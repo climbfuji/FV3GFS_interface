@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+"""
+build fv3gfs library
+"""
+import sys, os, time, filecmp, shutil, imp, glob
+
+_CIMEROOT = os.environ.get("CIMEROOT")
+if _CIMEROOT is None:
+    raise SystemExit("ERROR: must set CIMEROOT environment variable")
+
+_LIBDIR = os.path.join(_CIMEROOT, "scripts", "Tools")
+sys.path.append(_LIBDIR)
+
+from standard_script_setup import *
+from CIME.buildlib import parse_input
+from CIME.case import Case
+from CIME.utils import run_cmd, expect
+
+logger = logging.getLogger(__name__)
+
+###############################################################################
+def buildlib(caseroot, libroot, bldroot):
+###############################################################################
+
+    with Case(caseroot) as case:
+        # first check for the external FMS library and build it
+        srcroot = case.get_value("SRCROOT")
+        fmsbuildlib = os.path.join(srcroot,"libraries","FMS","buildlib")
+        fmsbuilddir = os.path.join(bldroot,"FMS")
+        if not os.path.exists(fmsbuildlib):
+            #todo: call checkout_externals to get this component
+            expect(False, "FMS external not found")
+        else:
+            stat, _, err = run_cmd("{} {} {} {}".format(fmsbuildlib, bldroot, fmsbuilddir, caseroot), verbose=True)
+            expect(stat==0, "FMS build Failed {}".format(err))
+
+        casetools = case.get_value("CASETOOLS")
+        gmake_j = case.get_value("GMAKE_J")
+        gmake = case.get_value("GMAKE")
+        mach = case.get_value("MACH")
+
+        #-------------------------------------------------------
+        # create Filepath file for fv3gfs
+        #-------------------------------------------------------
+        sharedlibroot = case.get_value("SHAREDLIBROOT")
+
+        incroot = " -I " + os.path.join(srcroot,"libraries","FMS","src","include") + \
+                  " -I " + os.path.join(srcroot,"libraries","FMS","src","mpp","include") + \
+                  " -I " + fmsbuilddir
+        filepath_file = os.path.join(bldroot,"Filepath")
+        if not os.path.isfile(filepath_file):
+            driver = case.get_value("COMP_INTERFACE")+"_driver"
+            os.environ["CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DGFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML "
+            paths = [os.path.join(caseroot,"SourceMods","src.fv3gfs"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","cpl"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "physics"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "GFS_layer"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","stochastic_physics"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "tools"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "model"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","ipd")]
+# io has a dependancy on nemsio which is not included
+#                     os.path.join(srcroot,"components","fv3","FV3GFS","io"),]
+
+
+            with open(filepath_file, "w") as filepath:
+                filepath.write("\n".join(paths))
+                filepath.write("\n")
+        libfms = os.path.join(bldroot,"FMS","libfms.a")
+        if os.path.exists(libfms):
+            shutil.copy(libfms, libroot)
+
+        os.chdir(bldroot)
+
+        # build the library
+        makefile = os.path.join(casetools, "Makefile")
+        complib = os.path.join(libroot,"libatm.a")
+        cmd = "{} complib -j {} MODEL=fv3gfs COMPLIB={} -f {} INCROOT=\"{}\"" .format(gmake, gmake_j, complib, makefile, incroot)
+
+        rc, out, err = run_cmd(cmd)
+        logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
+        expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
+
+
+def _main_func():
+    caseroot, libroot, bldroot = parse_input(sys.argv)
+    buildlib(caseroot, libroot, bldroot)
+
+###############################################################################
+
+if __name__ == "__main__":
+    _main_func()
