@@ -51,18 +51,23 @@ def buildlib(caseroot, libroot, bldroot):
         filepath_file = os.path.join(bldroot,"Filepath")
         if not os.path.isfile(filepath_file):
             driver = case.get_value("COMP_INTERFACE")+"_driver"
-            os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DGFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNEMS_GSM "
             paths = [os.path.join(caseroot,"SourceMods","src.fv3gfs"),
+                     os.path.join(srcroot,"components","fv3","cime_config","cpl"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS"),
+                     os.path.join(srcroot,"components","fv3","nemsio", "src"),
+                     os.path.join(srcroot,"components","fv3","sp", "src"),
+                     os.path.join(srcroot,"components","fv3","bacio", "src"),
+                     os.path.join(srcroot,"components","fv3","w3nco", "src"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","cpl"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","io"),
                      os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "physics"),
                      os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "GFS_layer"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","stochastic_physics"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver"),
+                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver","fvGFS"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "tools"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "model"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","ipd")]
-# io has a dependancy on nemsio which is not included
-#                     os.path.join(srcroot,"components","fv3","FV3GFS","io"),]
 
 
             with open(filepath_file, "w") as filepath:
@@ -73,8 +78,14 @@ def buildlib(caseroot, libroot, bldroot):
             shutil.copy(libfms, libroot)
 
         os.chdir(bldroot)
+        physdir = os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","physics")
+        # cime build system does not like this filename
+        if os.path.isfile(os.path.join(physdir,"dcyc2.pre.rad.f")):
+            os.rename(os.path.join(physdir,"dcyc2.pre.rad.f"),os.path.join(physdir,"dcyc2_pre_rad.f"))
 
         # build the library
+        os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DGFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNEMS_GSM -Duse_WRTCOMP "
+
         makefile = os.path.join(casetools, "Makefile")
         complib = os.path.join(libroot,"libatm.a")
         cmd = "{} complib -j {} MODEL=fv3gfs COMPLIB={} -f {} INCROOT=\"{}\"" .format(gmake, gmake_j, complib, makefile, incroot)
@@ -82,6 +93,12 @@ def buildlib(caseroot, libroot, bldroot):
         rc, out, err = run_cmd(cmd)
         logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
         expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
+        with open(os.path.join(caseroot,"Macros.make"), "r+") as Macros:
+            for line in Macros:
+                if "USE_FMS" in line:
+                    break
+            else:  #not found, we are at eof
+                Macros.write("USE_FMS:=TRUE")
 
 
 def _main_func():
