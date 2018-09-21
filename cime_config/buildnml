@@ -25,11 +25,113 @@ from CIME.utils import run_cmd
 
 logger = logging.getLogger(__name__)
 
+# prepares the input files of a case and places in rundir:
+def prep_input(case):
+    casename        = case.get_value("CASE")
+    Buildconf       = case.get_value("CASEBUILD")
+    rundir          = case.get_value("RUNDIR")
+    gridname        = case.get_value("GRID")
+#    srcroot         = case.get_value("SRCROOT")
+#    din_loc_root    = case.get_value("DIN_LOC_ROOT")
+
+
+# This section below is how input files 
+# are copied in NEMS and is just for reference
+#
+#     # Specify input files.
+#     filters input {
+#       #    WORK FILE  <=filter=   SOURCE FILE
+#           'input.nml' <=atparse=  "@[PARMnems]/input.mom6.nml.IN"
+#     'model_configure' <=atparse=  "@[PARMnems]/model_configure.IN"
+#                  'aerosol.dat' <=copyfrom= "@[FV3_input_data]/INPUT"
+#   'co2historicaldata_201*.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
+#   'global_o3prdlos.f77' <=copyfrom= "@[FV3_input_data]/INPUT"
+#       'sfc_emissivity_idx.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
+#    'solarconstant_noaa_an.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
+#                '*grb' <=copyfrom= "@[FV3_input_data]"
+#             '*_table' <=copyfrom= "@[FV3_input_data]"
+#          '*configure' <=copyfrom= "@[FV3_input_data]"
+#               'INPUT' <=copy=     "@[FV3_input_data]/INPUT"
+# 'INPUT/C96_mosaic.nc' <=copy=     "@[FV3_input_data]/INPUT/grid_spec.nc"
+#      'nems.configure' <=atparse=  "@[PARMnems]/nems.configure.@[nems_configure].IN"
+#             'INPUT/*' <=copyfrom= "@[UGCS_input_data]/MOM6_FIX_025deg"
+#  'INPUT/MOM6_IC_TS.nc' <=copy=    "@[UGCS_input_data]/MOM6_IC/MOM6_IC_TS.nc"
+#                   '*' <=copyfrom= "@[UGCS_input_data]/CICE"
+#                   '*' <=copyfrom= "@[UGCS_input_data]/MEDIATOR_atm_flux"
+#  'INPUT/grid_spec.nc'  <=copy=    "@[UGCS_input_data]/COUPLED/grid_spec.nc"
+#          'diag_table'  <=copy=    "@[UGCS_input_data]/COUPLED/diag_table"
+#     }
+
+    # maps input file -> output file
+    # if output file is "", then keep same name
+    fv3_input_files = {
+        "INPUT/aerosol.dat" : "",
+        "INPUT/co2historicaldata_201*.txt" : "",
+        "INPUT/global_o3prdlos.f77" : "",
+        "INPUT/sfc_emissivity_idx.txt" : "",
+        "INPUT/solarconstant_noaa_an.txt" : "",
+        "*grb" : "",
+        "*_table" : "",
+        "*configure" : "",
+        "INPUT" : "",
+        "INPUT/grid_spec.nc" : "INPUT/C96_mosaic.nc"
+    }
+
+    ugcs_input_files = {
+        "model_configure.cmeps" : "model_configure",
+        "input.nml.cmeps" : "input.nml",
+        "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
+        "COUPLED/diag_table" : ""
+    }
+
+    # create symbolic links for these
+    input_dirs_to_link = []
+
+    # Make sure that rundir exists. If not, make it:
+    if not os.path.exists(rundir):
+        os.makedirs(rundir)
+
+    # copy template input files:
+    logger.info("\tCopying input files")
+    
+    # hard-coded input directory until we decide how to handle these files
+    # this directory was copied from NEMS/Theia
+    # /glade/work/dunlap/FV3GFS/updateFV3-20180727
+    ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
+    for input_file_name in ugcs_input_files:
+        input_file_path = os.path.join(ugcs_input_dir, input_file_name)
+        if not os.path.exists(input_file_path):
+            expect(False, "Couldn't find input file path: " + input_file_path)
+#        logger.info("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
+        run_cmd("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
+
+    fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data")
+    for input_file_name in fv3_input_files:
+        input_file_path = os.path.join(fv3_input_dir, input_file_name)
+        if "*" not in input_file_name and not os.path.exists(input_file_path):
+            expect(False, "Couldn't find input file path: " + input_file_path)
+#        logger.info("cp " + input_file_path + " " + os.path.join(rundir, fv3_input_files[input_file_name]))
+        run_cmd("cp " + input_file_path + " " + os.path.join(rundir, fv3_input_files[input_file_name]))
+
+    logger.info("\tLinking input directories")
+    for input_dir_name in input_dirs_to_link:
+        input_dir_path = os.path.join(input_templates_dir, input_dir_name)
+        if not os.path.exists(input_dir_path):
+            expect(False, "Couldn't find input direcory " + input_dir_path)
+        run_cmd("ln -s " + input_dir_path + " " + os.path.join(rundir, input_dir_name))
+
+    # FV3 expects a RESTART directory
+    logger.info("\tCreating RESTART directory")
+    run_cmd("mkdir " + os.path.join(rundir, "RESTART"))
+
+
 def buildnml(case, caseroot, compname):
 
     # Build the component namelist
     if compname != "fv3gfs":
         raise AttributeError
+
+    prep_input(case)
 
     return
 
