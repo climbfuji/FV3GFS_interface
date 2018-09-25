@@ -73,7 +73,7 @@ def prep_input(case):
         "*grb" : "",
         "*_table" : "",
         "*configure" : "",
-        "INPUT" : "",
+        "INPUT/*" : "INPUT",
         "INPUT/grid_spec.nc" : "INPUT/C96_mosaic.nc"
     }
 
@@ -91,13 +91,18 @@ def prep_input(case):
     if not os.path.exists(rundir):
         os.makedirs(rundir)
 
+    # Create INPUT and RESTART directories
+    logger.info("\tCreating INPUT and RESTART directory")
+    run_cmd("mkdir " + os.path.join(rundir, "INPUT"))
+    run_cmd("mkdir " + os.path.join(rundir, "RESTART"))
+
     # copy template input files:
     logger.info("\tCopying input files")
     
     # hard-coded input directory until we decide how to handle these files
     # this directory was copied from NEMS/Theia
-    # /glade/work/dunlap/FV3GFS/updateFV3-20180727
-    ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
+    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
+    ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","master-20180904")
     for input_file_name in ugcs_input_files:
         input_file_path = os.path.join(ugcs_input_dir, input_file_name)
         if not os.path.exists(input_file_path):
@@ -119,10 +124,6 @@ def prep_input(case):
         if not os.path.exists(input_dir_path):
             expect(False, "Couldn't find input direcory " + input_dir_path)
         run_cmd("ln -s " + input_dir_path + " " + os.path.join(rundir, input_dir_name))
-
-    # FV3 expects a RESTART directory
-    logger.info("\tCreating RESTART directory")
-    run_cmd("mkdir " + os.path.join(rundir, "RESTART"))
 
 
 def buildnml(case, caseroot, compname):
