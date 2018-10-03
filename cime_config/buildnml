@@ -67,6 +67,7 @@ def prep_input(case):
     fv3_input_files = {
         "INPUT/aerosol.dat" : "",
         "INPUT/co2historicaldata_201*.txt" : "",
+        "INPUT/co2historicaldata_glob.txt" : "",
         "INPUT/global_o3prdlos.f77" : "",
         "INPUT/sfc_emissivity_idx.txt" : "",
         "INPUT/solarconstant_noaa_an.txt" : "",
