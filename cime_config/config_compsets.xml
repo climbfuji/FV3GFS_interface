@@ -40,7 +40,7 @@
 
   <compset>
     <alias>F2000fv3gfs</alias>
-    <lname>2000_FV3GFS_SLND_DICE%PRES_DOCN%DOM_SROF_SGLC_SWAV</lname>
+    <lname>2000_FV3GFS_SLND_CICE%PRES_DOCN%DOM_SROF_SGLC_SWAV</lname>
   </compset>
 
 </compsets>
