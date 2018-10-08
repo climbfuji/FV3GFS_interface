@@ -103,7 +103,8 @@ def prep_input(case):
     # hard-coded input directory until we decide how to handle these files
     # this directory was copied from NEMS/Theia
     #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
-    ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","master-20180904")
+    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","master-20180904")
+    ugcs_input_dir = os.path.join("/glade","work","mvertens","FV3GFS","master-20180904")
     for input_file_name in ugcs_input_files:
         input_file_path = os.path.join(ugcs_input_dir, input_file_name)
         if not os.path.exists(input_file_path):
