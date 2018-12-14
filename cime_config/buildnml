@@ -31,6 +31,7 @@ def prep_input(case):
     Buildconf       = case.get_value("CASEBUILD")
     rundir          = case.get_value("RUNDIR")
     gridname        = case.get_value("GRID")
+    testcase        = case.get_value("TEST")
 #    srcroot         = case.get_value("SRCROOT")
 #    din_loc_root    = case.get_value("DIN_LOC_ROOT")
 
@@ -82,7 +83,7 @@ def prep_input(case):
         "model_configure.cmeps" : "model_configure",
         "input.nml.cmeps" : "input.nml",
         "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
-        "COUPLED/diag_table" : ""
+        "COUPLED/diag_table.cmeps" : "diag_table"
     }
 
     # create symbolic links for these
@@ -104,21 +105,23 @@ def prep_input(case):
     # this directory was copied from NEMS/Theia
     #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
     #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","master-20180904")
-    ugcs_input_dir = os.path.join("/glade","work","mvertens","FV3GFS","master-20180904")
-    for input_file_name in ugcs_input_files:
-        input_file_path = os.path.join(ugcs_input_dir, input_file_name)
-        if not os.path.exists(input_file_path):
-            expect(False, "Couldn't find input file path: " + input_file_path)
-#        logger.info("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
-        run_cmd("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
-
+    #ugcs_input_dir = os.path.join("/glade","work","mvertens","FV3GFS","master-20180904")
+    ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","frac_20181029_2t")
     fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data")
+
     for input_file_name in fv3_input_files:
         input_file_path = os.path.join(fv3_input_dir, input_file_name)
         if "*" not in input_file_name and not os.path.exists(input_file_path):
             expect(False, "Couldn't find input file path: " + input_file_path)
-#        logger.info("cp " + input_file_path + " " + os.path.join(rundir, fv3_input_files[input_file_name]))
+        logger.info("cp " + input_file_path + " " + os.path.join(rundir, fv3_input_files[input_file_name]))
         run_cmd("cp " + input_file_path + " " + os.path.join(rundir, fv3_input_files[input_file_name]))
+
+    for input_file_name in ugcs_input_files:
+        input_file_path = os.path.join(ugcs_input_dir, input_file_name)
+        if not os.path.exists(input_file_path):
+            expect(False, "Couldn't find input file path: " + input_file_path)
+        logger.info("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
+        run_cmd("cp " + input_file_path + " " + os.path.join(rundir, ugcs_input_files[input_file_name]))
 
     logger.info("\tLinking input directories")
     for input_dir_name in input_dirs_to_link:
@@ -126,6 +129,31 @@ def prep_input(case):
         if not os.path.exists(input_dir_path):
             expect(False, "Couldn't find input direcory " + input_dir_path)
         run_cmd("ln -s " + input_dir_path + " " + os.path.join(rundir, input_dir_name))
+
+    # do replacements in diag_table
+    if os.path.exists(os.path.join(rundir, "diag_table")):
+        with open(os.path.join(rundir,"diag_table"), 'r') as diag_table_in:
+            with open(os.path.join(rundir,"diag_table.tmp"), 'w') as diag_table:
+                for line in diag_table_in:
+                    line = line.replace('CASENAME', casename)
+                    # Use cesm style file names
+                    line = line.replace("%4yr-%3dy", "%4yr-%2mo-%2dy-%5sc")
+                    if testcase:
+                        # this makes all real fields double precision
+                        if line.endswith('2\n'):
+                            line = line[:-2] + "1\n"
+                            # this changes output frequency and number of records per file
+                            # using HIST_N and HIST_OPTION from case
+                            if line.startswith("\""+casename):
+                                parts = line.split(',')
+                                if len(parts) > 7:
+                                    parts[1] = "1"
+                                    parts[2] = "days"
+                                    parts[6] = parts[1]
+                                    parts[7] = parts[2]
+                                    line = ','.join(parts)+"\n"
+                    diag_table.writelines(line)
+        os.rename(os.path.join(rundir,"diag_table.tmp"), os.path.join(rundir,"diag_table"))
 
 
 def buildnml(case, caseroot, compname):
