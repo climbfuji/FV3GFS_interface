@@ -31,7 +31,7 @@
 	  <rootpe_atm>0</rootpe_atm>
 	  <rootpe_rof>0</rootpe_rof>
 	  <rootpe_ice>0</rootpe_ice>
-	  <rootpe_ocn>0</rootpe_ocn>
+	  <rootpe_ocn>150</rootpe_ocn>
 	  <rootpe_cpl>0</rootpe_cpl>
 	  <rootpe_lnd>0</rootpe_lnd>
 	  <rootpe_glc>0</rootpe_glc>
