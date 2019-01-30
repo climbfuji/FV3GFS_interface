@@ -42,5 +42,10 @@
     <alias>F2000fv3gfs</alias>
     <lname>2000_FV3GFS_SLND_CICE%PRES_DOCN%DOM_SROF_SGLC_SWAV</lname>
   </compset>
+  
+  <compset>
+    <alias>UFS_S2S</alias>
+    <lname>2000_FV3GFS_SLND_CICE_MOM6_SROF_SGLC_SWAV</lname>
+  </compset>
 
 </compsets>
