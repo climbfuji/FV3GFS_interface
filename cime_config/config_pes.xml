@@ -82,11 +82,11 @@
       <pes pesize="any" compset="FV3GFS.+CICE.+MOM">
 	<comment>none</comment>
 	<ntasks>
-	  <ntasks_atm>366</ntasks_atm>
+	  <ntasks_atm>312</ntasks_atm>
 	  <ntasks_rof>1</ntasks_rof>
 	  <ntasks_ocn>360</ntasks_ocn>
-	  <ntasks_ice>360</ntasks_ice>
-	  <ntasks_cpl>366</ntasks_cpl>
+	  <ntasks_ice>24</ntasks_ice>
+	  <ntasks_cpl>312</ntasks_cpl>
 	  <ntasks_lnd>1</ntasks_lnd>
 	  <ntasks_glc>1</ntasks_glc>
 	  <ntasks_wav>1</ntasks_wav>
@@ -104,8 +104,8 @@
 	<rootpe>
 	  <rootpe_atm>0</rootpe_atm>
 	  <rootpe_rof>0</rootpe_rof>
-	  <rootpe_ice>0</rootpe_ice>
-	  <rootpe_ocn>366</rootpe_ocn>
+	  <rootpe_ice>672</rootpe_ice>
+	  <rootpe_ocn>312</rootpe_ocn>
 	  <rootpe_cpl>0</rootpe_cpl>
 	  <rootpe_lnd>0</rootpe_lnd>
 	  <rootpe_glc>0</rootpe_glc>

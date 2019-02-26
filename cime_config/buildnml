@@ -85,20 +85,24 @@ def prep_input(case):
         "*configure" : "",
         "INPUT/*" : "INPUT",
         "model_configure.cmeps" : "model_configure",
-        "input.nml.cmeps" : "input.nml",
+        "input.nml.cmeps" : "input.nml"
     }
     
     if atm_grid == 'C384':
         fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C384_mosaic.nc"
+        ugcs_input_files = {
+            "COUPLED384/grid_spec.nc" : "INPUT/grid_spec.nc",
+            "COUPLED384/diag_table.cmeps" : "diag_table"
+        }
     elif atm_grid == 'C96':
         fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C96_mosaic.nc"
+        ugcs_input_files = {
+            "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
+            "COUPLED/diag_table.cmeps" : "diag_table"
+        }
     else:
         expect(False, "Only C384 and C96 are supported as FV3 resolutions")
 
-    ugcs_input_files = {
-        "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
-        "COUPLED/diag_table.cmeps" : "diag_table"
-    }
 
     # create symbolic links for these
     input_dirs_to_link = []
