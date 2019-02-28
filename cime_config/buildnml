@@ -30,38 +30,46 @@ def prep_input(case):
     casename        = case.get_value("CASE")
     Buildconf       = case.get_value("CASEBUILD")
     rundir          = case.get_value("RUNDIR")
-    gridname        = case.get_value("GRID")
+    atm_grid        = case.get_value("ATM_GRID")
     testcase        = case.get_value("TEST")
-#    srcroot         = case.get_value("SRCROOT")
-#    din_loc_root    = case.get_value("DIN_LOC_ROOT")
-
 
 # This section below is how input files 
 # are copied in NEMS and is just for reference
 #
 #     # Specify input files.
 #     filters input {
-#       #    WORK FILE  <=filter=   SOURCE FILE
-#           'input.nml' <=atparse=  "@[PARMnems]/input.mom6.nml.IN"
-#     'model_configure' <=atparse=  "@[PARMnems]/model_configure.IN"
-#                  'aerosol.dat' <=copyfrom= "@[FV3_input_data]/INPUT"
-#   'co2historicaldata_201*.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
-#   'global_o3prdlos.f77' <=copyfrom= "@[FV3_input_data]/INPUT"
-#       'sfc_emissivity_idx.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
-#    'solarconstant_noaa_an.txt' <=copyfrom= "@[FV3_input_data]/INPUT"
-#                '*grb' <=copyfrom= "@[FV3_input_data]"
-#             '*_table' <=copyfrom= "@[FV3_input_data]"
-#          '*configure' <=copyfrom= "@[FV3_input_data]"
-#               'INPUT' <=copy=     "@[FV3_input_data]/INPUT"
-# 'INPUT/C96_mosaic.nc' <=copy=     "@[FV3_input_data]/INPUT/grid_spec.nc"
-#      'nems.configure' <=atparse=  "@[PARMnems]/nems.configure.@[nems_configure].IN"
-#             'INPUT/*' <=copyfrom= "@[UGCS_input_data]/MOM6_FIX_025deg"
-#  'INPUT/MOM6_IC_TS.nc' <=copy=    "@[UGCS_input_data]/MOM6_IC/MOM6_IC_TS.nc"
-#                   '*' <=copyfrom= "@[UGCS_input_data]/CICE"
-#                   '*' <=copyfrom= "@[UGCS_input_data]/MEDIATOR_atm_flux"
-#  'INPUT/grid_spec.nc'  <=copy=    "@[UGCS_input_data]/COUPLED/grid_spec.nc"
-#          'diag_table'  <=copy=    "@[UGCS_input_data]/COUPLED/diag_table"
+#       #    WORK FILE           <=filter=     SOURCE FILE
+#           'input.nml'          <=atparse=  " @[PARMnems]/input.mom6.nml.IN"
+#     'model_configure'          <=atparse=  " @[PARMnems]/model_configure.IN"
+#         'aerosol.dat'          <=copyfrom= " @[FV3_input_data]/INPUT"
+#   'co2historicaldata_201*.txt' <=copyfrom= " @[FV3_input_data]/INPUT"
+#   'global_o3prdlos.f77'        <=copyfrom= " @[FV3_input_data]/INPUT"
+#       'sfc_emissivity_idx.txt' <=copyfrom= " @[FV3_input_data]/INPUT"
+#    'solarconstant_noaa_an.txt' <=copyfrom= " @[FV3_input_data]/INPUT"
+#                '*grb'          <=copyfrom= " @[FV3_input_data]"
+#             '*_table'          <=copyfrom= " @[FV3_input_data]"
+#          '*configure'          <=copyfrom= " @[FV3_input_data]"
+#               'INPUT'          <=copy=     " @[FV3_input_data]/INPUT"
+# 'INPUT/C96_mosaic.nc'          <=copy=     " @[FV3_input_data]/INPUT/grid_spec.nc"
+#      'nems.configure'          <=atparse=  " @[PARMnems]/nems.configure.@[nems_configure].IN"
+#             'INPUT/*'          <=copyfrom= " @[UGCS_input_data]/MOM6_FIX_025deg"
+#  'INPUT/MOM6_IC_TS.nc'         <=copy=    "  @[UGCS_input_data]/MOM6_IC/MOM6_IC_TS.nc"
+#                   '*'          <=copyfrom= " @[UGCS_input_data]/CICE"
+#                   '*'          <=copyfrom= " @[UGCS_input_data]/MEDIATOR_atm_flux"
+#  'INPUT/grid_spec.nc'          <=copy=    "  @[UGCS_input_data]/COUPLED/grid_spec.nc"
+#          'diag_table'          <=copy=    "  @[UGCS_input_data]/COUPLED/diag_table"
 #     }
+
+    # Determine fv3 inputdata directory (xml variable in env_mach_specific.xml)
+    ugcs_input_dir = os.environ.get("UGCSINPUTPATH")
+    expect((ugcs_input_dir is not None), "You must set the UGCSINPUTPATH to your input directory location.")
+
+    if atm_grid == 'C384':
+        fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data384")
+    elif atm_grid == 'C96':
+        fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data")
+    else:
+        expect(False, "Only C384 and C96 are supported as FV3 resolutions")
 
     # maps input file -> output file
     # if output file is "", then keep same name
@@ -76,15 +84,25 @@ def prep_input(case):
         "*_table" : "",
         "*configure" : "",
         "INPUT/*" : "INPUT",
-        "INPUT/grid_spec.nc" : "INPUT/C96_mosaic.nc"
-    }
-
-    ugcs_input_files = {
         "model_configure.cmeps" : "model_configure",
-        "input.nml.cmeps" : "input.nml",
-        "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
-        "COUPLED/diag_table.cmeps" : "diag_table"
+        "input.nml.cmeps" : "input.nml"
     }
+    
+    if atm_grid == 'C384':
+        fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C384_mosaic.nc"
+        ugcs_input_files = {
+            "COUPLED384/grid_spec.nc" : "INPUT/grid_spec.nc",
+            "COUPLED384/diag_table.cmeps" : "diag_table"
+        }
+    elif atm_grid == 'C96':
+        fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C96_mosaic.nc"
+        ugcs_input_files = {
+            "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
+            "COUPLED/diag_table.cmeps" : "diag_table"
+        }
+    else:
+        expect(False, "Only C384 and C96 are supported as FV3 resolutions")
+
 
     # create symbolic links for these
     input_dirs_to_link = []
@@ -93,7 +111,7 @@ def prep_input(case):
     if not os.path.exists(rundir):
         os.makedirs(rundir)
 
-    # Create INPUT and RESTART directories
+    # create INPUT and RESTART directories
     logger.info("\tCreating INPUT and RESTART directory")
     run_cmd("mkdir " + os.path.join(rundir, "INPUT"))
     run_cmd("mkdir " + os.path.join(rundir, "RESTART"))
@@ -101,18 +119,6 @@ def prep_input(case):
     # copy template input files:
     logger.info("\tCopying input files")
     
-    # hard-coded input directory until we decide how to handle these files
-    # this directory was copied from NEMS/Theia
-    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","updateFV3-20180727")
-    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","master-20180904")
-    #ugcs_input_dir = os.path.join("/glade","work","mvertens","FV3GFS","master-20180904")
-    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","frac_20181029_2t")
-    #ugcs_input_dir = os.path.join("/glade","work","dunlap","FV3GFS","benchmark-20181016")
-    ugcs_input_dir = os.environ.get("UGCSINPUTPATH")
-    expect((ugcs_input_dir is not None), "You must set the UGCSINPUTPATH to your input directory location.")
-            
-    fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data")
-
     for input_file_name in fv3_input_files:
         input_file_path = os.path.join(fv3_input_dir, input_file_name)
         if "*" not in input_file_name and not os.path.exists(input_file_path):
