@@ -64,48 +64,64 @@ def prep_input(case):
     ugcs_input_dir = os.environ.get("UGCSINPUTPATH")
     expect((ugcs_input_dir is not None), "You must set the UGCSINPUTPATH to your input directory location.")
 
-    if atm_grid == 'C384':
-        fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data384")
-    elif atm_grid == 'C96':
-        fv3_input_dir = os.path.join(ugcs_input_dir, "FV3_input_data")
-    else:
-        expect(False, "Only C384 and C96 are supported as FV3 resolutions")
+    # Determine fv3 fixed files directory (xml variable in env_mach_specific.xml)
+    ugcs_fixed_file_dir = os.environ.get("UGCSFIXEDFILEPATH")
+    expect((ugcs_fixed_file_dir is not None), "You must set the UGCSFIXEDFILEPATH to your fixed files directory location.")
+
+    # Determine fv3 addtional files directory (xml variable in env_mach_specific.xml)
+    ugcs_addon_dir = os.environ.get("UGCSADDONPATH")
+    expect((ugcs_addon_dir is not None), "You must set the UGCSADDONPATH to your grid spec and diag_table files directory location.")
+
+    # fv3 input directory
+    fv3_input_dir = ugcs_input_dir
 
     # maps input file -> output file
     # if output file is "", then keep same name
     fv3_input_files = {
-        "INPUT/aerosol.dat" : "",
-        "INPUT/co2historicaldata_201*.txt" : "",
-        "INPUT/co2historicaldata_glob.txt" : "",
-        "INPUT/global_o3prdlos.f77" : "",
-        "INPUT/sfc_emissivity_idx.txt" : "",
-        "INPUT/solarconstant_noaa_an.txt" : "",
+        "aerosol.dat" : "",
+        "co2historicaldata_201*.txt" : "",
+        "co2historicaldata_glob.txt" : "",
+        "global_o3prdlos.f77" : "",
+        "sfc_emissivity_idx.txt" : "",
+        "solarconstant_noaa_an.txt" : "",
         "*grb" : "",
         "*_table" : "",
         "*configure" : "",
         "INPUT/*" : "INPUT",
-        "model_configure.cmeps" : "model_configure",
-        "input.nml.cmeps" : "input.nml"
+        "model_configure" : "",
+        os.path.join(ugcs_addon_dir, atm_grid, "input.nml") : "input.nml",
     }
+
+    # additional files for run
+    ugcs_input_files = {
+        os.path.join(ugcs_addon_dir, atm_grid, "grid_spec.nc") : "INPUT/grid_spec.nc",
+        os.path.join(ugcs_addon_dir, atm_grid, "diag_table.cmeps") : "diag_table",
+        os.path.join(ugcs_addon_dir, atm_grid, "model_configure.cmeps") : "model_configure"
+    }    
     
-    if atm_grid == 'C384':
-        fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C384_mosaic.nc"
-        ugcs_input_files = {
-            "COUPLED384/grid_spec.nc" : "INPUT/grid_spec.nc",
-            "COUPLED384/diag_table.cmeps" : "diag_table"
-        }
-    elif atm_grid == 'C96':
-        fv3_input_files["INPUT/grid_spec.nc"] = "INPUT/C96_mosaic.nc"
-        ugcs_input_files = {
-            "COUPLED/grid_spec.nc" : "INPUT/grid_spec.nc",
-            "COUPLED/diag_table.cmeps" : "diag_table"
-        }
-    else:
-        expect(False, "Only C384 and C96 are supported as FV3 resolutions")
-
-
-    # create symbolic links for these
+    # create symbolic links for these dirs
     input_dirs_to_link = []
+
+    # create symbolic links for these files
+    input_files_to_link = {
+        os.path.join(ugcs_fixed_file_dir, "global_glacier.2x2.grb") : "global_glacier.2x2.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_maxice.2x2.grb") : "global_maxice.2x2.grb",
+        os.path.join(ugcs_fixed_file_dir, "RTGSST.1982.2012.monthly.clim.grb") : "RTGSST.1982.2012.monthly.clim.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_snoclim.1.875.grb") : "global_snoclim.1.875.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_snowfree_albedo.bosu.t766.1536.768.rg.grb") : "global_snowfree_albedo.bosu.t766.1536.768.rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_albedo4.1x1.grb") : "global_albedo4.1x1.grb",
+        os.path.join(ugcs_fixed_file_dir, "CFSR.SEAICE.1982.2012.monthly.clim.grb") : "CFSR.SEAICE.1982.2012.monthly.clim.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_tg3clim.2.6x1.5.grb") : "global_tg3clim.2.6x1.5.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_vegfrac.0.144.decpercent.grb") : "global_vegfrac.0.144.decpercent.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_vegtype.igbp.t766.1536.768.rg.grb") : "global_vegtype.igbp.t766.1536.768.rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_soiltype.statsgo.t766.1536.768.rg.grb") : "global_soiltype.statsgo.t766.1536.768.rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo.t766.1536.768.grb") : "global_soilmgldas.statsgo.t766.1536.768.grb",
+        os.path.join(ugcs_fixed_file_dir, "seaice_newland.grb") : "seaice_newland.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_shdmin.0.144x0.144.grb") : "global_shdmin.0.144x0.144.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_shdmax.0.144x0.144.grb") : "global_shdmax.0.144x0.144.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_slope.1x1.grb") : "global_slope.1x1.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_mxsnoalb.uariz.t766.1536.768.rg.grb") : "global_mxsnoalb.uariz.t766.1536.768.rg.grb"
+    }
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
@@ -139,6 +155,12 @@ def prep_input(case):
         if not os.path.exists(input_dir_path):
             expect(False, "Couldn't find input direcory " + input_dir_path)
         run_cmd("ln -s " + input_dir_path + " " + os.path.join(rundir, input_dir_name))
+
+    logger.info("\tLinking input static input files")
+    for input_file_name in input_files_to_link:
+        if not os.path.isfile(input_file_name):
+            expect(False, "Couldn't find file " + input_file_name)
+        run_cmd("ln -s " + input_file_name + " " + os.path.join(rundir, input_files_to_link[input_file_name]))
 
     # do replacements in diag_table
     if os.path.exists(os.path.join(rundir, "diag_table")):
