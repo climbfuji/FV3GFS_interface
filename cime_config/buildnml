@@ -88,19 +88,26 @@ def prep_input(case):
         "*_table" : "",
         "*configure" : "",
         "INPUT/*" : "INPUT",
-        "model_configure" : "",
-        os.path.join(ugcs_addon_dir, atm_grid, "input.nml") : "input.nml",
+        "model_configure.cmeps" : "model_configure",
+        "input.nml.cmeps" : "input.nml",
     }
 
     # additional files for run
     ugcs_input_files = {
         os.path.join(ugcs_addon_dir, atm_grid, "grid_spec.nc") : "INPUT/grid_spec.nc",
         os.path.join(ugcs_addon_dir, atm_grid, "diag_table.cmeps") : "diag_table",
-        os.path.join(ugcs_addon_dir, atm_grid, "model_configure.cmeps") : "model_configure"
     }    
     
     # create symbolic links for these dirs
     input_dirs_to_link = []
+
+    # resolution dependent parameters (need to manage fixed files)
+    if (atm_grid == 'C96'):
+        res_str = "t126.384.190"
+    elif (atm_grid == 'C384'):  
+        res_str = "t766.1536.768"
+    else:
+        expect(False, "Given resolution " + atm_grid + " currently not supported!")
 
     # create symbolic links for these files
     input_files_to_link = {
@@ -108,20 +115,21 @@ def prep_input(case):
         os.path.join(ugcs_fixed_file_dir, "global_maxice.2x2.grb") : "global_maxice.2x2.grb",
         os.path.join(ugcs_fixed_file_dir, "RTGSST.1982.2012.monthly.clim.grb") : "RTGSST.1982.2012.monthly.clim.grb",
         os.path.join(ugcs_fixed_file_dir, "global_snoclim.1.875.grb") : "global_snoclim.1.875.grb",
-        os.path.join(ugcs_fixed_file_dir, "global_snowfree_albedo.bosu.t766.1536.768.rg.grb") : "global_snowfree_albedo.bosu.t766.1536.768.rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_snowfree_albedo.bosu." + res_str + ".rg.grb") : "global_snowfree_albedo.bosu." + res_str + ".rg.grb",
         os.path.join(ugcs_fixed_file_dir, "global_albedo4.1x1.grb") : "global_albedo4.1x1.grb",
         os.path.join(ugcs_fixed_file_dir, "CFSR.SEAICE.1982.2012.monthly.clim.grb") : "CFSR.SEAICE.1982.2012.monthly.clim.grb",
         os.path.join(ugcs_fixed_file_dir, "global_tg3clim.2.6x1.5.grb") : "global_tg3clim.2.6x1.5.grb",
         os.path.join(ugcs_fixed_file_dir, "global_vegfrac.0.144.decpercent.grb") : "global_vegfrac.0.144.decpercent.grb",
-        os.path.join(ugcs_fixed_file_dir, "global_vegtype.igbp.t766.1536.768.rg.grb") : "global_vegtype.igbp.t766.1536.768.rg.grb",
-        os.path.join(ugcs_fixed_file_dir, "global_soiltype.statsgo.t766.1536.768.rg.grb") : "global_soiltype.statsgo.t766.1536.768.rg.grb",
-        os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo.t766.1536.768.grb") : "global_soilmgldas.statsgo.t766.1536.768.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_vegtype.igbp." + res_str + ".rg.grb") : "global_vegtype.igbp." + res_str + ".rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_soiltype.statsgo." + res_str + ".rg.grb") : "global_soiltype.statsgo." + res_str + ".rg.grb",
         os.path.join(ugcs_fixed_file_dir, "seaice_newland.grb") : "seaice_newland.grb",
         os.path.join(ugcs_fixed_file_dir, "global_shdmin.0.144x0.144.grb") : "global_shdmin.0.144x0.144.grb",
         os.path.join(ugcs_fixed_file_dir, "global_shdmax.0.144x0.144.grb") : "global_shdmax.0.144x0.144.grb",
         os.path.join(ugcs_fixed_file_dir, "global_slope.1x1.grb") : "global_slope.1x1.grb",
-        os.path.join(ugcs_fixed_file_dir, "global_mxsnoalb.uariz.t766.1536.768.rg.grb") : "global_mxsnoalb.uariz.t766.1536.768.rg.grb"
+        os.path.join(ugcs_fixed_file_dir, "global_mxsnoalb.uariz." + res_str + ".rg.grb") : "global_mxsnoalb.uariz." + res_str + ".rg.grb"
     }
+    if (atm_grid == 'C384'):
+         input_files_to_link[os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo." + res_str + ".grb")] = "global_soilmgldas.statsgo." + res_str + ".grb"
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
