@@ -82,6 +82,7 @@ def prep_input(case):
         "co2historicaldata_201*.txt" : "",
         "co2historicaldata_glob.txt" : "",
         "global_o3prdlos.f77" : "",
+        "global_h2oprdlos.f77" : "",
         "sfc_emissivity_idx.txt" : "",
         "solarconstant_noaa_an.txt" : "",
         "*grb" : "",
