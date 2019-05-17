@@ -232,19 +232,32 @@ def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
     ntiles = int(nmlgen2.get_value('ntiles'))
 
     if ((ntask_atm-ntask_write)%ntiles != 0):
-        expect(False, "(ntask_atm-ntask_write)%%ntiles must equal to 0! (%d-%d)/%d = %d" % 
+        expect(False, "(ntask_atm-write_tasks_per_group)%%ntiles must equal to 0! (%d-%d)/%d = %d" % 
              (ntask_atm,ntask_write,ntiles,(ntask_atm-ntask_write)%ntiles))
     else:
-        ntask = (ntask_atm-ntask_write)/ntiles
-        # calculate dividers
-        fact1 = sorted(list(factors(ntask)))
-        fact2 = [ntask/i for i in fact1]
-        # get differencies
-        res = [abs(x1 - x2) for (x1, x2) in zip(fact1, fact2)]
-        # find indices of smallest diff
-        i = res.index(min(res))
-        # set layout
-        nmlgen2.set_value('layout', value=[fact1[i],fact2[i],])
+        # get default value
+        layout = nmlgen2.get_value('layout')
+        layout_x = int(layout[0])  
+        layout_y = int(layout[1])  
+
+        # check it
+        if (((layout_x*layout_y)*ntiles+ntask_write) != ntask_atm):
+            logger.info("\tWARNING: (layout(1)*layout(2)*ntiles+write_tasks_per_group) must equal to %d but it is %d!" %
+                (ntask_atm,(layout_x*layout_y)*ntiles+ntask_write))
+
+            # calculate total number of task
+            ntask = (ntask_atm-ntask_write)/ntiles
+            # calculate dividers
+            fact1 = sorted(list(factors(ntask)))
+            fact2 = [ntask/i for i in fact1]
+            # get differencies
+            res = [abs(x1 - x2) for (x1, x2) in zip(fact1, fact2)]
+            # find indices of smallest diff
+            i = res.index(min(res))
+            # set layout
+            nmlgen2.set_value('layout', value=[fact1[i],fact2[i],])
+            # print out new factors
+            logger.info("\tusing automatically generated layout configuration %s x %s" % (fact1[i], fact2[i]))
 
     # modify file names based on selected resolution
     res_dict = {'384x190':'t126', '1536x768':'t766'}
