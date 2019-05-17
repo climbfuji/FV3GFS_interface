@@ -9,7 +9,7 @@
 # Disable these because this is our standard setup
 # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
 
-import os, shutil, sys, glob, stat, filecmp, imp
+import os, shutil, sys, glob, stat, filecmp, imp, re
 
 CIMEROOT = os.environ.get("CIMEROOT")
 if CIMEROOT is None:
@@ -24,6 +24,10 @@ from CIME.buildnml import create_namelist_infile, parse_input
 from CIME.utils import run_cmd
 
 logger = logging.getLogger(__name__)
+
+# find factors of a number
+def factors(n):
+    return set(x for tup in ([i, n//i] for i in range(1, int(n**0.5)+1) if n % i == 0) for x in tup)
 
 # prepares the input files of a case and places in rundir:
 def prep_input(case):
@@ -89,8 +93,6 @@ def prep_input(case):
         "*_table" : "",
         "*configure" : "",
         "INPUT/*" : "INPUT",
-        "model_configure.cmeps" : "model_configure",
-        "input.nml.cmeps" : "input.nml",
     }
 
     # additional files for run
@@ -196,14 +198,259 @@ def prep_input(case):
                     diag_table.writelines(line)
         os.rename(os.path.join(rundir,"diag_table.tmp"), os.path.join(rundir,"diag_table"))
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+####################################################################################
+def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
+####################################################################################
+    """Write out the namelist for this component.
 
+    Most arguments are the same as those for `NamelistGenerator`.
+    The `confdir` argument is used to specify the directory  in which output files will be placed.
+    """
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
+
+    #----------------------------------------------------
+    # Create config dictionary
+    #----------------------------------------------------
+    config = {}
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
+    nmlgen2.init_defaults(infile, config)
+
+    #----------------------------------------------------
+    # Modify namelist defaults
+    #----------------------------------------------------
+
+    # modify layout namelist option to be consistent with given number of task
+    ntask_atm = int(case.get_value('NTASKS_ATM'))
+    ntask_write = int(nmlgen1.get_value('write_tasks_per_group'))
+    ntiles = int(nmlgen2.get_value('ntiles'))
+
+    if ((ntask_atm-ntask_write)%ntiles != 0):
+        expect(False, "(ntask_atm-ntask_write)%%ntiles must equal to 0! (%d-%d)/%d = %d" % 
+             (ntask_atm,ntask_write,ntiles,(ntask_atm-ntask_write)%ntiles))
+    else:
+        ntask = (ntask_atm-ntask_write)/ntiles
+        # calculate dividers
+        fact1 = sorted(list(factors(ntask)))
+        fact2 = [ntask/i for i in fact1]
+        # get differencies
+        res = [abs(x1 - x2) for (x1, x2) in zip(fact1, fact2)]
+        # find indices of smallest diff
+        i = res.index(min(res))
+        # set layout
+        nmlgen2.set_value('layout', value=[fact1[i],fact2[i],])
+
+    # modify file names based on selected resolution
+    res_dict = {'384x190':'t126', '1536x768':'t766'}
+
+    for var in nmlgen2.get_group_variables('namsfc'):
+        var_str = str(nmlgen2.get_value(var))
+        if re.search('.t[1-9][1-9]', var_str):
+            lst = var_str.split(".")
+            indx = [i for i, item in enumerate(lst) if re.search('t[1-9][1-9]', item)]
+            key = "%sx%s" % (nmlgen1.get_value('imo'), nmlgen1.get_value('jmo'))
+            lst[indx[0]] = res_dict[key]
+            lst[indx[0]+1] = nmlgen1.get_value('imo') 
+            lst[indx[0]+2] = nmlgen1.get_value('jmo') 
+            var_str_out = ".".join(lst)
+            nmlgen2.set_value(var, value=var_str_out)
+
+    #----------------------------------------------------
+    # Write out namelist groups
+    #----------------------------------------------------
+    groups=['amip_interp_nml',
+            'atmos_model_nml',
+            'diag_manager_nml',
+            'fms_io_nml',
+            'fms_nml',
+            'fv_core_nml',
+            'external_ic_nml',
+            'gfs_physics_nml',
+            'gfdl_cloud_microphysics_nml',
+            'interpolator_nml',
+            'namsfc',
+            'fv_grid_nml',
+            'nam_stochy',
+            'nam_sfcperts',
+            'MOM_input_nml']
+
+    namelist_file = os.path.join(confdir, "atm_in")
+    nmlgen2.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
+
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+####################################################################################
+def _create_namelist1(case, confdir, infile, nmlgen):
+####################################################################################
+    """Write out the namelist for this component.
+
+    Most arguments are the same as those for `NamelistGenerator`.
+    The `confdir` argument is used to specify the directory  in which output files will be placed.
+    """
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
+    if os.path.exists(data_list_path):
+        os.remove(data_list_path)
+
+    #----------------------------------------------------
+    # Create config dictionary
+    #----------------------------------------------------
+    config = {}
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
+    nmlgen.init_defaults(infile, config)
+
+    #----------------------------------------------------
+    # Modify namelist defaults
+    #----------------------------------------------------
+
+    # modify start date
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = int(run_start_date[0])
+    mm = int(run_start_date[1])
+    dd = int(run_start_date[2])
+    nmlgen.set_value('start_year', value=yyyy)
+    nmlgen.set_value('start_month', value=mm)
+    nmlgen.set_value('start_day', value=dd)
+
+    run_start_tod = case.get_value('START_TOD')
+    hh = int(run_start_tod//3600)
+    mi = int((run_start_tod-hh*3600)//60)
+    ss = int(run_start_tod-hh*3600-mi*60)
+    nmlgen.set_value('start_hour', value=hh)
+    nmlgen.set_value('start_minute', value=mi)
+    nmlgen.set_value('start_second', value=ss)
+
+    # TODO: modify forecast lenght ? need to use dateutil.relativedelta.relativedelta to simplify the code
+    #cal_option = case.get_value('CALENDAR')
+    #stop_option = case.get_value('STOP_OPTION')
+    #stop_n = int(case.get_value('STOP_N'))
+    #if 'nyear' in stop_option:
+    #    if cal_option == 'NO_LEAP':
+    #        nmlgen.set_value('nhours_fcst', value=stop_n*365*24)
+    #    elif cal_option == 'GREGORIAN':
+    #        nmlgen.set_value('nhours_fcst', value=(datetime.datetime(yyyy+stop_n,mm,dd)-datetime.datetime(yyyy, mm, dd)).hours)  
+    #elif 'nmonth' in stop_option:
+    #     ddif = (datetime.datetime(yyyy+(stop_n/12), mm+(stop_n%12)+1, dd, hh, mi, ss)-datetime.datetime(yyyy, mm, dd, hh, mi, ss)).days
+    #     if cal_option == 'NO_LEAP':
+    #        nleap = 0
+    #        for i in xrange(yyyy, yyyy+(stop_n/12)+1):
+    #            nleap = nleap+calendar.isleap(i)
+    #        nmlgen.set_value('nhours_fcst', value=(ddif-nleap)*24)
+    #     elif cal_option == 'GREGORIAN':
+    #        nmlgen.set_value('nhours_fcst', value=ddif*24)
+    #elif 'nday' in stop_option:
+    #     #ddif = (datetime.datetime(yyyy+(stop_n/12), mm+(stop_n%12)+1, dd, hh, mi, ss)-datetime.datetime(yyyy, mm, dd, hh, mi, ss)).days
+
+    # modify restart option
+    if case.get_value('MEDIATOR_READ_RESTART'):
+        nmlgen.set_value('RUN_CONTINUE', value=True)
+    else:
+        nmlgen.set_value('RUN_CONTINUE', value=False)
+
+    # resolution dependent parameters
+    atm_grid = case.get_value("ATM_GRID")
+    if (atm_grid == 'C96'):
+        nmlgen.set_value('imo', value=384)
+        nmlgen.set_value('jmo', value=190)
+    elif (atm_grid == 'C384'):
+        nmlgen.set_value('imo', value=1536)
+        nmlgen.set_value('jmo', value=768)
+    else:
+        expect(False, "Given resolution " + atm_grid + " currently not supported!")
+ 
+    #----------------------------------------------------
+    # Write out model.configure namelist
+    #----------------------------------------------------
+    model_config_file = os.path.join(confdir, "model_configure")
+    nmlgen.write_nuopc_config_file(model_config_file, data_list_path)
+
+###############################################################################
 def buildnml(case, caseroot, compname):
+###############################################################################
 
     # Build the component namelist
     if compname != "fv3gfs":
         raise AttributeError
 
+    # copy/link input files
     prep_input(case)
+
+    # query source and run directories
+    srcroot = case.get_value("SRCROOT")
+    rundir = case.get_value("RUNDIR")
+
+    # determine the confdir directory
+    confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
+    if not os.path.isdir(confdir):
+        os.makedirs(confdir)
+
+    #----------------------------------------------------
+    # Construct the namelist generator/s
+    #----------------------------------------------------
+    # user definition *replaces* existing definition.
+    namelist_xml_dir = os.path.join(srcroot, "components", "fv3", "cime_config")
+
+    # determine directory for user modified namelist_definitions.xml and namelist_defaults.xml for
+    user_xml_dir = os.path.join(caseroot, "SourceMods", "src.fv3gfs")
+    expect (os.path.isdir(user_xml_dir),
+            "user_xml_dir %s does not exist " %user_xml_dir)
+
+    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
+    user_definition = os.path.join(user_xml_dir, "namelist_definition_fv3.xml")
+    if os.path.isfile(user_definition):
+        definition_file = [user_definition]
+    for file_ in definition_file:
+        expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
+
+    # create the namelist generator object for model_configure - independent of instance
+    nmlgen1 = NamelistGenerator(case, definition_file)
+
+    # create the namelist generator object for input.nml - independent of instance
+    nmlgen2 = NamelistGenerator(case, definition_file)
+
+    # create namelist_infile using user_nl_file as input
+    user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
+    expect(os.path.isfile(user_nl_file),
+           "Missing required user_nl_file %s " %(user_nl_file))
+    infile = os.path.join(confdir, "namelist_infile")
+    create_namelist_infile(case, user_nl_file, infile)
+    namelist_infile = [infile]
+
+    # create namelist model_configure
+    _create_namelist1(case, confdir, namelist_infile, nmlgen1)
+
+    # copy namelist files to rundir
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "model_configure")
+        file2 = os.path.join(rundir, "model_configure")
+        logger.debug("FV3 model configuration copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    # create namelist input.nml
+    _create_namelist2(case, confdir, namelist_infile, nmlgen1, nmlgen2)
+
+    # copy namelist files to rundir
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "atm_in")
+        file2 = os.path.join(rundir, "atm_in")
+        logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    # link file
+    logger.info("\tLinking input namelist for FV3GFS")
+    if not os.path.exists(rundir):
+        expect(False, "Couldn't find run direcory " + rundir)
+    run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
 
     return
 
