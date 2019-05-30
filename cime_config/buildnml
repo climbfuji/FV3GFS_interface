@@ -9,7 +9,7 @@
 # Disable these because this is our standard setup
 # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
 
-import os, shutil, sys, glob, stat, filecmp, imp, re, numpy
+import os, shutil, sys, glob, stat, filecmp, imp, re
 
 CIMEROOT = os.environ.get("CIMEROOT")
 if CIMEROOT is None:
@@ -254,24 +254,17 @@ def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
             # get differencies
             res = [abs(x1 - x2) for (x1, x2) in zip(fact1, fact2)]
             # check values
-            res_valid = [] 
             for i in xrange(len(res)):
                 if (atm_grid == 'C96'):
                     if (96%fact1[i] != 0 or 96%fact2[i] != 0):
-                        res_valid.append(True)  
-                    else:
-                        res_valid.append(False)
+                        res[i] = 999  
                 elif (atm_grid == 'C384'):
                     if (384%fact1[i] != 0 or 384%fact2[i] != 0):
-                        res_valid.append(True)  
-                    else:
-                        res_valid.append(False)
+                        res[i] = 999  
                 else:
                     expect(False, "Given resolution " + atm_grid + " currently not supported!")
-            # remove non valid items using masked array
-            res_masked = numpy.ma.array(res, mask=res_valid)
             # find indices of smallest diff
-            i = res.index(res_masked.min())
+            i = res.index(min(res))
             # set layout
             nmlgen2.set_value('layout', value=[fact1[i],fact2[i],])
             # print out new factors
