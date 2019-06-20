@@ -1850,7 +1850,7 @@
       do inline cloud fraction
     </desc>
     <values>
-      <value>.false.</value>
+      <value>.true.</value>
     </values>
   </entry>
 
