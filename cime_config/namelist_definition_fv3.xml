@@ -1190,7 +1190,7 @@
       flag for stratosphere h2o
     </desc>
     <values>
-      <value>.true.</value>
+      <value>.false.</value>
     </values>
   </entry>
 
