@@ -95,15 +95,14 @@ def prep_input(case):
     fv3_input_files = {
         "aerosol.dat" : "",
         "co2historicaldata_201*.txt" : "",
-        "co2historicaldata_glob.txt" : "",
         "global_o3prdlos.f77" : "",
-        "global_h2oprdlos.f77" : "",
         "sfc_emissivity_idx.txt" : "",
         "solarconstant_noaa_an.txt" : "",
         "*grb" : "",
         "*_table" : "",
         "*configure" : "",
         "INPUT/*" : "INPUT",
+        "input.nml" : "",
     }
 
     # additional files for run
@@ -476,7 +475,7 @@ def buildnml(case, caseroot, compname):
         shutil.copy2(file1, file2)
 
     # create namelist input.nml
-    _create_namelist2(case, confdir, namelist_infile, nmlgen1, nmlgen2)
+    #_create_namelist2(case, confdir, namelist_infile, nmlgen1, nmlgen2)
 
     # copy namelist files to rundir
     if os.path.isdir(rundir):
@@ -486,10 +485,10 @@ def buildnml(case, caseroot, compname):
         shutil.copy2(file1, file2)
 
     # link file
-    logger.info("\tLinking input namelist for FV3GFS")
-    if not os.path.exists(rundir):
-        expect(False, "Couldn't find run direcory " + rundir)
-    run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
+    #logger.info("\tLinking input namelist for FV3GFS")
+    #if not os.path.exists(rundir):
+    #    expect(False, "Couldn't find run direcory " + rundir)
+    #run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
 
     return
 
