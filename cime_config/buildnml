@@ -465,24 +465,24 @@ def buildnml(case, caseroot, compname):
     namelist_infile = [infile]
 
     # create namelist model_configure
-    _create_namelist1(case, confdir, namelist_infile, nmlgen1)
+    #_create_namelist1(case, confdir, namelist_infile, nmlgen1)
 
     # copy namelist files to rundir
-    if os.path.isdir(rundir):
-        file1 = os.path.join(confdir, "model_configure")
-        file2 = os.path.join(rundir, "model_configure")
-        logger.debug("FV3 model configuration copy: file1 %s file2 %s " %(file1, file2))
-        shutil.copy2(file1, file2)
+    #if os.path.isdir(rundir):
+    #    file1 = os.path.join(confdir, "model_configure")
+    #    file2 = os.path.join(rundir, "model_configure")
+    #    logger.debug("FV3 model configuration copy: file1 %s file2 %s " %(file1, file2))
+    #    shutil.copy2(file1, file2)
 
     # create namelist input.nml
     #_create_namelist2(case, confdir, namelist_infile, nmlgen1, nmlgen2)
 
     # copy namelist files to rundir
-    if os.path.isdir(rundir):
-        file1 = os.path.join(confdir, "atm_in")
-        file2 = os.path.join(rundir, "atm_in")
-        logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
-        shutil.copy2(file1, file2)
+    #if os.path.isdir(rundir):
+    #    file1 = os.path.join(confdir, "atm_in")
+    #    file2 = os.path.join(rundir, "atm_in")
+    #    logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
+    #    shutil.copy2(file1, file2)
 
     # link file
     #logger.info("\tLinking input namelist for FV3GFS")
