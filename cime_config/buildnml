@@ -210,6 +210,37 @@ def prep_input(case):
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
+def _create_namelist3(case, confdir, infile, nmlgen):
+####################################################################################
+    """Write out the namelist for this component.
+
+    Most arguments are the same as those for `NamelistGenerator`.
+    The `confdir` argument is used to specify the directory  in which output files will be placed.
+    """
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
+
+    #----------------------------------------------------
+    # Create config dictionary
+    #----------------------------------------------------
+    config = {}
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
+    nmlgen.init_defaults(infile, config)
+
+    #----------------------------------------------------
+    # Write out model.configure namelist
+    #----------------------------------------------------
+    namelist_file = os.path.join(confdir, "config.nml")
+    print(namelist_file)
+    nmlgen.write_output_file(namelist_file, data_list_path, sorted_groups=False)
+
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+####################################################################################
 def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
 ####################################################################################
     """Write out the namelist for this component.
@@ -489,6 +520,64 @@ def buildnml(case, caseroot, compname):
     #if not os.path.exists(rundir):
     #    expect(False, "Couldn't find run direcory " + rundir)
     #run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
+
+    # create the namelist generator object for chgres 
+    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_chgres.xml")]
+    user_definition = os.path.join(user_xml_dir, "namelist_definition_chgres.xml")
+    if os.path.isfile(user_definition):
+        definition_file = [user_definition]
+    for file_ in definition_file:
+        expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
+    nmlgen3 = NamelistGenerator(case, definition_file)
+
+    # create namelist for chgres
+    _create_namelist3(case, confdir, namelist_infile, nmlgen3)
+
+    # copy namelist files to rundir
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "config.nml")
+        file2 = os.path.join(rundir, "fort.41")
+        logger.debug("Chgres namelist copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    # copy chgres binary to rundir
+    chgres_bin = os.environ.get("CHGRES_BIN")
+    expect((chgres_bin is not None), "You must set the CHGRES_BIN to process data.")
+
+    if os.path.isdir(rundir):
+        file1 = chgres_bin
+        file2 = os.path.join(rundir, "chgres_cube.exe")
+        logger.debug("Chgres executable copy: file1 %s file2 %s " %(file1, file2))
+        print("Chgres executable copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    # create changes script to run
+    chgres_sh = os.path.join(rundir, "chgres_cube.sh")
+    f = open(chgres_sh, "w+")
+    f.write("#!/bin/bash\n")
+    f.write("cd " + rundir + "\n")
+    cmd = case.get_mpirun_cmd(allow_unresolved_envvars=False)
+    cmd = cmd.split()
+    chgres_np = os.environ.get("CHGRES_NPROC")
+    if (chgres_np == None):
+         chgres_np = 36
+    f.write(cmd[0] + " -np " + str(chgres_np) + " " + rundir +"/chgres_cube.exe\n")
+    #f.write("mv -f gfs_ctrl.nc INPUT/.\n")
+    f.write("mv -f out.atm.tile1.nc INPUT/gfs_data.tile1.nc\n")  
+    f.write("mv -f out.atm.tile2.nc INPUT/gfs_data.tile2.nc\n")  
+    f.write("mv -f out.atm.tile3.nc INPUT/gfs_data.tile3.nc\n")  
+    f.write("mv -f out.atm.tile4.nc INPUT/gfs_data.tile4.nc\n")  
+    f.write("mv -f out.atm.tile5.nc INPUT/gfs_data.tile5.nc\n")  
+    f.write("mv -f out.atm.tile6.nc INPUT/gfs_data.tile6.nc\n")  
+    #f.write("mv -f sfc_ctrl.nc INPUT/.\n")
+    f.write("mv -f out.sfc.tile1.nc INPUT/sfc_data.tile1.nc\n")
+    f.write("mv -f out.sfc.tile2.nc INPUT/sfc_data.tile2.nc\n")
+    f.write("mv -f out.sfc.tile3.nc INPUT/sfc_data.tile3.nc\n")
+    f.write("mv -f out.sfc.tile4.nc INPUT/sfc_data.tile4.nc\n")
+    f.write("mv -f out.sfc.tile5.nc INPUT/sfc_data.tile5.nc\n")
+    f.write("mv -f out.sfc.tile6.nc INPUT/sfc_data.tile6.nc\n")
+    f.close()
+    os.chmod(chgres_sh, 0755)
 
     return
 
