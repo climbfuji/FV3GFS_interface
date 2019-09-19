@@ -103,13 +103,17 @@ def prep_input(case):
         "*configure" : "",
         "INPUT/*" : "INPUT",
         "input.nml" : "",
+        "diag_table" : "",
+        "itaga.0*" : "",
+        "postxconfig-NT.txt" : "",
+        "params_grib2_tbl_new" : "",
     }
 
     # additional files for run
     ugcs_input_files = {
         os.path.join(ugcs_addon_dir, atm_grid, "grid_spec.nc") : "INPUT/grid_spec.nc",
-        os.path.join(ugcs_addon_dir, atm_grid, "diag_table.cmeps") : "diag_table",
     }    
+    #os.path.join(ugcs_addon_dir, atm_grid, "diag_table.cmeps") : "diag_table",
     
     # create symbolic links for these dirs
     input_dirs_to_link = []
@@ -551,33 +555,16 @@ def buildnml(case, caseroot, compname):
         print("Chgres executable copy: file1 %s file2 %s " %(file1, file2))
         shutil.copy2(file1, file2)
 
-    # create changes script to run
-    chgres_sh = os.path.join(rundir, "chgres_cube.sh")
-    f = open(chgres_sh, "w+")
-    f.write("#!/bin/bash\n")
-    f.write("cd " + rundir + "\n")
-    cmd = case.get_mpirun_cmd(allow_unresolved_envvars=False)
-    cmd = cmd.split()
-    chgres_np = os.environ.get("CHGRES_NPROC")
-    if (chgres_np == None):
-         chgres_np = 36
-    f.write(cmd[0] + " -np " + str(chgres_np) + " " + rundir +"/chgres_cube.exe\n")
-    f.write("mv -f gfs_ctrl.nc INPUT/.\n")
-    f.write("mv -f out.atm.tile1.nc INPUT/gfs_data.tile1.nc\n")  
-    f.write("mv -f out.atm.tile2.nc INPUT/gfs_data.tile2.nc\n")  
-    f.write("mv -f out.atm.tile3.nc INPUT/gfs_data.tile3.nc\n")  
-    f.write("mv -f out.atm.tile4.nc INPUT/gfs_data.tile4.nc\n")  
-    f.write("mv -f out.atm.tile5.nc INPUT/gfs_data.tile5.nc\n")  
-    f.write("mv -f out.atm.tile6.nc INPUT/gfs_data.tile6.nc\n")  
-    #f.write("mv -f sfc_ctrl.nc INPUT/.\n")
-    f.write("mv -f out.sfc.tile1.nc INPUT/sfc_data.tile1.nc\n")
-    f.write("mv -f out.sfc.tile2.nc INPUT/sfc_data.tile2.nc\n")
-    f.write("mv -f out.sfc.tile3.nc INPUT/sfc_data.tile3.nc\n")
-    f.write("mv -f out.sfc.tile4.nc INPUT/sfc_data.tile4.nc\n")
-    f.write("mv -f out.sfc.tile5.nc INPUT/sfc_data.tile5.nc\n")
-    f.write("mv -f out.sfc.tile6.nc INPUT/sfc_data.tile6.nc\n")
-    f.close()
-    os.chmod(chgres_sh, 0755)
+    # copy gfs.post binary to rundir
+    ncep_post_bin = os.environ.get("NCEP_POST_BIN")
+    expect((ncep_post_bin is not None), "You must set the NCEP_POST_BIN to process data.")
+
+    if os.path.isdir(rundir):
+        file1 = chgres_bin
+        file2 = os.path.join(rundir, "ncep_post")
+        logger.debug("Post-processing executable copy: file1 %s file2 %s " %(file1, file2))
+        print("Post-processing executable copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
 
     return
 
