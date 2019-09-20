@@ -44,7 +44,7 @@
   </compset>
 
   <compset>
-    <alias>GLOBAL_WORKFLOW</alias>
+    <alias>UFS_Weather</alias>
     <lname>2000_FV3GFS_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
   
