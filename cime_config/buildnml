@@ -538,10 +538,14 @@ def buildnml(case, caseroot, compname):
     _create_namelist3(case, confdir, namelist_infile, nmlgen3)
 
     # copy namelist files to rundir
+    chgres_nml = os.environ.get("CHGRES_NML")
+    expect((chgres_nml is not None), "You must set the CHGRES_NML to process data.")
+
     if os.path.isdir(rundir):
-        file1 = os.path.join(confdir, "config.nml")
+        file1 = chgres_nml
         file2 = os.path.join(rundir, "fort.41")
         logger.debug("Chgres namelist copy: file1 %s file2 %s " %(file1, file2))
+        print("Chgres namelist copy: file1 %s file2 %s " %(file1, file2))
         shutil.copy2(file1, file2)
 
     # copy chgres binary to rundir
