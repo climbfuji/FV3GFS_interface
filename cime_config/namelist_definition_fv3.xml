@@ -2938,6 +2938,17 @@
     </values>
   </entry>
 
+  <entry id="output_1st_tstep_rst">
+    <type>logical</type>
+    <category>esmf_config</category>
+    <group>_no_group_var</group>
+    <desc>
+    </desc>
+    <values>
+      <value>.false.</value>
+    </values>
+  </entry>
+
   <entry id="quilting">
     <type>logical</type>
     <category>esmf_config</category>
