@@ -46,57 +46,94 @@ def buildlib(caseroot, libroot, bldroot):
         # create Filepath file for fv3gfs
         #-------------------------------------------------------
         sharedlibroot = case.get_value("SHAREDLIBROOT")
+        fv3_ccpp = case.get_value("FV3GFS_CCPP")
+        fv3_physp = case.get_value("FV3GFS_PHYSP")
+        fv3_ipost = case.get_value("FV3GFS_INLINE_POST")
 
         incroot = " -I " + os.path.join(srcroot,"libraries","FMS","src","include") + \
                   " -I " + os.path.join(srcroot,"libraries","FMS","src","mpp","include") + \
+                  " -I " + os.path.join(bldroot,"FMS") + \
                   " -I " + fmsbuilddir
+
         filepath_file = os.path.join(bldroot,"Filepath")
         if not os.path.isfile(filepath_file):
             driver = case.get_value("COMP_INTERFACE")+"_driver"
             paths = [os.path.join(caseroot,"SourceMods","src.fv3gfs"),
                      os.path.join(srcroot,"components","fv3","cime_config","cpl"),
+                     os.path.join(srcroot,"components","fv3","stochastic_physics"),
                      os.path.join(srcroot,"components","fv3","FV3GFS"),
-                     os.path.join(srcroot,"components","fv3","nemsio", "src"),
-                     os.path.join(srcroot,"components","fv3","sp", "src"),
-                     os.path.join(srcroot,"components","fv3","bacio", "src"),
-                     os.path.join(srcroot,"components","fv3","w3nco", "src"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","cpl"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","io"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "physics"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS", "gfsphysics", "GFS_layer"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","stochastic_physics"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver","fvGFS"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "tools"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "model"),
                      os.path.join(srcroot,"components","fv3","FV3GFS","ipd")]
 
+            if fv3_physp == "gfs":
+                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","physics"))
+                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","GFS_layer"))
+                if fv3_ccpp:
+                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","CCPP_layer"))
+                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","CCPP_layer")) 
+            else:
+                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","namphysics","physics"))
+                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","namphysics","NAM_layer")) 
 
             with open(filepath_file, "w") as filepath:
                 filepath.write("\n".join(paths))
                 filepath.write("\n")
+
+            for i in paths:
+                logger.info("\t %s" % (i))
+
         libfms = os.path.join(bldroot,"FMS","libfms.a")
         if os.path.exists(libfms):
             shutil.copy(libfms, libroot)
 
+        # change physics directory based on selected physics package
         os.chdir(bldroot)
-        physdir = os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","physics")
+        physdir = os.path.join(srcroot,"components","fv3","FV3GFS",fv3_physp+"physics","physics")
+
         # cime build system does not like this filename
         if os.path.isfile(os.path.join(physdir,"dcyc2.pre.rad.f")):
             os.rename(os.path.join(physdir,"dcyc2.pre.rad.f"),os.path.join(physdir,"dcyc2_pre_rad.f"))
 
-        # the NEMS build system conditionally compiles this file, which we do not need for FV3
-        if os.path.isfile(os.path.join(srcroot, "components","fv3","FV3GFS","ipd", "IPD_CCPP_driver.F90")):
-            os.rename(os.path.join(srcroot, "components","fv3","FV3GFS","ipd", "IPD_CCPP_driver.F90"),
-                      os.path.join(srcroot, "components","fv3","FV3GFS","ipd", "IPD_CCPP_driver.F90.unused"))
+        # use external NCEP library installation
+        ncep_libs = os.environ.get("NCEP_LIBS")
+        incroot += " -I "+ncep_libs+"/include" + \
+                   " -I "+ncep_libs+"/../NCEPLIBS-post/src/NCEPLIBS-post-build/include"
 
-        # build the library
-        os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DGFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNEMS_GSM -Duse_WRTCOMP -DFV3_CPLD "
+        # create list of files that will be removed from Srcfiles
+        if fv3_ipost:
+            remove_files = ["post_gfs_stub.F90"] 
+        else:
+            remove_files = ["post_gfs.F90"]     
+
+        # sets CPP definitions based on selected configuration
+        if fv3_physp == "nam":
+            os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -Duse_WRTCOMP -DNAM_phys -DSTATIC"
+        else:
+            os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -Duse_WRTCOMP -DSTATIC -DNEMS_GSM"
 
         makefile = os.path.join(casetools, "Makefile")
         complib = os.path.join(libroot,"libatm.a")
         cmd = "{} complib -j {} MODEL=fv3gfs COMPLIB={} -f {} USER_INCLDIR=\"{}\" {}" .format(gmake, gmake_j, complib, makefile, incroot, gmake_args)
 
+        # remove files from Srcfiles, listed in remove_files, rc is not checked here on purpose beacuse it exits
+        rc, out, err = run_cmd(cmd+" Srcfiles")
+        logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
+
+        objroot = case.get_value("OBJROOT")
+        with open(os.path.join(objroot,"atm","obj","Srcfiles"), "r+") as f:
+            d = f.readlines()
+            f.seek(0)
+            for i in d:
+                if i.rstrip() not in remove_files:
+                    f.write(i)
+                f.truncate()        
+
+        # build the library 
         rc, out, err = run_cmd(cmd)
         logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
         expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
@@ -106,7 +143,6 @@ def buildlib(caseroot, libroot, bldroot):
                     break
             else:  #not found, we are at eof
                 Macros.write("USE_FMS:=TRUE")
-
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
