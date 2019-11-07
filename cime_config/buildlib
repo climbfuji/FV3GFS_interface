@@ -74,7 +74,9 @@ def buildlib(caseroot, libroot, bldroot):
                 paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","physics"))
                 paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","GFS_layer"))
                 if fv3_ccpp:
-                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","CCPP_layer"))
+                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","driver"))
+                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","framework","src"))
+                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","physics","physics"))
                     paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","CCPP_layer")) 
             else:
                 paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","namphysics","physics"))
