@@ -15,136 +15,65 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect
+from CIME.utils import run_cmd, expect, safe_copy
 from CIME.build import get_standard_makefile_args
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-def buildlib(caseroot, libroot, bldroot):
+def buildlib(caseroot, libroot, bldroot, clean = False):
 ###############################################################################
 
     with Case(caseroot) as case:
-        # first check for the external FMS library and build it
+        # retrieve variables
         srcroot = case.get_value("SRCROOT")
-        fmsbuildlib = os.path.join(srcroot,"libraries","FMS","buildlib")
-        fmsbuilddir = os.path.join(bldroot,"FMS")
-        if not os.path.exists(fmsbuildlib):
-            #todo: call checkout_externals to get this component
-            expect(False, "FMS external not found")
-        else:
-            stat, _, err = run_cmd("{} {} {} {}".format(fmsbuildlib, bldroot, fmsbuilddir, caseroot), verbose=True)
-            expect(stat==0, "FMS build Failed {}".format(err))
+        compiler = case.get_value("COMPILER")
+        debug = case.get_value("DEBUG") #__DEBUG__ Y/N
+        openmp = case.get_value("BUILD_THREADED") #__OPENMP__ Y/N
+        ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
+        ccpp_suits = case.get_value("FFLAGS")
 
-        casetools = case.get_value("CASETOOLS")
-        gmake_j = case.get_value("GMAKE_J")
-        gmake = case.get_value("GMAKE")
-        gmake_args = get_standard_makefile_args(case)
-        mach = case.get_value("MACH")
+        # create configure file under src/model/conf       
+        conf_dir = os.path.join(srcroot,"src","model","conf") 
+        opt_dict = {
+            "__MACROS_MAKE_CIME__" : os.path.join(caseroot,"Macros.make"),
+            "__DEBUG__"            : "Y" if debug else "N",
+            "__OPENMP__"           : "Y" if openmp else "N",
+            "__CCPP__"             : "Y" if ccpp else "N"
+        }
+        finp = open(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure.fv3"))
+        platform = "linux.{}".format(compiler)
+        cstr = "configure.fv3.{}".format(platform)
+        if os.path.exists(os.path.join(conf_dir,cstr)):
+            os.remove(os.path.join(conf_dir,cstr))
+        with open(os.path.join(conf_dir,cstr), 'w') as fout:
+            for s in finp.xreadlines():
+                found = False
+                for key in opt_dict:
+                    if key in s:
+                        fout.write(s.replace(key, opt_dict.get(key)))
+                        found = True
+                if not found:
+                    fout.write(s)
 
-        #-------------------------------------------------------
-        # create Filepath file for fv3gfs
-        #-------------------------------------------------------
-        sharedlibroot = case.get_value("SHAREDLIBROOT")
-        fv3_ccpp = case.get_value("FV3GFS_CCPP")
-        fv3_physp = case.get_value("FV3GFS_PHYSP")
-        fv3_ipost = case.get_value("FV3GFS_INLINE_POST")
+        # create module file under src/model/modulefiles/cime
+        module_dir = os.path.join(srcroot,"src","model","modulefiles",platform) 
+        if not os.path.exists(module_dir): 
+            os.makedirs(module_dir)
+        if os.path.exists(os.path.join(module_dir,"fv3")):
+            os.remove(os.path.join(module_dir,"fv3"))
+        os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(module_dir,"fv3"))
 
-        incroot = " -I " + os.path.join(srcroot,"libraries","FMS","src","include") + \
-                  " -I " + os.path.join(srcroot,"libraries","FMS","src","mpp","include") + \
-                  " -I " + os.path.join(bldroot,"FMS") + \
-                  " -I " + fmsbuilddir
+        # TODO: this needs to be configurable and available suits are in ufs-mrweather-app/src/model/FV3/ccpp/suites/
+        suites = "FV3_GFS_v15,FV3_CPT_v0"
 
-        filepath_file = os.path.join(bldroot,"Filepath")
-        if not os.path.isfile(filepath_file):
-            driver = case.get_value("COMP_INTERFACE")+"_driver"
-            paths = [os.path.join(caseroot,"SourceMods","src.fv3gfs"),
-                     os.path.join(srcroot,"components","fv3","cime_config","cpl"),
-                     os.path.join(srcroot,"components","fv3","stochastic_physics"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","cpl"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","io"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere","driver","fvGFS"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "tools"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","atmos_cubed_sphere", "model"),
-                     os.path.join(srcroot,"components","fv3","FV3GFS","ipd")]
-
-            if fv3_physp == "gfs":
-                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","physics"))
-                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","GFS_layer"))
-                if fv3_ccpp:
-                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","driver"))
-                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","framework","src"))
-                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","ccpp","physics","physics"))
-                    paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","gfsphysics","CCPP_layer")) 
-            else:
-                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","namphysics","physics"))
-                paths.append(os.path.join(srcroot,"components","fv3","FV3GFS","namphysics","NAM_layer")) 
-
-            with open(filepath_file, "w") as filepath:
-                filepath.write("\n".join(paths))
-                filepath.write("\n")
-
-            for i in paths:
-                logger.info("\t %s" % (i))
-
-        libfms = os.path.join(bldroot,"FMS","libfms.a")
-        if os.path.exists(libfms):
-            shutil.copy(libfms, libroot)
-
-        # change physics directory based on selected physics package
-        os.chdir(bldroot)
-        physdir = os.path.join(srcroot,"components","fv3","FV3GFS",fv3_physp+"physics","physics")
-
-        # cime build system does not like this filename
-        if os.path.isfile(os.path.join(physdir,"dcyc2.pre.rad.f")):
-            os.rename(os.path.join(physdir,"dcyc2.pre.rad.f"),os.path.join(physdir,"dcyc2_pre_rad.f"))
-
-        # use external NCEP library installation
-        ncep_libs = os.environ.get("NCEP_LIBS")
-        incroot += " -I "+ncep_libs+"/include" + \
-                   " -I "+ncep_libs+"/../NCEPLIBS-post/src/NCEPLIBS-post-build/include"
-
-        # create list of files that will be removed from Srcfiles
-        if fv3_ipost:
-            remove_files = ["post_gfs_stub.F90"] 
-        else:
-            remove_files = ["post_gfs.F90"]     
-
-        # sets CPP definitions based on selected configuration
-        if fv3_physp == "nam":
-            os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -Duse_WRTCOMP -DNAM_phys -DSTATIC"
-        else:
-            os.environ["USER_CPPDEFS"] = " -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL64 -DGFS_PHYS -DMOIST_CAPPA -DUSE_COND -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -Duse_WRTCOMP -DSTATIC -DNEMS_GSM"
-
-        makefile = os.path.join(casetools, "Makefile")
-        complib = os.path.join(libroot,"libatm.a")
-        cmd = "{} complib -j {} MODEL=fv3gfs COMPLIB={} -f {} USER_INCLDIR=\"{}\" {}" .format(gmake, gmake_j, complib, makefile, incroot, gmake_args)
-
-        # remove files from Srcfiles, listed in remove_files, rc is not checked here on purpose beacuse it exits
-        rc, out, err = run_cmd(cmd+" Srcfiles")
-        logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
-
-        objroot = case.get_value("OBJROOT")
-        with open(os.path.join(objroot,"atm","obj","Srcfiles"), "r+") as f:
-            d = f.readlines()
-            f.seek(0)
-            for i in d:
-                if i.rstrip() not in remove_files:
-                    f.write(i)
-                f.truncate()        
-
-        # build the library 
+        # build model
+        os.chdir(os.path.join(srcroot,"src","model","tests"))
+        #cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release NO NO".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",suites)
+        cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",suites)
         rc, out, err = run_cmd(cmd)
         logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
         expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
-        with open(os.path.join(caseroot,"Macros.make"), "r+") as Macros:
-            for line in Macros:
-                if "USE_FMS" in line:
-                    break
-            else:  #not found, we are at eof
-                Macros.write("USE_FMS:=TRUE")
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
