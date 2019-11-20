@@ -12,6 +12,20 @@ ifdef InNemsMakefile
 include $(TOP)/conf/configure.nems.NUOPC
 endif
 
+# default is 64-bit OpenMP non-hydrostatic build using AVX2
+DEBUG = __DEBUG__
+REPRO = N
+VERBOSE = Y
+OPENMP = __OPENMP__
+AVX2 = Y
+HYDRO = N
+CCPP = __CCPP__
+STATIC = N
+SION = N
+
+ifeq ($(OPENMP),Y)
+compile_threaded = TRUE
+endif
 -include __MACROS_MAKE_CIME__
 
 ###################### PHYS_MODE ##### CHEM_MODE ###############################
@@ -37,29 +51,15 @@ endif
 ############
 # commands #
 ############
-#SFC             =       ifort
-#SCC             =       icc
-CCOMP           =       $(SCC) #icc
-DM_FC           =       $(MPIFC) #mpif90 -f90=$(SFC)
-DM_CC           =       $(MPICC) #mpicc -cc=$(SCC) -DMPI2_SUPPORT
+CCOMP           =       $(SCC)
+DM_FC           =       $(MPIFC)
+DM_CC           =       $(MPICC)
 FC              =       $(DM_FC)
-CC              =       $(DM_CC) #-DFSEEKO64_OK 
-LD              =       $(FC) #-mkl=sequential
+CC              =       $(DM_CC)
+LD              =       $(FC)
 
 #########
 # flags #
-#########
-# default is 64-bit OpenMP non-hydrostatic build using AVX2
-DEBUG = __DEBUG__
-REPRO = N
-VERBOSE = Y
-OPENMP = __OPENMP__
-AVX2 = Y
-HYDRO = N
-CCPP = __CCPP__
-STATIC = N
-SION = N
-
 include       $(ESMFMKFILE)
 ESMF_INC    = $(ESMF_F90COMPILEPATHS)
 
@@ -87,10 +87,12 @@ endif
 FPPFLAGS := -fpp -Wp,-w $(INCLUDE)
 CFLAGS := $(INCLUDE)
 
-FFLAGS := $(INCLUDE) $(FFLAGS) #-fno-alias -auto -safe-cray-ptr -save-temps -ftz -assume byterecl -nowarn -sox -align array64byte
+FFLAGS := $(INCLUDE) $(FFLAGS)
 
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO  -DUSE_GFSL63 -DGFS_PHYS -Duse_WRTCOMP
 CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST
+
+
 
 ifeq ($(HYDRO),Y)
 CPPDEFS +=
@@ -102,92 +104,20 @@ ifeq ($(NAM_phys),Y)
 CPPDEFS += -DNAM_phys
 endif
 
-#ifeq ($(32BIT),Y)
-#CPPDEFS += -DOVERLOAD_R4 -DOVERLOAD_R8
-#FFLAGS += -i4 -real-size 32
-#else
-#ifeq ($(REPRO),Y)
-#FFLAGS += -i4 -real-size 64
-#else
-#FFLAGS += -i4 -real-size 64 -no-prec-div -no-prec-sqrt
-#endif
-#endif
-
-#ifeq ($(REPRO),Y)
-#FFLAGS += -qno-opt-dynamic-align
-#CFLAGS += -qno-opt-dynamic-align
-#else
-#ifeq ($(AVX2),Y)
-#FFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
-#CFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
-#else
-#FFLAGS += -xHOST -qno-opt-dynamic-align
-#CFLAGS += -xHOST -qno-opt-dynamic-align
-#endif
-#endif
+ifeq ($(32BIT),Y)
+CPPDEFS += -DOVERLOAD_R4 -DOVERLOAD_R8
+else
+FFLAGS += $(FC_AUTO_R8)
+endif
 
 ifeq ($(MULTI_GASES),Y)
 CPPDEFS += -DMULTI_GASES
 endif
 
-FFLAGS_OPT = $(FFLAGS) #-O2 -debug minimal -fp-model source -qoverride-limits -qopt-prefetch=3
-FFLAGS_REPRO = $(FFLAGS) #-O2 -debug minimal -fp-model consistent -qoverride-limits -g -traceback
-FFLAGS_DEBUG = $(FFLAGS) #-g -O0 -check all -check noarg_temp_created -check nopointer -warn -warn noerrors -fp-stack-check -fstack-protector-all -fpe0 -debug -traceback -ftrapuv
-
-TRANSCENDENTALS := -fast-transcendentals
-FFLAGS_OPENMP = $(FFLAGS) #-qopenmp
-FFLAGS_VERBOSE = $(FFLAGS) #-v -V -what
-
-CFLAGS += $(CFLAGS) #-D__IFC -sox -fp-model source
-
-CFLAGS_OPT = $(CFLAGS) #-O2 -debug minimal
-CFLAGS_REPRO = $(CFLAGS) #-O2 -debug minimal
-CFLAGS_OPENMP = $(CFLAGS) #-qopenmp
-CFLAGS_DEBUG = $(CFLAGS) #-O0 -g -ftrapuv -traceback
-
-# Optional Testing compile flags.  Mutually exclusive from DEBUG, REPRO, and OPT
-# *_TEST will match the production if no new option(s) is(are) to be tested.
-FFLAGS_TEST = $(FFLAGS) #-O3 -debug minimal -fp-model source -qoverride-limits
-CFLAGS_TEST = $(CFLAGS) #-O2
-
-LDFLAGS := $(LDFLAGS)
-LDFLAGS_OPENMP := $(LDFLAGS) #-qopenmp
-LDFLAGS_VERBOSE := $(LDFLAGS) #-Wl,-V,--verbose,-cref,-M
-
-# start with blank LIBS
-LIBS :=
-
-ifeq ($(REPRO),Y)
-CPPDEFS += -DREPRO
-CFLAGS += $(CFLAGS_REPRO)
-FFLAGS += $(FFLAGS_REPRO)
-FAST :=
-else ifeq ($(DEBUG),Y)
-CPPDEFS += -DDEBUG
-CFLAGS += $(CFLAGS_DEBUG)
-FFLAGS += $(FFLAGS_DEBUG)
-FAST :=
-else ifeq ($(TEST),Y)
-CFLAGS += $(CFLAGS_TEST)
-FFLAGS += $(FFLAGS_TEST)
-FAST :=
-else
-CFLAGS += $(CFLAGS_OPT)
-FFLAGS += $(FFLAGS_OPT)
-FAST := $(TRANSCENDENTALS)
-endif
+CFLAGS += $(CFLAGS)
 
 ifeq ($(OPENMP),Y)
 CPPDEFS += -DOPENMP
-CFLAGS += $(CFLAGS_OPENMP)
-FFLAGS += $(FFLAGS_OPENMP)
-LDFLAGS += $(LDFLAGS_OPENMP)
-endif
-
-ifeq ($(VERBOSE),Y)
-CFLAGS += $(CFLAGS_VERBOSE)
-FFLAGS += $(FFLAGS_VERBOSE)
-LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
 ifeq ($(CCPP),Y)
@@ -207,8 +137,6 @@ CPPDEFS += -DSION
 CFLAGS += $(SIONLIB_INC)
 FFLAGS += $(SIONLIB_INC)
 endif
-
-LDFLAGS += $(LIBS)
 
 ifdef InNemsMakefile
 FFLAGS += $(ESMF_INC)
