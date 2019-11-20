@@ -19,7 +19,7 @@ sys.path.append(os.path.join(CIMEROOT, "scripts", "Tools"))
 from standard_script_setup import *
 from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
-from CIME.utils import expect
+from CIME.utils import expect, get_model
 from CIME.buildnml import create_namelist_infile, parse_input
 from CIME.utils import run_cmd
 
@@ -47,6 +47,7 @@ def prep_input(case):
     rundir          = case.get_value("RUNDIR")
     atm_grid        = case.get_value("ATM_GRID")
     testcase        = case.get_value("TEST")
+    model           = get_model()
 
 # This section below is how input files 
 # are copied in NEMS and is just for reference
@@ -96,6 +97,7 @@ def prep_input(case):
         "aerosol.dat" : "",
         "co2historicaldata_201*.txt" : "",
         "global_o3prdlos.f77" : "",
+        "global_h2oprdlos.f77" : "",
         "sfc_emissivity_idx.txt" : "",
         "solarconstant_noaa_an.txt" : "",
         "*grb" : "",
@@ -121,6 +123,8 @@ def prep_input(case):
     # resolution dependent parameters (need to manage fixed files)
     if (atm_grid == 'C96'):
         res_str = "t126.384.190"
+        if (model == "ufs"):
+           res_str = "t1534.3072.1536"
     elif (atm_grid == 'C384'):  
         res_str = "t766.1536.768"
     else:
@@ -139,14 +143,19 @@ def prep_input(case):
         os.path.join(ugcs_fixed_file_dir, "global_vegfrac.0.144.decpercent.grb") : "global_vegfrac.0.144.decpercent.grb",
         os.path.join(ugcs_fixed_file_dir, "global_vegtype.igbp." + res_str + ".rg.grb") : "global_vegtype.igbp." + res_str + ".rg.grb",
         os.path.join(ugcs_fixed_file_dir, "global_soiltype.statsgo." + res_str + ".rg.grb") : "global_soiltype.statsgo." + res_str + ".rg.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_soilmgldas." + res_str + ".grb") : "global_soilmgldas." + res_str + ".grb",
         os.path.join(ugcs_fixed_file_dir, "seaice_newland.grb") : "seaice_newland.grb",
         os.path.join(ugcs_fixed_file_dir, "global_shdmin.0.144x0.144.grb") : "global_shdmin.0.144x0.144.grb",
         os.path.join(ugcs_fixed_file_dir, "global_shdmax.0.144x0.144.grb") : "global_shdmax.0.144x0.144.grb",
         os.path.join(ugcs_fixed_file_dir, "global_slope.1x1.grb") : "global_slope.1x1.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_zorclim.1x1.grb") : "global_zorclim.1x1.grb",
+        os.path.join(ugcs_fixed_file_dir, "global_slmask." + res_str + ".grb") : "global_slmask." + res_str + ".grb",
         os.path.join(ugcs_fixed_file_dir, "global_mxsnoalb.uariz." + res_str + ".rg.grb") : "global_mxsnoalb.uariz." + res_str + ".rg.grb"
     }
-    if (atm_grid == 'C384'):
-         input_files_to_link[os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo." + res_str + ".grb")] = "global_soilmgldas.statsgo." + res_str + ".grb"
+    
+    #if (atm_grid == 'C384'):
+    #     input_files_to_link[os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo." + res_str + ".grb")] = "global_soilmgldas.statsgo." + res_str + ".grb"
+    input_files_to_link[os.path.join(ugcs_fixed_file_dir, "global_soilmgldas.statsgo." + res_str + ".grb")] = "global_soilmgldas.statsgo." + res_str + ".grb"
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
@@ -461,41 +470,41 @@ def buildnml(case, caseroot, compname):
     prep_input(case)
 
     # determine the confdir directory
-    confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
-    if not os.path.isdir(confdir):
-        os.makedirs(confdir)
+    #confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
+    #if not os.path.isdir(confdir):
+    #    os.makedirs(confdir)
 
     #----------------------------------------------------
     # Construct the namelist generator/s
     #----------------------------------------------------
     # user definition *replaces* existing definition.
-    namelist_xml_dir = os.path.join(srcroot, "components", "fv3", "cime_config")
+    #namelist_xml_dir = os.path.join(srcroot, "components", "fv3", "cime_config")
 
     # determine directory for user modified namelist_definitions.xml and namelist_defaults.xml for
-    user_xml_dir = os.path.join(caseroot, "SourceMods", "src.fv3gfs")
-    expect (os.path.isdir(user_xml_dir),
-            "user_xml_dir %s does not exist " %user_xml_dir)
+    #user_xml_dir = os.path.join(caseroot, "SourceMods", "src.fv3gfs")
+    #expect (os.path.isdir(user_xml_dir),
+    #        "user_xml_dir %s does not exist " %user_xml_dir)
 
-    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
-    user_definition = os.path.join(user_xml_dir, "namelist_definition_fv3.xml")
-    if os.path.isfile(user_definition):
-        definition_file = [user_definition]
-    for file_ in definition_file:
-        expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
+    #definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
+    #user_definition = os.path.join(user_xml_dir, "namelist_definition_fv3.xml")
+    #if os.path.isfile(user_definition):
+    #    definition_file = [user_definition]
+    #for file_ in definition_file:
+    #    expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
 
     # create the namelist generator object for model_configure - independent of instance
-    nmlgen1 = NamelistGenerator(case, definition_file)
+    #nmlgen1 = NamelistGenerator(case, definition_file)
 
     # create the namelist generator object for input.nml - independent of instance
-    nmlgen2 = NamelistGenerator(case, definition_file)
+    #nmlgen2 = NamelistGenerator(case, definition_file)
 
     # create namelist_infile using user_nl_file as input
-    user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
-    expect(os.path.isfile(user_nl_file),
-           "Missing required user_nl_file %s " %(user_nl_file))
-    infile = os.path.join(confdir, "namelist_infile")
-    create_namelist_infile(case, user_nl_file, infile)
-    namelist_infile = [infile]
+    #user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
+    #expect(os.path.isfile(user_nl_file),
+    #       "Missing required user_nl_file %s " %(user_nl_file))
+    #infile = os.path.join(confdir, "namelist_infile")
+    #create_namelist_infile(case, user_nl_file, infile)
+    #namelist_infile = [infile]
 
     # create namelist model_configure
     #_create_namelist1(case, confdir, namelist_infile, nmlgen1)
