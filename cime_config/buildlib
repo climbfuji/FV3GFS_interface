@@ -27,11 +27,12 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
+        machine = case.get_value("MACH")
         compiler = case.get_value("COMPILER")
         debug = case.get_value("DEBUG") #__DEBUG__ Y/N
         openmp = case.get_value("BUILD_THREADED") #__OPENMP__ Y/N
         ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
-        ccpp_suits = case.get_value("FFLAGS")
+        ccpp_suites = case.get_value("CCPP_SUITES")
 
         # create configure file under src/model/conf       
         conf_dir = os.path.join(srcroot,"src","model","conf") 
@@ -39,7 +40,7 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
             "__MACROS_MAKE_CIME__" : os.path.join(caseroot,"Macros.make"),
             "__DEBUG__"            : "Y" if debug else "N",
             "__OPENMP__"           : "Y" if openmp else "N",
-            "__CCPP__"             : "Y" if ccpp else "N"
+            "__CCPP__"             : "Y" if ccpp else "N",
         }
         finp = open(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure.fv3"))
         platform = "linux.{}".format(compiler)
@@ -60,20 +61,29 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
         module_dir = os.path.join(srcroot,"src","model","modulefiles",platform) 
         if not os.path.exists(module_dir): 
             os.makedirs(module_dir)
-        if os.path.exists(os.path.join(module_dir,"fv3")):
+        if os.path.islink(os.path.join(module_dir,"fv3")):
             os.remove(os.path.join(module_dir,"fv3"))
         os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(module_dir,"fv3"))
 
-        # TODO: this needs to be configurable and available suits are in ufs-mrweather-app/src/model/FV3/ccpp/suites/
-        suites = "FV3_GFS_v15,FV3_CPT_v0"
-
         # build model
         os.chdir(os.path.join(srcroot,"src","model","tests"))
-        #cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release NO NO".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",suites)
-        cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",suites)
+        #cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release NO NO".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",ccpp_suites)
+        cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",ccpp_suites)
         rc, out, err = run_cmd(cmd)
         logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
         expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
+
+        # copy executable to bld/ directory
+        file_src = os.path.join(srcroot,"src","model","tests","fv3_release.exe")
+        file_dst = os.path.join(bldroot,"..","..","ufs.exe")
+        if os.path.exists(file_src):
+            safe_copy(file_src, file_dst)
+
+        # compile ufs_utils 
+        #ufsutil_dir = os.path.join(srcroot,"src","preproc","modulefiles")
+        #if os.path.exists(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine))):
+        #    os.remove(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
+        #os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
