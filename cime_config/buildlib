@@ -3,7 +3,7 @@
 """
 build fv3gfs library
 """
-import sys, os, time, filecmp, shutil, imp, glob
+import sys, os
 
 _CIMEROOT = os.environ.get("CIMEROOT")
 if _CIMEROOT is None:
@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, safe_copy, new_lid
+from CIME.utils import run_cmd, expect, new_lid
 from CIME.build import get_standard_makefile_args
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,9 @@ def _build_ccpp_cmake_files(ccpp_blddir, ccpp_srcmods):
     return needs_update
 
 def _install_configure_file(case, srcroot, bldroot, ccpp):
+    """
+    Create a file configure.fv3 used by the fv3 build system
+    """
     machine = case.get_value("MACH")
     compiler = case.get_value("COMPILER")
     debug = case.get_value("DEBUG")
@@ -73,7 +76,6 @@ def _install_configure_file(case, srcroot, bldroot, ccpp):
         os.makedirs(os.path.join(bldroot,"conf"))
     with open(conf_file) as finp, open(os.path.join(conf_dir,"configure.fv3"), 'w') as fout:
         for s in finp.xreadlines():
-            found = False
             if s.startswith("SHELL"):
                 fout.write(s)
                 fout.write("-include {}\n".format(os.path.join(caseroot,"Macros.make")))
@@ -97,7 +99,11 @@ def _install_configure_file(case, srcroot, bldroot, ccpp):
     return conf_dir
 
 def _create_dir_structure(srcdir,targetdir):
-    for dirpath, dirnames, filenames in os.walk(srcdir):
+    """
+    Reproduce the directory structure of srcdir in targetdir with
+    links to the files of srcdir.
+    """
+    for dirpath, _, filenames in os.walk(srcdir):
         structure = targetdir + dirpath[len(srcdir):]
         if not os.path.isdir(structure):
             os.mkdir(structure)
@@ -107,7 +113,7 @@ def _create_dir_structure(srcdir,targetdir):
 
 
 ###############################################################################
-def buildlib(caseroot, libroot, bldroot, clean = False):
+def buildlib(caseroot, libroot, bldroot):
 ###############################################################################
 
     with Case(caseroot) as case:
@@ -122,7 +128,8 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
             expect(False, "FMS external not found")
         else:
             with open(os.path.join(case.get_value("EXEROOT"),"fms.bldlog."+new_lid()),"w") as fd:
-                stat, out, _ = run_cmd("{} {} {} {}".format(fmsbuildlib, bldroot, fmsbuilddir, caseroot), combine_output=True, arg_stdout=fd)
+                stat, out, _ = run_cmd("{} {} {} {}".format(fmsbuildlib, bldroot, fmsbuilddir, caseroot),
+                                       combine_output=True, arg_stdout=fd)
                 expect(stat==0, "FMS build Failed {} {}".format(out,stat))
 
 
@@ -179,69 +186,17 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
                 cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
                 run_cmd("cmake {} {} ".format(cmake_flags,ccpp_srcroot),from_dir=ccpp_blddir,verbose=True)
             gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
-            stat, out, err = run_cmd("gmake install {}".format(gmake_args),from_dir=ccpp_blddir,verbose=True)
+            stat, out, err = run_cmd("{} install {}".format(gmake,gmake_args),from_dir=ccpp_blddir,verbose=True)
             expect(stat==0,"Build error from ccpp {}".format(err))
         print("now build the model libraries")
-
-        conf_dir = _install_configure_file(case, srcroot, fv3_bldroot, ccpp)
+        _install_configure_file(case, srcroot, fv3_bldroot, ccpp)
 
         gmake_args += "FMS_DIR={} ".format(os.path.join(libroot,"include"))
         gmake_args += " PATH_CCPP={} ".format(libroot)
-        gmake_args += " CCPP_STATIC_API={} ".format(os.path.join(ccpp_blddir,"physics","ccpp_static_api.F90"))
-        stat, out, err = run_cmd("gmake libs -k {}".format(gmake_args),
+        # this needs to be a path relative to gfssphysics
+        gmake_args += " CCPP_STATIC_API={} ".format(os.path.join("..","ccpp","physics","ccpp_static_api.F90"))
+        stat, out, err = run_cmd("{} libs -k {}".format(gmake,gmake_args),
                                  from_dir=fv3_bldroot,verbose=True)
-
-
-
-        # # create configure file under src/model/conf
-        # opt_dict = {
-        #     "__MACROS_MAKE_CIME__" : os.path.join(caseroot,"Macros.make"),
-        #     "__DEBUG__"            : "Y" if debug else "N",
-        #     "__OPENMP__"           : "Y" if openmp else "N",
-        #     "__CCPP__"             : "Y" if ccpp else "N",
-        # }
-
-        # platform = "linux.{}".format(compiler)
-        # cstr = "configure.fv3.{}".format(platform)
-        # if os.path.exists(os.path.join(conf_dir,cstr)):
-        #     os.remove(os.path.join(conf_dir,cstr))
-        # with open(os.path.join(conf_dir,cstr), 'w') as fout:
-        #     for s in finp.xreadlines():
-        #         found = False
-        #         for key in opt_dict:
-        #             if key in s:
-        #                 fout.write(s.replace(key, opt_dict.get(key)))
-        #                 found = True
-        #         if not found:
-        #             fout.write(s)
-
-        # # create module file under src/model/modulefiles/cime
-        # module_dir = os.path.join(srcroot,"src","model","modulefiles",platform)
-        # if not os.path.exists(module_dir):
-        #     os.makedirs(module_dir)
-        # if os.path.islink(os.path.join(module_dir,"fv3")):
-        #     os.remove(os.path.join(module_dir,"fv3"))
-        # os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(module_dir,"fv3"))
-
-        # # build model
-        # os.chdir(os.path.join(srcroot,"src","model","tests"))
-        # #cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release NO NO".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",ccpp_suites)
-        # cmd = "./compile.sh {} {} 'CCPP={} STATIC=Y SUITES={}' release".format(os.path.join(srcroot,"src","model","FV3"),platform,"Y" if ccpp else "N",ccpp_suites)
-        # rc, out, err = run_cmd(cmd)
-        # logger.info("%s: \n\n output:\n %s \n\n err:\n\n%s\n"%(cmd,out,err))
-        # expect(rc == 0, "Command %s failed with rc=%s" % (cmd, rc))
-
-        # # copy executable to bld/ directory
-        # file_src = os.path.join(srcroot,"src","model","tests","fv3_release.exe")
-        # file_dst = os.path.join(bldroot,"..","..","ufs.exe")
-        # if os.path.exists(file_src):
-        #     safe_copy(file_src, file_dst)
-
-        # compile ufs_utils
-        #ufsutil_dir = os.path.join(srcroot,"src","preproc","modulefiles")
-        #if os.path.exists(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine))):
-        #    os.remove(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
-        #os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
