@@ -79,12 +79,6 @@ def buildlib(caseroot, libroot, bldroot, clean = False):
         if os.path.exists(file_src):
             safe_copy(file_src, file_dst)
 
-        # compile ufs_utils 
-        #ufsutil_dir = os.path.join(srcroot,"src","preproc","modulefiles")
-        #if os.path.exists(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine))):
-        #    os.remove(os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
-        #os.symlink(os.path.join(caseroot,".env_mach_specific.sh"), os.path.join(ufsutil_dir,"chgres_cube.{}".format(machine)))
-
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
     buildlib(caseroot, libroot, bldroot)
