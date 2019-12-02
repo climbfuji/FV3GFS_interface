@@ -47,10 +47,18 @@
     <alias>UFS_Weather</alias>
     <lname>2000_FV3GFS_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
-  
+
   <compset>
     <alias>UFS_S2S</alias>
     <lname>2000_FV3GFS_SLND_CICE_MOM6_SROF_SGLC_SWAV</lname>
   </compset>
-
+  <entries>
+    <entry id="COMP_CLASSES">
+      <values>
+	<value compset="FV3GFS_SLND_SICE_SOCN_SROF_SGLC_SWAV">ATM</value>
+	<value compset="FV3GFS_SLND_CICE_MOM6_SROF_SGLC_SWAV">CPL,ATM,OCN,ICE</value>
+	<value compset="FV3GFS_SLND_CICE%PRES_DOCN%DOM_SROF_SGLC_SWAV">CPL,ATM,OCN,ICE</value>
+      </values>
+    </entry>
+  </entries>
 </compsets>
