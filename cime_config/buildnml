@@ -106,7 +106,6 @@ def prep_input(case):
         "INPUT/*" : "INPUT",
         "input.nml" : "",
         "diag_table" : "",
-        "itaga.0*" : "",
         "postxconfig-NT.txt" : "",
         "params_grib2_tbl_new" : "",
     }
@@ -223,38 +222,7 @@ def prep_input(case):
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist3(case, confdir, infile, nmlgen):
-####################################################################################
-    """Write out the namelist for this component.
-
-    Most arguments are the same as those for `NamelistGenerator`.
-    The `confdir` argument is used to specify the directory  in which output files will be placed.
-    """
-    #----------------------------------------------------
-    # Clear out old data.
-    #----------------------------------------------------
-    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
-
-    #----------------------------------------------------
-    # Create config dictionary
-    #----------------------------------------------------
-    config = {}
-
-    #----------------------------------------------------
-    # Initialize namelist defaults
-    #----------------------------------------------------
-    nmlgen.init_defaults(infile, config)
-
-    #----------------------------------------------------
-    # Write out model.configure namelist
-    #----------------------------------------------------
-    namelist_file = os.path.join(confdir, "config.nml")
-    print(namelist_file)
-    nmlgen.write_output_file(namelist_file, data_list_path, sorted_groups=False)
-
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
-####################################################################################
-def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
+def _create_namelist_input(case, confdir, infile, nmlgen1, nmlgen2):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -346,28 +314,36 @@ def _create_namelist2(case, confdir, infile, nmlgen1, nmlgen2):
     #----------------------------------------------------
     # Write out namelist groups
     #----------------------------------------------------
-    groups=['amip_interp_nml',
-            'atmos_model_nml',
-            'diag_manager_nml',
-            'fms_io_nml',
-            'fms_nml',
-            'fv_core_nml',
-            'external_ic_nml',
-            'gfs_physics_nml',
-            'gfdl_cloud_microphysics_nml',
-            'interpolator_nml',
-            'namsfc',
-            'fv_grid_nml',
-            'nam_stochy',
-            'nam_sfcperts',
-            'MOM_input_nml']
+
+    # path for namelist files 
+    srcroot = case.get_value("SRCROOT")
+    namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
+
+    # create list of groups by querying xml file
+    groups = []
+    with open(os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml"), 'r') as fin:
+        for s in fin.xreadlines():
+            if "<group>" in s:
+                groups.append(s.replace('<group>', '').replace('</group>', '').strip())
+
+    # remove duplicates
+    groups = list(set(groups))
+
+    # keep only fv3gfs related ones
+    groups.remove('config') # chgres
+    groups.remove('_no_group_var') # model_configure
+    groups.remove('freeform') # ncep_post
+    groups.remove('nampgb') # ncep_post
+
+    # sort group
+    groups.sort()
 
     namelist_file = os.path.join(confdir, "atm_in")
     nmlgen2.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist1(case, confdir, infile, nmlgen):
+def _create_namelist_model_configure(case, confdir, infile, nmlgen):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -456,6 +432,101 @@ def _create_namelist1(case, confdir, infile, nmlgen):
     model_config_file = os.path.join(confdir, "model_configure")
     nmlgen.write_nuopc_config_file(model_config_file, data_list_path)
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+####################################################################################
+def _create_namelist_chgres(case, confdir, infile, nmlgen):
+####################################################################################
+    """Write out the namelist for this component.
+
+    Most arguments are the same as those for `NamelistGenerator`.
+    The `confdir` argument is used to specify the directory  in which output files will be placed.
+    """
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
+
+    #----------------------------------------------------
+    # Create config dictionary
+    #----------------------------------------------------
+    config = {}
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
+    nmlgen.init_defaults(infile, config)
+
+    #----------------------------------------------------
+    # Write out namelist groups
+    #----------------------------------------------------
+    groups=['config']
+
+    namelist_file = os.path.join(confdir, "config.nml")
+    nmlgen.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
+
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+####################################################################################
+def _create_namelist_ncep_post(case, confdir, infile, nmlgen):
+####################################################################################
+    """Write out the namelist for this component.
+
+    Most arguments are the same as those for `NamelistGenerator`.
+    The `confdir` argument is used to specify the directory  in which output files will be placed.
+    """
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3gfs.input_data_list")
+
+    #----------------------------------------------------
+    # Create config dictionary
+    #----------------------------------------------------
+    config = {}
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
+    nmlgen.init_defaults(infile, config)
+
+    #----------------------------------------------------
+    # Write out namelist groups
+    #----------------------------------------------------
+    groups=['nampgb']
+
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yy = int(run_start_date[0])
+    mm = int(run_start_date[1])
+    dd = int(run_start_date[2])
+
+    run_start_tod = case.get_value('START_TOD')
+
+    cycle_lst = [12, 24, 36]
+    for i in cycle_lst:
+        namelist_file = os.path.join(confdir, "itaga.%03d" % (i))
+        nmlgen.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
+
+        dd_mod = dd
+        irest = i
+        if i/24 > 0:
+            dd_mod = dd+i/24
+            irest = i%24
+
+        run_start_tod_new = run_start_tod+irest*3600 
+        hh = int(run_start_tod_new//3600)
+        mi = int((run_start_tod_new-hh*3600)//60)
+        ss = int(run_start_tod_new-hh*3600-mi*60)
+
+        with open(namelist_file, 'r+') as f:
+            content = f.read()
+            f.seek(0,0)
+            f.write(nmlgen.get_value('filename')+"\n")
+            f.write(nmlgen.get_value('ioform')+"\n")
+            f.write(nmlgen.get_value('outform')+"\n")
+            f.write("%04d-%02d-%02d_%02d:%02d:%02d\n"%(yy, mm, dd_mod, hh, mi, ss))
+            f.write(nmlgen.get_value('modelname')+"\n")
+            f.write(nmlgen.get_value('filenameflux')+"\n")
+            f.write(content)
+
 ###############################################################################
 def buildnml(case, caseroot, compname):
 ###############################################################################
@@ -470,112 +541,104 @@ def buildnml(case, caseroot, compname):
     prep_input(case)
 
     # determine the confdir directory
-    #confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
-    #if not os.path.isdir(confdir):
-    #    os.makedirs(confdir)
+    confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
+    if not os.path.isdir(confdir):
+        os.makedirs(confdir)
+
+    # path for namelist files 
+    namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
     #----------------------------------------------------
-    # Construct the namelist generator/s
+    # Namelist generator for chgres
     #----------------------------------------------------
-    # user definition *replaces* existing definition.
-    #namelist_xml_dir = os.path.join(srcroot, "components", "fv3", "cime_config")
 
-    # determine directory for user modified namelist_definitions.xml and namelist_defaults.xml for
-    #user_xml_dir = os.path.join(caseroot, "SourceMods", "src.fv3gfs")
-    #expect (os.path.isdir(user_xml_dir),
-    #        "user_xml_dir %s does not exist " %user_xml_dir)
+    # set namelist definition file
+    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
 
-    #definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
-    #user_definition = os.path.join(user_xml_dir, "namelist_definition_fv3.xml")
-    #if os.path.isfile(user_definition):
-    #    definition_file = [user_definition]
-    #for file_ in definition_file:
-    #    expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
-
-    # create the namelist generator object for model_configure - independent of instance
-    #nmlgen1 = NamelistGenerator(case, definition_file)
-
-    # create the namelist generator object for input.nml - independent of instance
-    #nmlgen2 = NamelistGenerator(case, definition_file)
+    # create the namelist generator object
+    nmlgen_chgres = NamelistGenerator(case, definition_file)
 
     # create namelist_infile using user_nl_file as input
-    #user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
-    #expect(os.path.isfile(user_nl_file),
-    #       "Missing required user_nl_file %s " %(user_nl_file))
-    #infile = os.path.join(confdir, "namelist_infile")
-    #create_namelist_infile(case, user_nl_file, infile)
-    #namelist_infile = [infile]
+    user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
+    expect(os.path.isfile(user_nl_file),
+           "Missing required user_nl_file %s " %(user_nl_file))
+    infile = os.path.join(confdir, "namelist_infile")
+    create_namelist_infile(case, user_nl_file, infile)
+    namelist_infile = [infile]
+
+    # create namelist config.nml 
+    _create_namelist_chgres(case, confdir, namelist_infile, nmlgen_chgres)
+
+    # copy namelist to rundir
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "config.nml")
+        file2 = os.path.join(rundir, "config.nml")
+        logger.debug("CHGRES configuration copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    #----------------------------------------------------
+    # Namelist generator for fv3 (model_configure)
+    #----------------------------------------------------
+
+    # create the namelist generator object
+    nmlgen_model_configure = NamelistGenerator(case, definition_file)
 
     # create namelist model_configure
-    #_create_namelist1(case, confdir, namelist_infile, nmlgen1)
+    _create_namelist_model_configure(case, confdir, namelist_infile, nmlgen_model_configure)
 
     # copy namelist files to rundir
-    #if os.path.isdir(rundir):
-    #    file1 = os.path.join(confdir, "model_configure")
-    #    file2 = os.path.join(rundir, "model_configure")
-    #    logger.debug("FV3 model configuration copy: file1 %s file2 %s " %(file1, file2))
-    #    shutil.copy2(file1, file2)
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "model_configure")
+        file2 = os.path.join(rundir, "model_configure")
+        logger.debug("FV3GFS configuration copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
+
+    #----------------------------------------------------
+    # Namelist generator for fv3 (input.nml)
+    #----------------------------------------------------
+
+    # create the namelist generator object
+    nmlgen_input = NamelistGenerator(case, definition_file)
 
     # create namelist input.nml
-    #_create_namelist2(case, confdir, namelist_infile, nmlgen1, nmlgen2)
+    _create_namelist_input(case, confdir, namelist_infile, nmlgen_model_configure, nmlgen_input)
 
     # copy namelist files to rundir
-    #if os.path.isdir(rundir):
-    #    file1 = os.path.join(confdir, "atm_in")
-    #    file2 = os.path.join(rundir, "atm_in")
-    #    logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
-    #    shutil.copy2(file1, file2)
+    if os.path.isdir(rundir):
+        file1 = os.path.join(confdir, "atm_in")
+        file2 = os.path.join(rundir, "atm_in")
+        logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
+        shutil.copy2(file1, file2)
 
     # link file
-    #logger.info("\tLinking input namelist for FV3GFS")
-    #if not os.path.exists(rundir):
-    #    expect(False, "Couldn't find run direcory " + rundir)
-    #run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
+    logger.info("\tLinking input namelist for FV3GFS")
+    if not os.path.exists(rundir):
+        expect(False, "Couldn't find run direcory " + rundir)
+    run_cmd("ln -sf " + file2 + " " + os.path.join(rundir, "input.nml"))
 
-    # create the namelist generator object for chgres 
-    #definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_chgres.xml")]
-    #user_definition = os.path.join(user_xml_dir, "namelist_definition_chgres.xml")
-    #if os.path.isfile(user_definition):
-    #    definition_file = [user_definition]
-    #for file_ in definition_file:
-    #    expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
-    #nmlgen3 = NamelistGenerator(case, definition_file)
+    #----------------------------------------------------
+    # Namelist generator for ncep_post
+    #----------------------------------------------------
 
-    # create namelist for chgres
-    #_create_namelist3(case, confdir, namelist_infile, nmlgen3)
+    # create the namelist generator object
+    nmlgen_ncep_post = NamelistGenerator(case, definition_file)
 
-    # copy namelist files to rundir
-    #chgres_nml = os.environ.get("CHGRES_NML")
-    #expect((chgres_nml is not None), "You must set the CHGRES_NML to process data.")
+    # remove old configuration files
+    for f in os.listdir(confdir):
+        if "itaga" in f:
+            os.remove(os.path.join(confdir,f))
 
-    #if os.path.isdir(rundir):
-    #    file1 = chgres_nml
-    #    file2 = os.path.join(rundir, "fort.41")
-    #    logger.debug("Chgres namelist copy: file1 %s file2 %s " %(file1, file2))
-    #    print("Chgres namelist copy: file1 %s file2 %s " %(file1, file2))
-    #    shutil.copy2(file1, file2)
+    # create namelist model_configure
+    _create_namelist_ncep_post(case, confdir, namelist_infile, nmlgen_ncep_post)
 
-    # copy chgres binary to rundir
-    #chgres_bin = os.environ.get("CHGRES_BIN")
-    #expect((chgres_bin is not None), "You must set the CHGRES_BIN to process data.")
-
-    #if os.path.isdir(rundir):
-    #    file1 = chgres_bin
-    #    file2 = os.path.join(rundir, "chgres_cube.exe")
-    #    logger.debug("Chgres executable copy: file1 %s file2 %s " %(file1, file2))
-    #    print("Chgres executable copy: file1 %s file2 %s " %(file1, file2))
-    #    shutil.copy2(file1, file2)
-
-    # copy gfs.post binary to rundir
-    #ncep_post_bin = os.environ.get("NCEP_POST_BIN")
-    #expect((ncep_post_bin is not None), "You must set the NCEP_POST_BIN to process data.")
-
-    #if os.path.isdir(rundir):
-    #    file1 = chgres_bin
-    #    file2 = os.path.join(rundir, "ncep_post")
-    #    logger.debug("Post-processing executable copy: file1 %s file2 %s " %(file1, file2))
-    #    print("Post-processing executable copy: file1 %s file2 %s " %(file1, file2))
-    #    shutil.copy2(file1, file2)
+    # copy namelist to rundir
+    if os.path.isdir(rundir):
+        for f in os.listdir(confdir):
+            if "itaga" in f:
+                file1 = os.path.join(confdir, f)
+                file2 = os.path.join(rundir, f)
+                logger.debug("NCEP_POST configuration copy: file1 %s file2 %s " %(file1, file2))
+                shutil.copy2(file1, file2)
 
     return
 
