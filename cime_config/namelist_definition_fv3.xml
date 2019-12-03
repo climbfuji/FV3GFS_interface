@@ -3115,4 +3115,535 @@
       <value>.false.</value>
     </values>
   </entry>
+
+  <!-- =========================== -->
+  <!-- chgres -->
+  <!-- =========================== -->
+
+  <entry id="mosaic_file_target_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Target grid mosaic file
+    </desc>
+    <values>
+      <value>INPUT/C96_mosaic.nc</value>
+    </values>
+  </entry>
+
+  <entry id="fix_dir_target_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Directory containing target grid pre-computed fixed data (ex: soil type)
+    </desc>
+    <values>
+      <value>/glade/scratch/turuncu/fv3gfs/chgres/fix_sfc</value>
+    </values>
+  </entry>
+
+  <entry id="orog_dir_target_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Directory containing the target grid orography files
+    </desc>
+    <values>
+      <value>INPUT</value>
+    </values>
+  </entry>
+
+  <entry id="orog_files_target_grid">
+    <type>char(6)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Target grid orography files.
+    </desc>
+    <values>
+      <value>oro_data.tile1.nc,oro_data.tile2.nc,oro_data.tile3.nc,oro_data.tile4.nc,oro_data.tile5.nc,oro_data.tile6.nc</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="mosaic_file_input_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Input grid mosaic file. Not used with "gaussian" or "gfs_gaussian" input type.
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+
+  <entry id="orog_dir_input_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Directory containing the input grid orography files. Not used for "gaussian" or "gfs_gaussian" input types.
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+
+  <entry id="orog_files_input_grid">
+    <type>char(6)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Input grid orography files. Not used for "gaussian" or "gfs_gaussian" input types.
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+
+  <entry id="nst_files_input_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File name of input nst data. Only used for input_type "gfs_gaussian". 
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+-->
+
+  <entry id="sfc_files_input_grid">
+    <type>char(6)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File names containing input surface data
+    </desc>
+    <values>
+      <value>gfs.t00z.sfcanl.nemsio</value>
+    </values>
+  </entry>
+
+  <entry id="atm_files_input_grid">
+    <type>char(6)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File names of input atmospheric data    
+    </desc>
+    <values>
+      <value>gfs.t00z.atmanl.nemsio</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="atm_core_files_input_grid">
+    <type>char(7)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File names of input atmospheric restart core files
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+
+  <entry id="atm_tracer_files_input_grid">
+    <type>char(6)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File names of input atmospheric restart tracer files
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+-->
+
+  <entry id="data_dir_input_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Directory containing input atm or sfc files
+    </desc>
+    <values>
+      <value>/glade/scratch/turuncu/fv3gfs/chgres/gfs.20190909</value>
+    </values>
+  </entry>
+
+  <entry id="vcoord_file_target_grid">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Vertical coordinate definition file
+    </desc>
+    <values>
+      <value>/glade/scratch/turuncu/fv3gfs/chgres/global_hyblev.l65.txt</value>
+    </values>
+  </entry>
+
+  <entry id="cycle_mon">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Cycle month
+    </desc>
+    <values>
+      <value>9</value>
+    </values>
+  </entry>
+
+  <entry id="cycle_day">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Cycle day
+    </desc>
+    <values>
+      <value>9</value>
+    </values>
+  </entry>
+
+  <entry id="cycle_hour">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Cycle hour
+    </desc>
+    <values>
+      <value>0</value>
+    </values>
+  </entry>
+
+  <entry id="convert_atm">
+    <type>logical</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Convert atmospheric data when true
+    </desc>
+    <values>
+      <value>.true.</value>
+    </values>
+  </entry>
+
+  <entry id="convert_nst">
+    <type>logical</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Convert nst data when true
+    </desc>
+    <values>
+      <value>.true.</value>
+    </values>
+  </entry>
+
+  <entry id="convert_sfc">
+    <type>logical</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Convert sfc data when true
+    </desc>
+    <values>
+      <value>.true.</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="regional">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    For regional target grids. When '1' remove boundary halo region from atmospheric/surface data and output atmospheric boundary file. When '2' output boundary file only. Default is '0' (global grids).
+    </desc>
+    <valid_values>0,1,2</valid_values>
+    <values>
+      <value>0</value>
+    </values>
+  </entry>
+-->
+
+  <entry id="input_type">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Input data type: "restart" for fv3 tiled restart files; "history" for fv3 tiled history files; "gaussian" for fv3 gaussian nemsio files; "gfs_gaussian" for spectral gfs gaussian nemsio files.
+    </desc>
+    <valid_values>restart,history,gaussian,gfs_gaussian</valid_values>
+    <values>
+      <value>gaussian</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="atm_weight_file">
+    <type>char</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    File containing pre-computed weights to horizontally interpolate atmospheric fields
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+-->
+
+  <entry id="tracers">
+    <type>char(100)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Name of each atmos tracer to be processed. These names will be used to identify the tracer records in the output files. Follows the convention in the field table.
+    </desc>
+    <values>
+      <value>sphum,liq_wat,o3mr,ice_wat,rainwat,snowwat,graupel</value>
+    </values>
+  </entry>
+
+  <entry id="tracers_input">
+    <type>char(100)</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Name of each atmos tracer record in the input file.  May be different from value in 'tracers'.
+    </desc>
+    <values>
+      <value>spfh,clwmr,o3mr,icmr,rwmr,snmr,grle</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="halo_bndy">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Number of row/cols of lateral halo, where pure lateral bndy conditions are applied (regional target grids). 
+    </desc>
+    <values>
+      <value>0</value>
+    </values>
+  </entry>
+
+  <entry id="halo_blend">
+    <type>integer</type>
+    <category>chgres</category>
+    <group>config</group>
+    <desc>
+    Number of row/cols of blending halo, where model tendencies and lateral boundary tendencies are applied. Regional target grids only.
+    </desc>
+    <values>
+      <value>0</value>
+    </values>
+  </entry>
+-->
+
+  <!-- =========================== -->
+  <!-- ncep_post -->
+  <!-- =========================== -->
+
+  <entry id="kpo">
+    <type>integer</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>50</value>
+    </values>
+  </entry>
+
+  <entry id="po">
+    <type>real(70)</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>1000.,975.,950.,925.,900.,875.,850.,825.,800.,775.,750.,725.,700.,675.,650.,625.,600.,575.,550.,525.,500.,475.,450.,425.,400.,375.,350.,325.,300.,275.,250.,225.,200.,175.,150.,125.,100.,70.,50.,40.,30.,20.,15.,10.,7.,5.,3.,2.,1.,0.4</value>
+    </values>
+  </entry>
+
+<!--
+  <entry id="kth">
+    <type>integer</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>6</value>
+    </values>
+  </entry>
+
+  <entry id="th">
+    <type>real(70)</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>310.0,320.0,350.0,450.0,550.0,650.0</value>
+    </values>
+  </entry>
+
+  <entry id="kpv">
+    <type>integer</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>8</value>
+    </values>
+  </entry>
+
+  <entry id="pv">
+    <type>real(70)</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>0.5,-0.5,1.0,-1.0,1.5,-1.5,2.0,-2.0</value>
+    </values>
+  </entry>
+
+  <entry id="filenameaer">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value></value>
+    </values>
+  </entry>
+
+  <entry id="d3d_on">
+    <type>logical</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>.false.</value>
+    </values>
+  </entry>
+
+  <entry id="gocart_on">
+    <type>logical</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>.false.</value>
+    </values>
+  </entry>
+
+  <entry id="popascal">
+    <type>logical</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>.false.</value>
+    </values>
+  </entry>
+
+  <entry id="hyb_sigp">
+    <type>logical</type>
+    <category>ncep_post</category>
+    <group>nampgb</group>
+    <desc>
+    </desc>
+    <values>
+      <value>.true.</value>
+    </values>
+  </entry>
+-->
+
+  <entry id="filename">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>freeform</group>
+    <desc>
+    Output file name
+    </desc>
+    <values>
+      <value>nemsfile</value>
+    </values>
+  </entry>
+
+  <entry id="ioform">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>freeform</group>
+    <desc>
+    Input file format
+    </desc>
+    <valid_values>netcdf,binary,binarympiio,grib,binarynemsiompiio,sigio,binarynemsio</valid_values>
+    <values>
+      <value>binarynemsiompiio</value>
+    </values>
+  </entry>
+
+  <entry id="outform">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>freeform</group>
+    <desc>
+    Output file format
+    </desc>
+    <valid_values>grib1,grib2</valid_values>
+    <values>
+      <value>grib2</value>
+    </values>
+  </entry>
+
+  <entry id="modelname">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>freeform</group>
+    <desc>
+    Model name
+    </desc>
+    <valid_values>GFS,FV3R,RAPR,RSM,NMM,NCAR</valid_values>
+    <values>
+      <value>GFS</value>
+    </values>
+  </entry>
+
+  <entry id="filenameflux">
+    <type>char</type>
+    <category>ncep_post</category>
+    <group>freeform</group>
+    <desc>
+    Flux file name
+    </desc>
+    <values>
+      <value>flxfile</value>
+    </values>
+  </entry>
+
 </entry_id>
