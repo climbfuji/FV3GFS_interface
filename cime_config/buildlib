@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, new_lid
+from CIME.utils import run_cmd, expect, new_lid, stringify_bool
 from CIME.build import get_standard_makefile_args
 
 logger = logging.getLogger(__name__)
@@ -151,7 +151,10 @@ def buildlib(caseroot, libroot, bldroot):
         ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
         gmake = case.get_value("GMAKE")
         gmake_j = case.get_value("GMAKE_J")
-        cmake_flags = " -C "+os.path.join(caseroot,"Macros.cmake")
+        cmake_flags = " -DCOMPILER={} ".format(case.get_value("COMPILER"))
+        cmake_flags += " -DMPILIB={} ".format(case.get_value("MPILIB"))
+        cmake_flags += " -DDEBUG={} ".format(stringify_bool(case.get_value("DEBUG")))
+
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.fv3gfs")
             ccpp_suites = case.get_value("CCPP_SUITES")
@@ -172,7 +175,7 @@ def buildlib(caseroot, libroot, bldroot):
         cmake_flags += " -DSTATIC=ON "
 
         if case.get_value("BUILD_THREADED"):
-            cmake_flags += " -DOPENMP=ON "
+            cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
         mklroot = os.environ.get("MKLROOT")
         if mklroot:
             cmake_flags += " -DMKL_DIR={}".format(mklroot)
@@ -192,9 +195,10 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["CMAKE_C_COMPILER"]="mpicc"
         os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
         os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
-        os.environ["CMAKE_Platform"]="linux.intel"
+        os.environ["CMAKE_Platform"]="cime"
         run_cmd("cmake {} {} ".format(cmake_flags,os.path.join(srcroot,"src","model")),from_dir=bldroot,verbose=True)
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
+        gmake_args += " VERBOSE=1 "
         stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
         expect(stat==0,"Build error from fv3 {}".format(err))
 

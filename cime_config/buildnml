@@ -21,7 +21,7 @@ from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
 from CIME.utils import expect, get_model
 from CIME.buildnml import create_namelist_infile, parse_input
-from CIME.utils import run_cmd
+from CIME.utils import run_cmd, safe_copy
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def checkList(lst):
 # prepares the input files of a case and places in rundir:
 def prep_input(case):
     casename        = case.get_value("CASE")
+    caseroot        = case.get_value("CASEROOT")
     Buildconf       = case.get_value("CASEBUILD")
     rundir          = case.get_value("RUNDIR")
     atm_grid        = case.get_value("ATM_GRID")
@@ -197,6 +198,8 @@ def prep_input(case):
         run_cmd("ln -s " + input_file_name + " " + os.path.join(rundir, input_files_to_link[input_file_name]))
 
     # do replacements in diag_table
+    if os.path.exists(os.path.join(caseroot,"SourceMods","src.fv3gfs","diag_table")):
+        safe_copy(os.path.join(caseroot,"SourceMods","src.fv3gfs","diag_table"), rundir)
     if os.path.exists(os.path.join(rundir, "diag_table")):
         with open(os.path.join(rundir,"diag_table"), 'r') as diag_table_in:
             with open(os.path.join(rundir,"diag_table.tmp"), 'w') as diag_table:
