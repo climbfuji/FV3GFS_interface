@@ -141,38 +141,22 @@ def buildlib(caseroot, libroot, bldroot):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
+        srcdir = os.path.join(srcroot,"src","model")
+        # fv3_bldroot = os.path.join(bldroot,"FV3")
 
-        #First build and install FMS library
-        fmsbuildlib = os.path.join(srcroot,"src","model","FMS","cime_config","buildlib")
-        fmsbuilddir = os.path.join(bldroot,"FMS")
-        if not os.path.exists(fmsbuildlib):
-            #todo: call checkout_externals to get this component
-            expect(False, "FMS external not found")
-        else:
-            with open(os.path.join(case.get_value("EXEROOT"),"fms.bldlog."+new_lid()),"w") as fd:
-                stat, out, _ = run_cmd("{} {} {} {}".format(fmsbuildlib, bldroot, fmsbuilddir, caseroot),
-                                       combine_output=True, arg_stdout=fd)
-                expect(stat==0, "FMS build Failed {} {}".format(out,stat))
-
-
-        # fv3 does not currently support an out of source build so
-        fv3_srcdir = os.path.join(srcroot,"src","model","FV3")
-        fv3_bldroot = os.path.join(bldroot,"FV3")
-
-        _create_dir_structure(fv3_srcdir,os.path.join(bldroot,"FV3"),
-                              sourcemods=os.path.join(caseroot,"SourceMods","src.fv3gfs"))
-        _create_dir_structure(os.path.join(srcroot,"src","model","stochastic_physics"),
-                              os.path.join(bldroot,"stochastic_physics"),
-                              sourcemods=os.path.join(caseroot,"SourceMods","src.fv3gfs"))
+        _create_dir_structure(srcdir,bldroot,
+                               sourcemods=os.path.join(caseroot,"SourceMods","src.fv3gfs"))
 
         #Now build ccpp if needed
         ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
         gmake = case.get_value("GMAKE")
         gmake_j = case.get_value("GMAKE_J")
+        cmake_flags = " -C "+os.path.join(caseroot,"Macros.cmake")
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.fv3gfs")
             ccpp_suites = case.get_value("CCPP_SUITES")
-            ccpp_srcroot = os.path.join(srcroot,"src","model","FV3","ccpp")
+
+            ccpp_srcroot = os.path.join(srcdir,"FV3","ccpp")
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
@@ -180,49 +164,39 @@ def buildlib(caseroot, libroot, bldroot):
 
                 run_cmd("{} --config {} --static --suites={} --builddir {}"
                         .format(ccpp_preconfig, ccpp_config, ccpp_suites,
-                                fv3_bldroot,
-                                from_dir=os.path.join(srcroot,"src","model")))
+                                os.path.join(bldroot,"FV3"),verbose=True,
+                                from_dir=srcdir))
+            _build_ccpp_cmake_files(ccpp_blddir,os.path.join(caseroot,"SourceMods","src.fv3gfs"))
+            cmake_flags += " -DCCPP=ON -DSUITES={} ".format(ccpp_suites)
+        cmake_flags += " -DMPI=ON "
+        cmake_flags += " -DSTATIC=ON "
 
-            needs_update = _build_ccpp_cmake_files(ccpp_blddir, ccpp_srcmods)
-
-            if not os.path.exists(os.path.join(ccpp_blddir,"Makefile")) or needs_update:
-                cmake_flags = " -C "+os.path.join(caseroot,"Macros.cmake")
-                cmake_flags += " -DMPI=ON "
-                cmake_flags += " -DSTATIC=ON "
-
-                if case.get_value("BUILD_THREADED"):
-                    cmake_flags += " -DOPENMP=ON "
-                mklroot = os.environ.get("MKLROOT")
-                if mklroot:
-                    cmake_flags += " -DMKL_DIR={}".format(mklroot)
-                for name in ("NETCDF", "NETCDF_DIR", "NETCDF_PATH", "TACC_NETCDF_DIR", "NETCDFROOT"):
-                    netcdf = os.environ.get(name)
-                    if netcdf:
-                        cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
-                        break
-                if not netcdf:
-                    # one last try
-                    from distutils.spawn import find_executable
-                    netcdf = find_executable("ncdump")
-                    if netcdf:
-                        netcdf = os.path.dirname(netcdf).parent
-                        cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
-                cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
-                run_cmd("cmake {} {} ".format(cmake_flags,ccpp_srcroot),from_dir=ccpp_blddir,verbose=True)
-            gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
-            stat, out, err = run_cmd("{} install {}".format(gmake,gmake_args),from_dir=ccpp_blddir,verbose=True)
-            expect(stat==0,"Build error from ccpp {}".format(err))
-        print("now build the model libraries")
-        _install_configure_file(case, srcroot, fv3_bldroot, ccpp)
-
-        gmake_args += "FMS_DIR={} ".format(os.path.join(libroot,"include"))
-        gmake_args += " PATH_CCPP={} ".format(libroot)
-        # this needs to be a path relative to gfssphysics
-        gmake_args += " CCPP_STATIC_API={} ".format(os.path.join("..","ccpp","physics","ccpp_static_api.F90"))
-        stat, out, err = run_cmd("{} libs -k {}".format(gmake,gmake_args),
-                                 from_dir=fv3_bldroot,verbose=True)
-        stat, out, err = run_cmd("{} libfv3cap.a {}".format(gmake,gmake_args),
-                                 from_dir=fv3_bldroot,verbose=True)
+        if case.get_value("BUILD_THREADED"):
+            cmake_flags += " -DOPENMP=ON "
+        mklroot = os.environ.get("MKLROOT")
+        if mklroot:
+            cmake_flags += " -DMKL_DIR={}".format(mklroot)
+        for name in ("NETCDF", "NETCDF_DIR", "NETCDF_PATH", "TACC_NETCDF_DIR", "NETCDFROOT"):
+            netcdf = os.environ.get(name)
+            if netcdf:
+                cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
+                break
+            if not netcdf:
+                # one last try
+                from distutils.spawn import find_executable
+                netcdf = find_executable("ncdump")
+                if netcdf:
+                    netcdf = os.path.dirname(netcdf).parent
+                    cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
+#        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
+        os.environ["CMAKE_C_COMPILER"]="mpicc"
+        os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
+        os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
+        os.environ["CMAKE_Platform"]="linux.intel"
+        run_cmd("cmake {} {} ".format(cmake_flags,os.path.join(srcroot,"src","model")),from_dir=bldroot,verbose=True)
+        gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
+        stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
+        expect(stat==0,"Build error from fv3 {}".format(err))
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)

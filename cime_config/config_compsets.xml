@@ -60,5 +60,10 @@
 	<value compset="FV3GFS_SLND_CICE%PRES_DOCN%DOM_SROF_SGLC_SWAV">CPL,ATM,OCN,ICE</value>
       </values>
     </entry>
+    <entry id="CHECK_TIMING">
+      <values>
+	<value compset="FV3GFS_SLND_SICE_SOCN_SROF_SGLC_SWAV">FALSE</value>
+      </values>
+    </entry>
   </entries>
 </compsets>
