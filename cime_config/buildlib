@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, new_lid, stringify_bool
+from CIME.utils import run_cmd, expect, new_lid, stringify_bool, safe_copy
 from CIME.build import get_standard_makefile_args
 
 logger = logging.getLogger(__name__)
@@ -196,6 +196,8 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
         os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
         os.environ["CMAKE_Platform"]="cime"
+        safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
+                  os.path.join(bldroot,"cmake"))
         run_cmd("cmake {} {} ".format(cmake_flags,os.path.join(srcroot,"src","model")),from_dir=bldroot,verbose=True)
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
         gmake_args += " VERBOSE=1 "
