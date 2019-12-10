@@ -143,7 +143,7 @@ def buildlib(caseroot, libroot, bldroot):
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
         srcdir = os.path.join(srcroot,"src","model")
-        # fv3_bldroot = os.path.join(bldroot,"FV3")
+        os.environ["CASEROOT"] = caseroot
 
         structure_updated = _create_dir_structure(srcdir,bldroot,
                                sourcemods=os.path.join(caseroot,"SourceMods","src.fv3gfs"))
