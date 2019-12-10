@@ -108,6 +108,7 @@ def _create_dir_structure(srcdir,targetdir, sourcemods=None):
     a file in the source tree matchs a file in the sourcemods directory
     link the sourcemods file instead
     """
+    structure_updated = False
     for dirpath, _, filenames in os.walk(srcdir):
         structure = targetdir + dirpath[len(srcdir):]
         if not os.path.isdir(structure):
@@ -130,9 +131,9 @@ def _create_dir_structure(srcdir,targetdir, sourcemods=None):
                 os.unlink(newfullpath)
             # Create new link
             if not os.path.exists(newfullpath):
-                os.symlink(linkto,newfullpath)
-
-
+                os.symlink(linkto, newfullpath)
+                structure_updated = True
+    return structure_updated
 
 ###############################################################################
 def buildlib(caseroot, libroot, bldroot):
@@ -144,7 +145,7 @@ def buildlib(caseroot, libroot, bldroot):
         srcdir = os.path.join(srcroot,"src","model")
         # fv3_bldroot = os.path.join(bldroot,"FV3")
 
-        _create_dir_structure(srcdir,bldroot,
+        structure_updated = _create_dir_structure(srcdir,bldroot,
                                sourcemods=os.path.join(caseroot,"SourceMods","src.fv3gfs"))
 
         #Now build ccpp if needed
@@ -169,7 +170,8 @@ def buildlib(caseroot, libroot, bldroot):
                         .format(ccpp_preconfig, ccpp_config, ccpp_suites,
                                 os.path.join(bldroot,"FV3"),verbose=True,
                                 from_dir=srcdir))
-            _build_ccpp_cmake_files(ccpp_blddir,os.path.join(caseroot,"SourceMods","src.fv3gfs"))
+                _build_ccpp_cmake_files(ccpp_blddir,
+                                        os.path.join(caseroot,"SourceMods","src.fv3gfs"))
             cmake_flags += " -DCCPP=ON -DSUITES={} ".format(ccpp_suites)
         cmake_flags += " -DMPI=ON "
         cmake_flags += " -DSTATIC=ON "
@@ -197,8 +199,8 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
         os.environ["CMAKE_Platform"]="cime"
         safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
-                  os.path.join(srcroot,"src","model","cmake"))
-        run_cmd("cmake {} {} ".format(cmake_flags,os.path.join(srcroot,"src","model")),from_dir=bldroot,verbose=True)
+                  os.path.join(bldroot,"cmake"))
+        run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
         gmake_args += " VERBOSE=1 "
         stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
