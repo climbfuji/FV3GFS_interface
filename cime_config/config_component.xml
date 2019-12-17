@@ -28,10 +28,10 @@
   <entry id="CCPP_SUITES">
     <type>char</type>
     <valid_values></valid_values>
-    <default_value>FV3_GFS_v15</default_value>
+    <default_value>FV3_GFS_v15p2</default_value>
     <values match="last">
-      <value>FV3_GFS_v15</value>
-      <value>FV3_GFS_v15,FV3_GFS_v16beta</value>
+      <value>FV3_GFS_v15p2</value>
+      <value>FV3_GFS_v16beta</value>
     </values>    
     <group>case_comp</group>
     <file>env_case.xml</file>

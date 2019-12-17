@@ -669,8 +669,8 @@
   <desc></desc>
   <values>
     <value>undefined</value>
-    <value app="mrweather" ccpp="v15">FV3_GFS_v15</value>
-    <value app="mrweather" ccpp="v16">FV3_GFS_v16</value>
+    <value app="mrweather" ccpp="v15p2">FV3_GFS_v15p2</value>
+    <value app="mrweather" ccpp="v16beta">FV3_GFS_v16beta</value>
   </values>
 </entry>
 
