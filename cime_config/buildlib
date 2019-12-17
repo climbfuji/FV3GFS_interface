@@ -166,13 +166,16 @@ def buildlib(caseroot, libroot, bldroot):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
 
-                run_cmd("{} --config {} --static --suites={} --builddir {}"
+                stat, out, err = run_cmd("{} --config {} --static --suites={} --builddir {}"
                         .format(ccpp_preconfig, ccpp_config, ccpp_suites,
                                 os.path.join(bldroot,"FV3"),verbose=True,
                                 from_dir=srcdir))
+                expect(stat==0,"ccpp_preconfig error from fv3 {}".format(err))
                 _build_ccpp_cmake_files(ccpp_blddir,
                                         os.path.join(caseroot,"SourceMods","src.fv3gfs"))
+
             cmake_flags += " -DCCPP=ON -DSUITES={} ".format(ccpp_suites)
+
         cmake_flags += " -DMPI=ON "
         cmake_flags += " -DSTATIC=ON "
 
@@ -200,7 +203,8 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["CMAKE_Platform"]="cime"
         safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                   os.path.join(bldroot,"cmake"))
-        run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
+        stat, out, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
+        expect(stat==0,"CMAKE error from fv3 {}".format(err))
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
         gmake_args += " VERBOSE=1 "
         stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)

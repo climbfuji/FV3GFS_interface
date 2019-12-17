@@ -4,24 +4,23 @@
     <rest_file_extension>r</rest_file_extension>
     <rest_file_extension>rh\d*</rest_file_extension>
     <rest_file_extension>rs</rest_file_extension>
-    <hist_file_extension>atmos_4xdaily.tile[123456].nc$</hist_file_extension>
-    <hist_file_extension>i\..*\.nc$</hist_file_extension>
-    <hist_file_extension>e</hist_file_extension>
+
+    <hist_file_regex>^dynf\d\d\d.tile[1-6].nc$</hist_file_regex>
+    <hist_file_regex>^phyf\d\d\d.tile[1-6].nc$</hist_file_regex>
+    <hist_file_regex>^atmf\d\d\d.tile[1-6].nc$</hist_file_regex>
+    <hist_file_regex>^sfcf\d\d\d.tile[1-6].nc$</hist_file_regex>
+
+    <hist_file_regex>^dynf\d\d:\d\d:\d\d.nc$</hist_file_regex>
+    <hist_file_regex>^phyf\d\d:\d\d:\d\d.nc$</hist_file_regex>
+    <hist_file_regex>^atmf\d\d:\d\d:\d\d.nc$</hist_file_regex>
+    <hist_file_regex>^sfcf\d\d:\d\d:\d\d.nc$</hist_file_regex>
+
     <rest_history_varname>nhfil</rest_history_varname>
-    <rpointer>
-      <rpointer_file>rpointer.atm$NINST_STRING</rpointer_file>
-      <rpointer_content>$CASE.fv3gfs$NINST_STRING.r.$DATENAME.nc </rpointer_content>
-    </rpointer>
     <test_file_names>
-      <tfile disposition="copy">rpointer.atm</tfile>
-      <tfile disposition="copy">rpointer.atm_9999</tfile>
-<!--      <tfile disposition="copy">casename.cam.r.1976-01-01-00000.nc</tfile>
-      <tfile disposition="copy">casename.cam.rh4.1976-01-01-00000.nc</tfile> -->
-      <tfile disposition="move">casename.atmos_4xdaily.tile2.nc</tfile>
-<!--      <tfile disposition="ignore">casename.cam.h0.1976-01-01-00000.nc.base</tfile>
-      <tfile disposition="move">casename.cam_0002.e.postassim.1976-01-01-00000.nc</tfile>
-      <tfile disposition="move">casename.cam_0002.e.preassim.1976-01-01-00000.nc</tfile>
-      <tfile disposition="move">casename.cam.i.1976-01-01-00000.nc</tfile> -->
+      <tfile disposition="move">dynf024.tile2.nc</tfile>
+      <tfile disposition="move">phyf000.tile1.nc</tfile>
+      <tfile disposition="move">atmf999.tile3.nc</tfile>
+      <tfile disposition="move">sfcf024.tile4.nc</tfile>
     </test_file_names>
   </comp_archive_spec>
 </components>
