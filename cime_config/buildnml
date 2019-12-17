@@ -31,15 +31,15 @@ def factors(n):
     return set(x for tup in ([i, n//i] for i in range(1, int(n**0.5)+1) if n % i == 0) for x in tup)
 
 # check if all elements in a list are same
-def checkList(lst): 
-    ele = lst[0] 
+def checkList(lst):
+    ele = lst[0]
     chk = True
-    # Comparing each element with first item  
-    for item in lst: 
-        if ele != item: 
+    # Comparing each element with first item
+    for item in lst:
+        if ele != item:
             chk = False
-            break; 
-    return chk 
+            break;
+    return chk
 
 # prepares the input files of a case and places in rundir:
 def prep_input(case, nmlgen):
@@ -52,7 +52,7 @@ def prep_input(case, nmlgen):
     ccpp = case.get_value("BUILD_CCPP")
 
     #----------------------------------------------------
-    # Create list of input files 
+    # Create list of input files
     #----------------------------------------------------
 
     # add fixed files to the list (do not need to copy or link, input.nml point them directly)
@@ -71,8 +71,8 @@ def prep_input(case, nmlgen):
         input_grid_files["gfs_data{}".format(tile)] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","gfs_data.tile{}.nc".format(tile))
         input_grid_files["sfc_data{}".format(tile)] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","sfc_data.tile{}.nc".format(tile))
     input_grid_files["grid_mosaic"] = os.path.join(din_loc_root,"global","fix","fix_fv3",atm_grid,atm_grid+"_mosaic.nc")
-    input_grid_files["grid_spec"] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","grid_spec.nc") 
-    input_grid_files["gfs_ctrl"] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","gfs_ctrl.nc") 
+    input_grid_files["grid_spec"] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","grid_spec.nc")
+    input_grid_files["gfs_ctrl"] = os.path.join(din_loc_root,"RT","fv3_gfdlmprad","INPUT","gfs_ctrl.nc")
 
     # add case specific files to the list (need to link to run/)
     input_case_files = {}
@@ -199,13 +199,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen1, nmlgen2, nmlg
     ntiles = int(nmlgen2.get_value('ntiles'))
 
     if ((ntask_atm-ntask_write)%ntiles != 0):
-        expect(False, "(ntask_atm-write_tasks_per_group*write_groups)%%ntiles must equal to 0! (%d-%d)/%d = %d" % 
+        expect(False, "(ntask_atm-write_tasks_per_group*write_groups)%%ntiles must equal to 0! (%d-%d)/%d = %d" %
              (ntask_atm,ntask_write,ntiles,(ntask_atm-(ntask_write*n_write_groups))%ntiles))
     else:
         # get default value
         layout = nmlgen2.get_value('layout')
-        layout_x = int(layout[0])  
-        layout_y = int(layout[1])  
+        layout_x = int(layout[0])
+        layout_y = int(layout[1])
 
         # check consitency of layout, number of io task etc. and try to fix it if it is required
         if (((layout_x*layout_y)*ntiles+(ntask_write*n_write_groups)) != ntask_atm):
@@ -250,7 +250,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen1, nmlgen2, nmlg
     # Write out namelist groups
     #----------------------------------------------------
 
-    # path for namelist files 
+    # path for namelist files
     srcroot = case.get_value("SRCROOT")
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
@@ -280,7 +280,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen1, nmlgen2, nmlg
     for nml in nmlgen2._namelist.get_group_names():
         for var in nmlgen2.get_group_variables(nml):
              matched = False
-             var_type, _, var_size, =  nmlgen2._definition.split_type_string(var) 
+             var_type, _, var_size, =  nmlgen2._definition.split_type_string(var)
 
              # if it is list and size is different from var_size
              if var_size > 1:
@@ -307,7 +307,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen1, nmlgen2, nmlg
                     var_act = [-99.9 if x is None else float(eval(x.lower().replace('d','e'))) for x in var_act]
                     var_def = [-99.9 if x is None else float(eval(x.lower().replace('d','e'))) for x in var_def]
                     matched = all(x == y for x,y in zip(var_act,var_def))
-             else:        
+             else:
                  if var_type == 'character' or var_type == 'logical':
                      if nmlgen3.get_value(var) in nmlgen2.get_value(var):
                          matched = True
@@ -384,7 +384,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
         nmlgen.set_value('nhours_fcst', value=stop_n/60)
     elif 'nsteps' in stop_option:
         expect(False, "Need to implement support for 'nsteps'")
- 
+
     #----------------------------------------------------
     # Write out model.configure namelist
     #----------------------------------------------------
@@ -460,7 +460,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen):
             dd_mod = dd+i/24
             irest = i%24
 
-        run_start_tod_new = run_start_tod+irest*3600 
+        run_start_tod_new = run_start_tod+irest*3600
         hh = int(run_start_tod_new//3600)
         mi = int((run_start_tod_new-hh*3600)//60)
         ss = int(run_start_tod_new-hh*3600-mi*60)
@@ -493,7 +493,7 @@ def buildnml(case, caseroot, compname):
 
     # create config dictionary
     compset = case.get_value("COMPSET")
-    if "2000_FV3GFS_SLND_SICE_SOCN_SROF_SGLC_SWAV_SESP" in compset:
+    if "SLND_SICE_SOCN_SROF_SGLC_SWAV_SESP" in compset:
         app = "mrweather"
     else:
         app = "s2s"
@@ -503,9 +503,9 @@ def buildnml(case, caseroot, compname):
     config = {}
     config['app'] = app
     config['ccpp'] = ccpp_suite
-    config['hgrid'] = case.get_value("ATM_GRID") 
+    config['hgrid'] = case.get_value("ATM_GRID")
 
-    # path for namelist files 
+    # path for namelist files
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
     #----------------------------------------------------
@@ -526,7 +526,7 @@ def buildnml(case, caseroot, compname):
     create_namelist_infile(case, user_nl_file, infile)
     namelist_infile = [infile]
 
-    # create namelist config.nml 
+    # create namelist config.nml
     _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres)
 
     # copy namelist to rundir
