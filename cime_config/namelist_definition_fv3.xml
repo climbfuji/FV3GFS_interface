@@ -438,8 +438,6 @@
     <value app="mrweather">3000000</value>
   </values>
 </entry>
-    <!--
-    -->
 
 <entry id="iospec_ieee32">
   <type>char</type>
@@ -630,6 +628,25 @@
   <desc></desc>
   <values>
     <value>.true.</value>
+  </values>
+</entry>
+
+<!-- =========================== -->
+<!-- interpolator_nml -->
+<!-- =========================== -->
+
+<!-- there is no namelist related with it in the code-->
+<!-- FMS has but there is no interp_method variable -->
+<!-- could be a option for release/v0/sorc/fre-nctools.fd/tools/fregrid/fregrid.c -->
+<!-- fregrid.c has only conserve_order1,conserve_order2,conserve_order2_monotonic,bilinear options -->
+
+<entry id="interp_method">
+  <type>char</type>
+  <group>interpolator_nml</group>
+  <desc></desc>
+  <values>
+    <value>undefined</value>
+    <value app="mrweather">conserve_great_circle</value>
   </values>
 </entry>
 
@@ -876,7 +893,8 @@
   <desc></desc>
   <values>
     <value>55</value>
-    <value app="mrweather">27</value>
+    <value app="mrweather" ccpp="v16beta">27</value>
+    <value app="mrweather" ccpp="v15p2">25</value>
   </values>
 </entry>
 
@@ -1287,6 +1305,7 @@
   <desc></desc>
   <values>
     <value>0.02</value>
+    <value app="mrweather">0.0</value>
   </values>
 </entry>
 
@@ -2250,6 +2269,7 @@
   <desc></desc>
   <values>
     <value>INPUT/fv_rst.res.nc</value>
+    <value app="mrweather"></value>
   </values>
 </entry>
 
@@ -3818,7 +3838,7 @@
   <desc></desc>
   <values>
     <value>5.0</value>
-    <value app="mrweather">2.</value>
+    <value app="mrweather">2.0</value>
   </values>
 </entry>
 
@@ -4208,7 +4228,7 @@
   </values>
 </entry>
 
-<entry id="debug">
+<entry id="debug@gfs_physics_nml">
   <type>logical</type>
   <group>gfs_physics_nml</group>
   <desc></desc>
@@ -4331,6 +4351,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -4340,6 +4361,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -4349,6 +4371,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -4524,7 +4547,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <!--<value app="mrweather">.true.</value>-->
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -6611,8 +6634,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_snoalb.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_mxsnoalb.uariz.t126.384.190.rg.grb</value>
+    <value>global_snoalb.1x1.grb</value>
   </values>
 </entry>
 
@@ -6622,7 +6644,6 @@
   <desc></desc>
   <values>
     <value></value>
-    <value app="mrweather">"",</value>
   </values>
 </entry>
 
@@ -6649,8 +6670,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_iceclim.2x2.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/CFSR.SEAICE.1982.2012.monthly.clim.grb</value>
+    <value>global_iceclim.2x2.grb</value>
   </values>
 </entry>
 
@@ -6668,8 +6688,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_albedo4.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_snowfree_albedo.bosu.t126.384.190.rg.grb</value>
+    <value>global_albedo4.1x1.grb</value>
   </values>
 </entry>
 
@@ -6678,7 +6697,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_albedo4.1x1.grb</value>
+    <value>global_albedo4.1x1.grb</value>
   </values>
 </entry>
 
@@ -6705,7 +6724,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_glacier.2x2.grb</value>
+    <value>global_glacier.2x2.grb</value>
   </values>
 </entry>
 
@@ -6714,8 +6733,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_slmask.t126.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/seaice_newland.grb</value>
+    <value>global_slmask.t126.grb</value>
   </values>
 </entry>
 
@@ -6724,8 +6742,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_ice.2x2.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_maxice.2x2.grb</value>
+    <value>global_ice.2x2.grb</value>
   </values>
 </entry>
 
@@ -6779,7 +6796,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_slope.1x1.grb</value>
+    <value>global_slope.1x1.grb</value>
   </values>
 </entry>
 
@@ -6797,8 +6814,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_soilmcpc.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_soilmgldas.t126.384.190.grb</value>
+    <value>global_soilmcpc.1x1.grb</value>
   </values>
 </entry>
 
@@ -6808,7 +6824,6 @@
   <desc></desc>
   <values>
     <value></value>
-    <value app="mrweather">"",</value>
   </values>
 </entry>
 
@@ -6817,7 +6832,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_snoclim.1.875.grb</value>
+    <value>global_snoclim.1.875.grb</value>
   </values>
 </entry>
 
@@ -6835,8 +6850,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_soiltype.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_soiltype.statsgo.t126.384.190.rg.grb</value>
+    <value>global_soiltype.1x1.grb</value>
   </values>
 </entry>
 
@@ -6872,7 +6886,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_tg3clim.2.6x1.5.grb</value>
+    <value>global_tg3clim.2.6x1.5.grb</value>
   </values>
 </entry>
 
@@ -6891,8 +6905,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_sstclim.2x2.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/RTGSST.1982.2012.monthly.clim.grb</value>
+    <value>global_sstclim.2x2.grb</value>
   </values>
 </entry>
 
@@ -6910,8 +6923,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_vegfrac.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_vegfrac.0.144.decpercent.grb</value>
+    <value>global_vegfrac.1x1.grb</value>
   </values>
 </entry>
 
@@ -6929,8 +6941,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_vegtype.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_vegtype.igbp.t126.384.190.rg.grb</value>
+    <value>global_vegtype.1x1.grb</value>
   </values>
 </entry>
 
@@ -6948,7 +6959,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_shd.0.144x0.144.grb</value>
+    <value>global_shd.0.144x0.144.grb</value>
   </values>
 </entry>
 
@@ -6966,8 +6977,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_shd.0.144x0.144.grb</value>
-    <value app="mrweather" hgrid="C96">$DIN_LOC_ROOT/global/fix/fix_am/global_shdmax.0.144x0.144.grb</value>
+    <value>global_shd.0.144x0.144.grb</value>
   </values>
 </entry>
 
@@ -7003,8 +7013,7 @@
   <group>namsfc</group>
   <desc></desc>
   <values>
-    <value>$DIN_LOC_ROOT/global/fix/fix_am/global_zorclim.1x1.grb</value>
-    <value app="mrweather" hgrid="C96">igbp</value>
+    <value>global_zorclim.1x1.grb</value>
   </values>
 </entry>
 
@@ -7911,6 +7920,7 @@
   </desc>
   <values>
     <value>.true.</value>
+    <value app="mrweather">.false.</value>
   </values>
 </entry>
 
@@ -7934,6 +7944,17 @@
   <values>
     <value>450</value>
     <value app="mrweather" hgrid="C96">1200</value>
+  </values>
+</entry>
+
+<entry id="output_1st_tstep_rst">
+  <type>logical</type>
+  <category>esmf_config</category>
+  <group>_no_group_var</group>
+  <desc>
+  </desc>
+  <values>
+    <value>.false.</value>
   </values>
 </entry>
 
@@ -8050,6 +8071,28 @@
   </values>
 </entry>
 
+<entry id="output_history">
+  <type>logical</type>
+  <category>esmf_config</category>
+  <group>_no_group_var</group>
+  <desc>
+  </desc>
+  <values>
+    <value>.true.</value>
+  </values>
+</entry>
+
+<entry id="write_dopost">
+  <type>logical</type>
+  <category>esmf_config</category>
+  <group>_no_group_var</group>
+  <desc>
+  </desc>
+  <values>
+    <value>.false.</value>
+  </values>
+</entry>
+
 <entry id="num_files">
   <type>integer</type>
   <category>esmf_config</category>
@@ -8068,7 +8111,7 @@
   <desc>
   </desc>
   <values>
-    <value>dyn sfc</value>
+    <value>atm sfc</value>
   </values>
 </entry>
 
@@ -8094,6 +8137,28 @@
   <values>
     <value>netcdf</value>
     <value app="mrweather">nemsio</value>
+  </values>
+</entry>
+
+<entry id="ideflate">
+  <type>integer</type>
+  <category>esmf_config</category>
+  <group>_no_group_var</group>
+  <desc>
+  </desc>
+  <values>
+    <value>1</value>
+  </values>
+</entry>
+
+<entry id="nbits">
+  <type>integer</type>
+  <category>esmf_config</category>
+  <group>_no_group_var</group>
+  <desc>
+  </desc>
+  <values>
+    <value>14</value>
   </values>
 </entry>
 
@@ -8189,18 +8254,436 @@
   </values>
 </entry>
 
-<!--
-<entry id="finalize_fms">
-  <type>logical</type>
+<entry id="iau_offset">
+  <type>integer</type>
   <category>esmf_config</category>
   <group>_no_group_var</group>
   <desc>
   </desc>
   <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<!-- =========================== -->
+<!-- stochastic_physics -->
+<!-- =========================== -->
+
+<!-- =========================== -->
+<!-- nam_sfcperts -->
+<!-- =========================== -->
+
+<entry id="iseed_sfc">
+  <type>integer</type>
+  <group>nam_sfcperts</group>
+  <desc>random seeds (if 0 use system clock)</desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="nsfcpert">
+  <type>integer</type>
+  <group>nam_sfcperts</group>
+  <desc>number of weights for stochastic surface perturbation</desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="pertalb">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of surface albedo perturbation</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="pertlai">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of perturbation of leaf area index</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="pertshc">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of perturbation of soil hydraulic conductivity</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="pertvegf">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of perturbation of vegetation fraction</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="pertz0">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of perturbation of momentum roughness length</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="pertzt">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>magnitude of perturbation of heat to momentum roughness length ratio</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="sfc_lscale">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>length scales</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="sfc_tau">
+  <type>real</type>
+  <group>nam_sfcperts</group>
+  <desc>time scales</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="sppt_land">
+  <type>logical</type>
+  <group>nam_sfcperts</group>
+  <desc></desc>
+  <values>
     <value>.false.</value>
   </values>
 </entry>
+
+<!-- =========================== -->
+<!-- nam_stochy -->
+<!-- =========================== -->
+
+<entry id="fhstoch">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>forecast hour to write out random pattern in order to restart the pattern for a different forecast (used in DA), file is stoch_out.F</desc>
+  <values>
+    <value>-999.0</value>
+  </values>
+</entry>
+
+<entry id="iseed_shum">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>random seeds (if 0 use system clock)</desc>
+  <values>
+    <value>0</value>
+    <value app="mrweather">2019102712452</value>
+  </values>
+</entry>
+
+<entry id="iseed_skeb">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>seeds for setting the random number sequence (ignored if stochini is true)</desc>
+  <values>
+    <value>0</value>
+    <value app="mrweather">2019102712451</value>
+  </values>
+</entry>
+
+<entry id="iseed_sppt">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>seeds for setting the random number sequence (ignored if stochini is true)</desc>
+  <values>
+    <value>0</value>
+    <value app="mrweather">2019102712453</value>
+  </values>
+</entry>
+
+<entry id="lat_s">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>number of latitude point for the Gaussian grid</desc>
+  <values>
+    <value>-999</value>
+    <value app="mrweather">768</value>
+  </values>
+</entry>
+
+<entry id="lon_s">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>number of longitude point for the Gaussian grid</desc>
+  <values>
+    <value>-999</value>
+    <value app="mrweather">1536</value>
+  </values>
+</entry>
+
+<entry id="ntrunc">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>spectral resolution (e.g. T126) of random patterns</desc>
+  <values>
+    <value>-999</value>
+    <value app="mrweather">766</value>
+  </values>
+</entry>
+
+<entry id="shum">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>amplitude of stochastic boundary layer specific humidity perturbations</desc>
+  <values>
+    <value>-999.</value>
+    <value app="mrweather">0.005</value>
+  </values>
+</entry>
+
+<entry id="shum_lscale">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation spatial scales in meters</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">500000.0</value>
+  </values>
+</entry>
+
+<entry id="shum_sigefold">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>e-folding lengthscale (in units of sigma) of specific humidity perturbations</desc>
+  <values>
+    <value>0.2</value>
+  </values>
+</entry>
+
+<entry id="shum_tau">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation time scales in seconds</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">21600.0</value>
+  </values>
+</entry>
+
+<entry id="skeb">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>stochastic KE backscatter amplitude</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">0.3</value>
+  </values>
+</entry>
+
+<!-- no default in code: skip for now
+<entry id="skeb_diss_smooth">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc></desc>
+  <values>
+    <value>None</value>
+  </values>
+</entry>
 -->
+
+<entry id="skeb_lscale">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation spatial scales in meters</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">500000.0</value>
+  </values>
+</entry>
+
+<entry id="skeb_npass">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>number of passes of smoother for dissipation estimate</desc>
+  <values>
+    <value>11</value>
+    <value app="mrweather">30</value>
+  </values>
+</entry>
+
+<entry id="skeb_sigtop1">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>sigma levels to taper perturbations to zeros</desc>
+  <values>
+    <value>0.1</value>
+  </values>
+</entry>
+
+<entry id="skeb_sigtop2">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>sigma levels to taper perturbations to zeros</desc>
+  <values>
+    <value>0.025</value>
+  </values>
+</entry>
+
+<entry id="skeb_tau">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation timescales in seconds</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">21600.0</value>
+  </values>
+</entry>
+
+<entry id="skeb_varspect_opt">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>gaussian or power law variance spectrum for SKEB (0: gaussian, 1: power law)</desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="skeb_vdof">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>the number of degrees of freedom in the vertical for the SKEB random pattern</desc>
+  <values>
+    <value>5</value>
+  </values>
+</entry>
+
+<entry id="skeb_vfilt">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc></desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="skebint">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc></desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="skebnorm">
+  <type>integer</type>
+  <group>nam_stochy</group>
+  <desc>0: random pattern is stream function,1: pattern is kenorm, 2: pattern is vorticity</desc>
+  <values>
+    <value>0</value>
+  </values>
+</entry>
+
+<entry id="sppt">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>amplitude of random patterns</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">0.5</value>
+  </values>
+</entry>
+
+<entry id="sppt_logit">
+  <type>logical</type>
+  <group>nam_stochy</group>
+  <desc>logit transform for SPPT to bounded interval [-1,+1]</desc>
+  <values>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
+  </values>
+</entry>
+
+<entry id="sppt_lscale">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation spatial scales in meters</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">500000.0</value>
+  </values>
+</entry>
+
+<entry id="sppt_sfclimit">
+  <type>logical</type>
+  <group>nam_stochy</group>
+  <desc>reduce amplitude of SPPT near surface (lowest 2 levels)</desc>
+  <values>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
+  </values>
+</entry>
+
+<entry id="sppt_sigtop1">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>sigma levels to taper perturbations to zeros</desc>
+  <values>
+    <value>0.1</value>
+  </values>
+</entry>
+
+<entry id="sppt_sigtop2">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>sigma levels to taper perturbations to zeros</desc>
+  <values>
+    <value>0.025</value>
+  </values>
+</entry>
+
+<entry id="sppt_tau">
+  <type>real</type>
+  <group>nam_stochy</group>
+  <desc>decorrelation time scales in seconds</desc>
+  <values>
+    <value>-999.0</value>
+    <value app="mrweather">21600.0</value>
+  </values>
+</entry>
+
+<entry id="stochini">
+  <type>logical</type>
+  <group>nam_stochy</group>
+  <desc>set to true if wanting to read in a previous random pattern (input file need to be named stoch_ini)</desc>
+  <values>
+    <value>.false.</value>
+  </values>
+</entry>
+
+<entry id="use_zmtnblck">
+  <type>logical</type>
+  <group>nam_stochy</group>
+  <desc>flag for mountain blocking. .T. = do not apply perturbations below the dividing streamline that is diagnosed by the gravity wave drag, mountain blocking scheme</desc>
+  <values>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
+  </values>
+</entry>
 
 <!-- =========================== -->
 <!-- chgres -->
