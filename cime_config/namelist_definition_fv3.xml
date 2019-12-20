@@ -651,6 +651,66 @@
 </entry>
 
 <!-- =========================== -->
+<!-- mpp_io_nml -->
+<!-- =========================== -->
+
+<entry id="cf_compliance">
+  <type>logical</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>.false.</value>
+  </values>
+</entry>
+
+<entry id="deflate_level">
+  <type>integer</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>-1</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
+  </values>
+</entry>
+
+<entry id="global_field_on_root_pe">
+  <type>logical</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>.true.</value>
+  </values>
+</entry>
+
+<entry id="header_buffer_val">
+  <type>integer</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>16384</value>
+  </values>
+</entry>
+
+<entry id="io_clocks_on">
+  <type>logical</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>.false.</value>
+  </values>
+</entry>
+
+<entry id="shuffle">
+  <type>integer</type>
+  <group>mpp_io_nml</group>
+  <desc></desc>
+  <values>
+    <value>0</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
+  </values>
+</entry>
+
+<!-- =========================== -->
 <!-- FV3 -->
 <!-- =========================== -->
 
@@ -728,6 +788,7 @@
   <values>
     <value>0.0</value>
     <value app="mrweather">1.0</value>
+    <value app="mrweather" ccpp="v16beta">3.0</value>
   </values>
 </entry>
 
@@ -737,6 +798,7 @@
   <desc></desc>
   <values>
     <value>384.0</value>
+    <value app="mrweather" ccpp="v16beta">240.0</value>
   </values>
 </entry>
 
@@ -746,6 +808,7 @@
   <desc></desc>
   <values>
     <value>120.0</value>
+    <value app="mrweather" ccpp="v16beta">0.0</value>
   </values>
 </entry>
 
@@ -1264,8 +1327,9 @@
   <group>fv_core_nml</group>
   <desc></desc>
   <values>
-    <value>6.</value>
+    <value>6.0</value>
     <value app="mrweather">0.15</value>
+    <value app="mrweather" ccpp="v16beta">0.20</value>
   </values>
 </entry>
 
@@ -1274,8 +1338,9 @@
   <group>fv_core_nml</group>
   <desc></desc>
   <values>
-    <value>4.</value>
+    <value>4.0</value>
     <value app="mrweather">0.02</value>
+    <value app="mrweather" ccpp="v16beta">0.0</value>
   </values>
 </entry>
 
@@ -3489,6 +3554,7 @@
   <desc></desc>
   <values>
     <value>1</value>
+    <value app="mrweather" ccpp="v16beta">2</value>
   </values>
 </entry>
 
@@ -4104,8 +4170,9 @@
   <group>gfs_physics_nml</group>
   <desc></desc>
   <values>
-    <value>2.0d0,0.25d0,1.0d0,1.0d0</value>
+    <value>2.0,0.25,1.0,1.0</value>
     <value app="mrweather">3.5,0.25</value>
+    <value app="mrweather" ccpp="v16beta">4.0,0.15,1.0,1.0</value>
   </values>
 </entry>
 
@@ -4381,6 +4448,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather" ccpp="v16beta">.true.</value>
   </values>
 </entry>
 
@@ -4566,7 +4634,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <value app="mrweather">.true.</value>
+    <value app="mrweather" ccpp="v15p2">.true.</value>
   </values>
 </entry>
 
@@ -4577,6 +4645,7 @@
   <values>
     <value>1</value>
     <value app="mrweather">111</value>
+    <value app="mrweather" ccpp="v16beta">5111</value>
   </values>
 </entry>
 
@@ -4641,6 +4710,7 @@
   <desc></desc>
   <values>
     <value>1</value>
+    <value app="mrweather" ccpp="v16beta">2</value>
   </values>
 </entry>
 
@@ -4754,6 +4824,7 @@
   <desc></desc>
   <values>
     <value>4</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
   </values>
 </entry>
 
@@ -4781,6 +4852,7 @@
   <desc></desc>
   <values>
     <value>3</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
   </values>
 </entry>
 
@@ -4790,6 +4862,7 @@
   <desc></desc>
   <values>
     <value>3</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
   </values>
 </entry>
 
@@ -4808,6 +4881,7 @@
   <desc></desc>
   <values>
     <value>1</value>
+    <value app="mrweather" ccpp="v16beta">4</value>
   </values>
 </entry>
 
@@ -4835,6 +4909,7 @@
   <desc></desc>
   <values>
     <value>1</value>
+    <value app="mrweather" ccpp="v16beta">3</value>
   </values>
 </entry>
 
@@ -4844,6 +4919,7 @@
   <desc></desc>
   <values>
     <value>1</value>
+    <value app="mrweather" ccpp="v16beta">3</value>
   </values>
 </entry>
 
@@ -4853,6 +4929,7 @@
   <desc></desc>
   <values>
     <value>0</value>
+    <value app="mrweather" ccpp="v16beta">1</value>
   </values>
 </entry>
 
@@ -4976,6 +5053,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather" ccpp="v16beta">.true.</value>
   </values>
 </entry>
 
@@ -5614,6 +5692,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
+    <value app="mrweather" ccpp="v16beta">.true.</value>
   </values>
 </entry>
 
@@ -7014,6 +7093,7 @@
   <desc></desc>
   <values>
     <value>global_zorclim.1x1.grb</value>
+    <value app="mrweather">igbp</value>
   </values>
 </entry>
 
