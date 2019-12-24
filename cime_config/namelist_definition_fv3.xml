@@ -439,7 +439,7 @@
   </values>
 </entry>
 
-<entry id="iospec_ieee32">
+<entry id="iospec_ieee32@fms_nml">
   <type>char</type>
   <group>fms_nml</group>
   <desc></desc>
@@ -457,7 +457,7 @@
   </values>
 </entry>
 
-<entry id="read_all_pe">
+<entry id="read_all_pe@fms_nml">
   <type>logical</type>
   <group>fms_nml</group>
   <desc></desc>
@@ -543,8 +543,7 @@
   </values>
 </entry>
 
-<!--
-<entry id="iospec_ieee32">
+<entry id="iospec_ieee32@fms_io_nml">
   <type>char</type>
   <group>fms_io_nml</group>
   <desc></desc>
@@ -552,7 +551,6 @@
     <value>-N ieee_32</value>
   </values>
 </entry>
--->
 
 <entry id="max_files_r">
   <type>integer</type>
@@ -583,8 +581,7 @@
   </values>
 </entry>
 
-<!--
-<entry id="read_all_pe">
+<entry id="read_all_pe@fms_io_nml">
   <type>logical</type>
   <group>fms_io_nml</group>
   <desc></desc>
@@ -592,7 +589,6 @@
     <value>.true.</value>
   </values>
 </entry>
--->
 
 <entry id="read_data_bug">
   <type>logical</type>
@@ -635,8 +631,9 @@
 <!-- interpolator_nml -->
 <!-- =========================== -->
 
+<!-- probably it is not used -->
 <!-- there is no namelist related with it in the code-->
-<!-- FMS has but there is no interp_method variable -->
+<!-- FMS has but there is no interp_method variable in this namelist group -->
 <!-- could be a option for release/v0/sorc/fre-nctools.fd/tools/fregrid/fregrid.c -->
 <!-- fregrid.c has only conserve_order1,conserve_order2,conserve_order2_monotonic,bilinear options -->
 
@@ -718,9 +715,7 @@
 <!-- atmos_model_nml -->
 <!-- =========================== -->
 
-<!--
-
-<entry id="avg_max_length">
+<entry id="avg_max_length@atmos_model_nml">
   <type>real</type>
   <group>atmos_model_nml</group>
   <desc></desc>
@@ -728,7 +723,6 @@
     <value>3600.</value>
   </values>
 </entry>
--->
 
 <entry id="blocksize">
   <type>integer</type>
@@ -760,9 +754,7 @@
   </values>
 </entry>
 
-<!--
-
-<entry id="debug">
+<entry id="debug@atmos_model_nml">
   <type>logical</type>
   <group>atmos_model_nml</group>
   <desc></desc>
@@ -770,7 +762,6 @@
     <value>.false.</value>
   </values>
 </entry>
--->
 
 <entry id="dycore_only">
   <type>logical</type>
@@ -965,8 +956,9 @@
 <!-- coupler_nml -->
 <!-- =========================== -->
 
-<!--
+<!-- it is handled by model_configure -->
 
+<!--
 <entry id="atmos_nthreads">
   <type>integer</type>
   <group>coupler_nml</group>
@@ -1156,6 +1148,7 @@
   <type>integer</type>
   <group>external_ic_nml</group>
   <desc></desc>
+  <!-- <valid_values>65,91,98,1128</valid_values> -->
   <values>
     <value>64</value>
     <value app="mrweather">65</value>
@@ -2124,7 +2117,7 @@
   </values>
 </entry>
 
-<entry id="ntiles">
+<entry id="ntiles@fv_core_nml">
   <type>integer</type>
   <group>fv_core_nml</group>
   <desc></desc>
@@ -3958,7 +3951,7 @@
   </values>
 </entry>
 
-<entry id="avg_max_length">
+<entry id="avg_max_length@gfs_physics_nml">
   <type>real</type>
   <group>gfs_physics_nml</group>
   <desc></desc>
@@ -4704,7 +4697,7 @@
   </values>
 </entry>
 
-<entry id="icliq_sw">
+<entry id="icliq_sw@gfs_physics_nml">
   <type>integer</type>
   <group>gfs_physics_nml</group>
   <desc></desc>
@@ -5919,9 +5912,7 @@
 <!-- nam_physics_nml -->
 <!-- =========================== -->
 
-<!--
-
-<entry id="alpha">
+<entry id="alpha@nam_physics_nml">
   <type>real</type>
   <group>nam_physics_nml</group>
   <desc></desc>
@@ -6111,7 +6102,7 @@
   </values>
 </entry>
 
-<entry id="icliq_sw">
+<entry id="icliq_sw@nam_physics_nml">
   <type>integer</type>
   <group>nam_physics_nml</group>
   <desc></desc>
@@ -6429,7 +6420,6 @@
     <value>1.0</value>
   </values>
 </entry>
--->
 
 <!-- =========================== -->
 <!-- namsfc -->
@@ -7676,18 +7666,15 @@
   </values>
 </entry>
 
-<!--
-
-<entry id="ntiles">
+<entry id="ntiles@nest_nml">
   <type>integer</type>
   <group>nest_nml</group>
   <desc></desc>
   <values>
     <value>1</value>
-    <value app="mrweather">6</value>
+    <!--<value app="mrweather">6</value>-->
   </values>
 </entry>
--->
 
 <entry id="p_split">
   <type>integer</type>
@@ -7823,7 +7810,7 @@
 <!-- test_case_nml -->
 <!-- =========================== -->
 
-<entry id="alpha">
+<entry id="alpha@test_case_nml">
   <type>real</type>
   <group>test_case_nml</group>
   <desc></desc>
@@ -8777,7 +8764,7 @@
   Target grid mosaic file
   </desc>
   <values>
-    <value>INPUT/C96_mosaic.nc</value>
+    <value></value>
   </values>
 </entry>
 
@@ -8789,7 +8776,8 @@
   Directory containing target grid pre-computed fixed data (ex: soil type)
   </desc>
   <values>
-    <value>/glade/scratch/turuncu/fv3gfs/chgres/fix_sfc</value>
+    <value></value>
+    <value app="mrweather">INPUT</value>
   </values>
 </entry>
 
@@ -8801,7 +8789,8 @@
   Directory containing the target grid orography files
   </desc>
   <values>
-    <value>INPUT</value>
+    <value></value>
+    <value app="mrweather">INPUT</value>
   </values>
 </entry>
 
@@ -8813,11 +8802,10 @@
   Target grid orography files.
   </desc>
   <values>
-    <value>oro_data.tile1.nc,oro_data.tile2.nc,oro_data.tile3.nc,oro_data.tile4.nc,oro_data.tile5.nc,oro_data.tile6.nc</value>
+    <value></value>
+    <value app="mrweather">oro_data.tile1.nc,oro_data.tile2.nc,oro_data.tile3.nc,oro_data.tile4.nc,oro_data.tile5.nc,oro_data.tile6.nc</value>
   </values>
 </entry>
-
-<!--
 
 <entry id="mosaic_file_input_grid">
   <type>char</type>
@@ -8866,7 +8854,6 @@
     <value></value>
   </values>
 </entry>
--->
 
 <entry id="sfc_files_input_grid">
   <type>char(6)</type>
@@ -8876,7 +8863,8 @@
   File names containing input surface data
   </desc>
   <values>
-    <value>gfs.t00z.sfcanl.nemsio</value>
+    <value></value>
+    <value app="mrweather">gfs.t00z.sfcanl.nemsio</value>
   </values>
 </entry>
 
@@ -8888,11 +8876,10 @@
   File names of input atmospheric data    
   </desc>
   <values>
-    <value>gfs.t00z.atmanl.nemsio</value>
+    <value></value>
+    <value app="mrweather">gfs.t00z.atmanl.nemsio</value>
   </values>
 </entry>
-
-<!--
 
 <entry id="atm_core_files_input_grid">
   <type>char(7)</type>
@@ -8917,7 +8904,6 @@
     <value></value>
   </values>
 </entry>
--->
 
 <entry id="data_dir_input_grid">
   <type>char</type>
@@ -8927,7 +8913,8 @@
   Directory containing input atm or sfc files
   </desc>
   <values>
-    <value>/glade/scratch/turuncu/fv3gfs/chgres/gfs.20190909</value>
+    <value></value>
+    <value app="mrweather">$DIN_LOC_ROOT/IC/gfs.20190909</value>
   </values>
 </entry>
 
@@ -8939,7 +8926,7 @@
   Vertical coordinate definition file
   </desc>
   <values>
-    <value>/glade/scratch/turuncu/fv3gfs/chgres/global_hyblev.l65.txt</value>
+    <value></value>
   </values>
 </entry>
 
@@ -8951,7 +8938,7 @@
   Cycle month
   </desc>
   <values>
-    <value>9</value>
+    <value></value>
   </values>
 </entry>
 
@@ -8963,7 +8950,7 @@
   Cycle day
   </desc>
   <values>
-    <value>9</value>
+    <value></value>
   </values>
 </entry>
 
@@ -8975,7 +8962,7 @@
   Cycle hour
   </desc>
   <values>
-    <value>0</value>
+    <value></value>
   </values>
 </entry>
 
@@ -8987,7 +8974,8 @@
   Convert atmospheric data when true
   </desc>
   <values>
-    <value>.true.</value>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -8999,7 +8987,8 @@
   Convert nst data when true
   </desc>
   <values>
-    <value>.true.</value>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -9011,13 +9000,12 @@
   Convert sfc data when true
   </desc>
   <values>
-    <value>.true.</value>
+    <value>.false.</value>
+    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
-<!--
-
-<entry id="regional">
+<entry id="regional@chgres">
   <type>integer</type>
   <category>chgres</category>
   <group>config</group>
@@ -9029,7 +9017,6 @@
     <value>0</value>
   </values>
 </entry>
--->
 
 <entry id="input_type">
   <type>char</type>
@@ -9040,11 +9027,10 @@
   </desc>
   <valid_values>restart,history,gaussian,gfs_gaussian</valid_values>
   <values>
-    <value>gaussian</value>
+    <value>history</value>
+    <value app="mrweather">gaussian</value>
   </values>
 </entry>
-
-<!--
 
 <entry id="atm_weight_file">
   <type>char</type>
@@ -9057,7 +9043,6 @@
     <value></value>
   </values>
 </entry>
--->
 
 <entry id="tracers">
   <type>char(100)</type>
@@ -9067,7 +9052,8 @@
   Name of each atmos tracer to be processed. These names will be used to identify the tracer records in the output files. Follows the convention in the field table.
   </desc>
   <values>
-    <value>sphum,liq_wat,o3mr,ice_wat,rainwat,snowwat,graupel</value>
+    <value></value>
+    <value app="mrweather">sphum,liq_wat,o3mr,ice_wat,rainwat,snowwat,graupel</value>
   </values>
 </entry>
 
@@ -9079,11 +9065,10 @@
   Name of each atmos tracer record in the input file.  May be different from value in 'tracers'.
   </desc>
   <values>
-    <value>spfh,clwmr,o3mr,icmr,rwmr,snmr,grle</value>
+    <value></value>
+    <value app="mrweather">spfh,clwmr,o3mr,icmr,rwmr,snmr,grle</value>
   </values>
 </entry>
-
-<!--
 
 <entry id="halo_bndy">
   <type>integer</type>
@@ -9108,7 +9093,6 @@
     <value>0</value>
   </values>
 </entry>
--->
 
 <!-- =========================== -->
 <!-- ncep_post -->
