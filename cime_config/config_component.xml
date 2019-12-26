@@ -5,7 +5,7 @@
 <entry_id version="3.0">
 
   <description>
-    <desc atm="FV3GFS">FV3GFS Atmosphere </desc>
+    <desc atm="FV3GFS">FV3GFS Atmosphere</desc>
   </description>
 
   <entry id="COMP_ATM">
@@ -37,25 +37,6 @@
     <file>env_build.xml</file>
     <desc>Suite option for CCPP physics package</desc>
   </entry>
-
-<!--
-  <entry id="FV3GFS_PHYSP">
-    <type>char</type>
-    <valid_values>gfs,nam</valid_values>
-    <default_value>gfs</default_value>
-    <group>case_comp</group>
-    <file>env_case.xml</file>
-    <desc>Option for FV3GFS physics package</desc>
-  </entry>
-
-  <entry id="FV3GFS_INLINE_POST">
-    <type>logical</type>
-    <default_value>FALSE</default_value>
-    <group>case_comp</group>
-    <file>env_case.xml</file>
-    <desc>Option for FV3GFS inline post support</desc>
-  </entry>
--->
 
   <help>
     =========================================
