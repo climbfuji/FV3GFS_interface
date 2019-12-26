@@ -10,6 +10,7 @@
 # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
 
 import os, shutil, sys, glob, stat, filecmp, imp, re, time, copy
+from datetime import date, datetime, timedelta
 
 CIMEROOT = os.environ.get("CIMEROOT")
 if CIMEROOT is None:
@@ -19,6 +20,7 @@ sys.path.append(os.path.join(CIMEROOT, "scripts", "Tools"))
 from standard_script_setup import *
 from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
+from CIME.namelist import parse
 from CIME.utils import expect, get_model
 from CIME.buildnml import create_namelist_infile, parse_input
 from CIME.utils import run_cmd, safe_copy, symlink_force
@@ -41,14 +43,20 @@ def checkList(lst):
     return chk
 
 # keep only changed namelist options
-# keep only changed namelist options
-def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur):
+def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
 
     nmlgen_ret = copy.copy(nmlgen_cur)
 
     for nml in nmlgen_cur._namelist.get_group_names():
         for var in nmlgen_cur.get_group_variables(nml):
              matched = False
+
+             # if it is an user modified parameter, add it to namelist in any case
+             lst = namelist_user.get_value(var)
+             if any(len(item) > 0 for item in lst):
+                 continue
+
+             # get type and size of namelist variable
              var_type, _, var_size, = nmlgen_cur._definition.split_type_string(var)
 
              # if it is list and size is different from var_size
@@ -287,7 +295,7 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, datestamp):
+def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -434,7 +442,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     groups.sort()
 
     # remove duplicates
-    nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input)
+    nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
 
     # create namelist
     namelist_file = os.path.join(confdir, "atm_in")
@@ -510,7 +518,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -585,8 +593,21 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         else:
             nmlgen.set_value('data_dir_input_grid', icdir)
 
+    # Check input file exist or not?
+    atm_file_lst = nmlgen.get_value('atm_files_input_grid')
+    for f in atm_file_lst:
+        atm_file = os.path.join(icdir, f)
+        if not os.path.isfile(atm_file):
+            expect(False, "Couldn't find '"+atm_file+"'!")
+
+    sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
+    for f in sfc_file_lst:
+        sfc_file = os.path.join(icdir, f)
+        if not os.path.isfile(sfc_file):
+            expect(False, "Couldn't find '"+sfc_file+"'!")
+
     # remove namelist options that has no specialization
-    nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen)
+    nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
 
     #----------------------------------------------------
     # Write out namelist groups
@@ -629,27 +650,21 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen):
 
     cycle_lst = [12, 24, 36]
     for i in cycle_lst:
+        # create namelist file
         namelist_file = os.path.join(confdir, "itaga.%03d" % (i))
         nmlgen.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
 
-        dd_mod = dd
-        irest = i
-        if i/24 > 0:
-            dd_mod = dd+i/24
-            irest = i%24
-
-        run_start_tod_new = run_start_tod+irest*3600
-        hh = int(run_start_tod_new//3600)
-        mi = int((run_start_tod_new-hh*3600)//60)
-        ss = int(run_start_tod_new-hh*3600-mi*60)
-
+        # set cycle date
+        date_cycle = datetime(yy, mm, dd, run_start_tod/3600, 0, 0)+timedelta(hours=i)
+        
+        # add header section to namelist
         with open(namelist_file, 'r+') as f:
             content = f.read()
             f.seek(0,0)
             f.write(nmlgen.get_value('filename')+"\n")
             f.write(nmlgen.get_value('ioform')+"\n")
             f.write(nmlgen.get_value('outform')+"\n")
-            f.write("%04d-%02d-%02d_%02d:%02d:%02d\n"%(yy, mm, dd_mod, hh, mi, ss))
+            f.write(date_cycle.strftime("%Y-%m-%d_%H:%M:%S")+"\n")
             f.write(nmlgen.get_value('modelname')+"\n")
             f.write(nmlgen.get_value('filenameflux')+"\n")
             f.write(content)
@@ -701,6 +716,9 @@ def buildnml(case, caseroot, compname):
     create_namelist_infile(case, user_nl_file, infile)
     namelist_infile = [infile]
 
+    # read user modified namelist values
+    namelist_user = parse(infile)
+
     #----------------------------------------------------
     # Namelist generator for fv3 (model_configure)
     #----------------------------------------------------
@@ -729,7 +747,7 @@ def buildnml(case, caseroot, compname):
     nmlgen_input_def = NamelistGenerator(case, definition_file)
 
     # create namelist input.nml
-    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, datestamp)
+    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp)
 
     # copy namelist files to rundir
     if os.path.isdir(rundir):
@@ -769,7 +787,7 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):

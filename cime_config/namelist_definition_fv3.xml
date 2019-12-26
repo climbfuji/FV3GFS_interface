@@ -8860,7 +8860,7 @@
   <category>chgres</category>
   <group>config</group>
   <desc>
-  File names containing input surface data
+  File names containing input surface data (for each tile)
   </desc>
   <values>
     <value></value>
@@ -8873,7 +8873,7 @@
   <category>chgres</category>
   <group>config</group>
   <desc>
-  File names of input atmospheric data    
+  File names of input atmospheric data (for each tile)   
   </desc>
   <values>
     <value></value>
