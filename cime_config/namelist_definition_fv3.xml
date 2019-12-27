@@ -1872,6 +1872,7 @@
   <values>
     <value>1,1</value>
     <value hgrid="C96">3,8</value>
+    <value hgrid="C768">8,16</value>
   </values>
 </entry>
 
@@ -2076,6 +2077,7 @@
   <values>
     <value>1</value>
     <value app="mrweather" hgrid="C96">97</value>
+    <value app="mrweather" hgrid="C768">769</value>
   </values>
 </entry>
 
@@ -2086,6 +2088,7 @@
   <values>
     <value>1</value>
     <value app="mrweather" hgrid="C96">97</value>
+    <value app="mrweather" hgrid="C768">769</value>
   </values>
 </entry>
 
@@ -7898,7 +7901,8 @@
   </desc>
   <values>
     <value>480</value>
-    <value app="mrweather">150</value>
+    <value app="mrweather" hgrid="C96">150</value>
+    <value app="mrweather" hgrid="C768">792</value>
   </values>
 </entry>
 
@@ -8011,6 +8015,7 @@
   <values>
     <value>450</value>
     <value app="mrweather" hgrid="C96">1200</value>
+    <value app="mrweather" hgrid="C768">225</value>
   </values>
 </entry>
 
@@ -8134,7 +8139,8 @@
   </desc>
   <values>
     <value>48</value>
-    <value app="mrweather">6</value>
+    <value app="mrweather" hgrid="C96">6</value>
+    <value app="mrweather" hgrid="C768">24</value>
   </values>
 </entry>
 
@@ -8262,6 +8268,7 @@
   <values>
     <value>1536</value>
     <value hgrid="C96">384</value>
+    <value hgrid="C768">3072</value>
   </values>
 </entry>
 
@@ -8274,6 +8281,7 @@
   <values>
     <value>768</value>
     <value hgrid="C96">190</value>
+    <value hgrid="C768">1536</value>
   </values>
 </entry>
 
