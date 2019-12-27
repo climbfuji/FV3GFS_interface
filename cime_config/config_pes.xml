@@ -234,7 +234,7 @@
       <pes pesize="any" compset="FV3GFS">
         <comment>none</comment>
         <ntasks>
-          <ntasks_atm>792</ntasks_atm>
+          <ntasks_atm>1728</ntasks_atm>
           <ntasks_rof>1</ntasks_rof>
           <ntasks_ocn>1</ntasks_ocn>
           <ntasks_ice>1</ntasks_ice>
