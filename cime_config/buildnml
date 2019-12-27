@@ -121,6 +121,7 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
     din_loc_root = case.get_value("DIN_LOC_ROOT")
     ccpp = case.get_value("BUILD_CCPP")
     testcase = case.get_value("TEST")
+    is_restart =  case.get_value("CONTINUE_RUN")
 
     #----------------------------------------------------
     # Query jobs
@@ -230,6 +231,32 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
     run_cmd("mkdir " + os.path.join(rundir, "INPUT"))
     run_cmd("mkdir " + os.path.join(rundir, "RESTART"))
 
+    if is_restart:
+        # Tiled files
+        for f in ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]:
+            for tile in xrange(1,7): 
+                src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
+                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                if not os.path.isfile(src_file):
+                    expect(False, "{} is missing.".format(src_file)) 
+                else:
+                    safe_copy(src_file, tgt_file)
+
+        # Others
+        for f in ["fv_core.res.nc", "coupler.res"]:
+            src_file = os.path.join(rundir,"RESTART",f)
+            tgt_file = os.path.join(rundir,"INPUT",f)
+            if not os.path.isfile(src_file):                    
+                expect(False, "{} is missing.".format(src_file))
+            else:
+                safe_copy(src_file, tgt_file) 
+
+        # Remove IC files from the list
+        input_files.pop("gfs_ctrl")
+        for tile in xrange(1,7):
+            input_files.pop("sfc_data.tile{}".format(tile))
+            input_files.pop("gfs_data.tile{}".format(tile))
+
     # Copy/Link files
     for k,v in input_files.items():
         if not os.path.isfile(os.path.join(rundir,v[2])):
@@ -321,13 +348,18 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # modify layout namelist option to be consistent with given number of task
     atm_grid = case.get_value("ATM_GRID")
     ntask_atm = int(case.get_value('NTASKS_ATM'))
-    ntask_write = int(nmlgen_model.get_value('write_tasks_per_group'))
-    n_write_groups = int(nmlgen_model.get_value('write_groups'))
+    write_tasks_per_group = int(nmlgen_model.get_value('write_tasks_per_group'))
+    write_groups = int(nmlgen_model.get_value('write_groups'))
     ntiles = int(nmlgen_input.get_value('ntiles@fv_core_nml'))
 
-    if ((ntask_atm-ntask_write)%ntiles != 0):
-        expect(False, "(ntask_atm-write_tasks_per_group*write_groups)%%ntiles must equal to 0! (%d-%d)/%d = %d" %
-             (ntask_atm,ntask_write,ntiles,(ntask_atm-(ntask_write*n_write_groups))%ntiles))
+    if ((ntask_atm-(write_groups*write_tasks_per_group))%ntiles != 0):
+        expect(False, "ntask_atm = %d\n"+
+                      "ntiles = %d\n"+
+                      "write_groups = %d\n"+
+                      "write_tasks_per_group = %d\n" % (ntask_atm,ntiles,write_groups,write_tasks_per_group))
+
+        #expect(False, "(ntask_atm-write_tasks_per_group*write_groups)%%ntiles must equal to 0! (%d-%d)/%d = %d" %
+        #     (ntask_atm,write_tasks_per_group,ntiles,(ntask_atm-(write_tasks_per_group*write_groups))%ntiles))
     else:
         # get default value
         layout = nmlgen_input.get_value('layout')
@@ -335,12 +367,12 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         layout_y = int(layout[1])
 
         # check consitency of layout, number of io task etc. and try to fix it if it is required
-        if (((layout_x*layout_y)*ntiles+(ntask_write*n_write_groups)) != ntask_atm):
+        if (((layout_x*layout_y)*ntiles+(write_tasks_per_group*write_groups)) != ntask_atm):
             logger.info("\tWARNING: (layout(1)*layout(2)*ntiles+write_tasks_per_group*write_groups) must equal to %d but it is %d!" %
-                (ntask_atm,(layout_x*layout_y)*ntiles+(ntask_write*n_write_groups)))
+                (ntask_atm,(layout_x*layout_y)*ntiles+(write_tasks_per_group*write_groups)))
 
             # calculate total number of task
-            ntask = (ntask_atm-(ntask_write*n_write_groups))/ntiles
+            ntask = (ntask_atm-(write_tasks_per_group*write_groups))/ntiles
 
             # calculate dividers
             fact1 = sorted(list(factors(ntask)))
@@ -360,7 +392,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
                 logger.info("\tYou must provide a resonable layout pair! Exiting ...")
                 logger.info("\tThe resolution (" + atm_grid[1:] + ") need to be divided evenly with layouts.")
                 logger.info("\tTo fix the issue:")
-                logger.info("\t   (1) the total number of PEs assigned to ATM component")
+                logger.info("\t   (1) the total number of PEsk_atmassigned to ATM component")
                 logger.info("\t   (2) write_tasks_per_group (in user_nl_fv3gfs)")
                 logger.info("\tcan be modified.")
 
@@ -413,6 +445,28 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # TODO: Stochastic physics options need to be generated based on date such as ISEED_SKEB, ISEED_SHUM ...
     # https://github.com/NOAA-EMC/global-workflow/blob/feature/gfsv16b/scripts/exglobal_fcst_nemsfv3gfs.sh 
+    #cdate = datetime.now().strftime("%Y%m%d%H")
+    #print cdate
+
+    # Warm start
+    is_restart =  case.get_value("CONTINUE_RUN")
+    if is_restart:
+        nmlgen_input.set_value('warm_start', True) 
+        nmlgen_input.set_value('nggps_ic', False)
+        nmlgen_input.set_value('external_ic', False)
+        nmlgen_input.set_value('mountain', True)
+        nmlgen_input.set_value('make_nh', False)
+        nmlgen_input.set_value('na_init', 0)
+
+        # Turn off nst spin up
+        nstf_name = nmlgen_input.get_value('nstf_name')
+        nstf_name[1] = 0
+        nmlgen_input.set_value('nstf_name', nstf_name)
+
+        # Enable adding increment on the fly to the restarts
+        read_increment = nmlgen_input.get_value('read_increment')
+        if read_increment:
+            nmlgen_input.set_value('res_latlon_dynamics', "INPUT/fv_rst.res.nc")
 
     #----------------------------------------------------
     # Write out namelist groups
@@ -506,6 +560,12 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
     elif 'nsteps' in stop_option:
         expect(False, "Need to implement support for 'nsteps'")
 
+    # modify number of used PEs if there is a mismatch
+    ntask_atm = int(case.get_value('NTASKS_ATM'))
+    pe_member = int(nmlgen.get_value('PE_MEMBER01'))
+    if pe_member != ntask_atm:
+        nmlgen.set_value('PE_MEMBER01', ntask_atm)  
+
     # TODO: need to modify following?
     #atmos_nthreads
     #ncores_per_node 
@@ -571,40 +631,45 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_hour', hh)
 
     # Set initial condition directory
-    icdir = os.environ.get('IC_DIR')
-    if not os.path.exists(icdir):
-        expect(False, "Couldn't find initial condition direcory to process " + icdir)        
-    else:
-        ic_dirs = icdir.split('/')
-        ndirs = len(ic_dirs)
-
-        # get initial condition date/time
-        ic_date = ic_dirs[ndirs-2].split('.')[1]
-        yy_ic = int(ic_date)/10000
-        mm_ic = (int(ic_date)-(yy_ic*10000))/100
-        dd_ic = int(ic_date)-(yy_ic*10000+mm_ic*100) 
-        hh_ic = int(ic_dirs[ndirs-1])
-
-        # compare it with model start
-        date1 = yy*1000000+mm*10000+dd*100+hh
-        date2 = yy_ic*1000000+mm_ic*10000+dd_ic*100+hh_ic
-        if date1 != date2:
-            expect(False, "Model '{}' and initial condition '{}' dates must be consistent!".format(date1, date2))
+    is_restart =  case.get_value("CONTINUE_RUN")
+    if not is_restart: # Cold start
+        icdir = os.environ.get('IC_DIR')
+        if not os.path.exists(icdir):
+            expect(False, "Couldn't find initial condition direcory to process " + icdir)        
         else:
-            nmlgen.set_value('data_dir_input_grid', icdir)
+            ic_dirs = icdir.split('/')
+            ndirs = len(ic_dirs)
 
-    # Check input file exist or not?
-    atm_file_lst = nmlgen.get_value('atm_files_input_grid')
-    for f in atm_file_lst:
-        atm_file = os.path.join(icdir, f)
-        if not os.path.isfile(atm_file):
-            expect(False, "Couldn't find '"+atm_file+"'!")
+            # get initial condition date/time
+            ic_date = ic_dirs[ndirs-2].split('.')[1]
+            yy_ic = int(ic_date)/10000
+            mm_ic = (int(ic_date)-(yy_ic*10000))/100
+            dd_ic = int(ic_date)-(yy_ic*10000+mm_ic*100) 
+            hh_ic = int(ic_dirs[ndirs-1])
 
-    sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
-    for f in sfc_file_lst:
-        sfc_file = os.path.join(icdir, f)
-        if not os.path.isfile(sfc_file):
-            expect(False, "Couldn't find '"+sfc_file+"'!")
+            # compare it with model start
+            date1 = yy*1000000+mm*10000+dd*100+hh
+            date2 = yy_ic*1000000+mm_ic*10000+dd_ic*100+hh_ic
+            if date1 != date2:
+                expect(False, "Model '{}' and initial condition '{}' dates must be consistent!".format(date1, date2))
+            else:
+                nmlgen.set_value('data_dir_input_grid', icdir)
+
+        # Check input file exist or not?
+        atm_file_lst = nmlgen.get_value('atm_files_input_grid')
+        for f in atm_file_lst:
+            atm_file = os.path.join(icdir, f)
+            if not os.path.isfile(atm_file):
+                expect(False, "Couldn't find '"+atm_file+"'!")
+
+        sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
+        for f in sfc_file_lst:
+            sfc_file = os.path.join(icdir, f)
+            if not os.path.isfile(sfc_file):
+                expect(False, "Couldn't find '"+sfc_file+"'!")
+    else: # Warm start
+        logger.debug("It is warm start.\n")
+        logger.debug("The initial conditions are provided by previous run!\n")
 
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
