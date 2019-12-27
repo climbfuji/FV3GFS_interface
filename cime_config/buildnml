@@ -443,10 +443,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     else:
         nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
 
-    # TODO: Stochastic physics options need to be generated based on date such as ISEED_SKEB, ISEED_SHUM ...
-    # https://github.com/NOAA-EMC/global-workflow/blob/feature/gfsv16b/scripts/exglobal_fcst_nemsfv3gfs.sh 
-    #cdate = datetime.now().strftime("%Y%m%d%H")
-    #print cdate
+    # Stochastic physics
+    # TODO: member option (-1: control, 0: ensemble mean, >0: ensemble member) need to be handled, for now it is assumed as 1 
+    member = 1
+    cdate = int(datetime.now().strftime("%Y%m%d%H"))
+    nmlgen_input.set_value('iseed_skeb', cdate*1000+member*10+1)
+    nmlgen_input.set_value('iseed_shum', cdate*1000+member*10+2)
+    nmlgen_input.set_value('iseed_sppt', cdate*1000+member*10+3)
 
     # Warm start
     is_restart =  case.get_value("CONTINUE_RUN")
