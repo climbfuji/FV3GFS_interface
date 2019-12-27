@@ -1872,7 +1872,7 @@
   <values>
     <value>1,1</value>
     <value hgrid="C96">3,8</value>
-    <value hgrid="C768">8,16</value>
+    <value hgrid="C768">16,16</value>
   </values>
 </entry>
 
@@ -1956,7 +1956,9 @@
   <group>fv_core_nml</group>
   <desc></desc>
   <values>
-    <value>0</value>
+    <!-- <value>0</value> -->
+    <value>-1</value>
+    <value app="mrweather">0</value>
   </values>
 </entry>
 
@@ -7902,7 +7904,7 @@
   <values>
     <value>480</value>
     <value app="mrweather" hgrid="C96">150</value>
-    <value app="mrweather" hgrid="C768">792</value>
+    <value app="mrweather" hgrid="C768">1728</value>
   </values>
 </entry>
 
@@ -8128,6 +8130,7 @@
   </desc>
   <values>
     <value>1</value>
+    <value app="mrweather" hgrid="C768">3</value>
   </values>
 </entry>
 
@@ -8140,7 +8143,7 @@
   <values>
     <value>48</value>
     <value app="mrweather" hgrid="C96">6</value>
-    <value app="mrweather" hgrid="C768">24</value>
+    <value app="mrweather" hgrid="C768">64</value>
   </values>
 </entry>
 
