@@ -122,6 +122,7 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
     ccpp = case.get_value("BUILD_CCPP")
     testcase = case.get_value("TEST")
     is_restart =  case.get_value("CONTINUE_RUN")
+    srcroot = case.get_value("SRCROOT")
 
     #----------------------------------------------------
     # Query jobs
@@ -140,7 +141,6 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
     # Define base directories
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
     dir_fix_fv3 = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
-    dir_rt_fv3 = os.path.join(din_loc_root,"RT","fv3_gfdlmprad")
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
@@ -185,20 +185,6 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
         if 'character' in var_type and var_str and 'igbp' not in var_str[0:4]:
             input_files[var] = [var_str, "none", ""]
 
-    # Table files
-    input_files["data_tbl"] = [os.path.join(dir_rt_fv3,"data_table"), "cp", "data_table"]
-    input_files["diag_tbl"] = [os.path.join(dir_rt_fv3,"diag_table"), "cp", "diag_table"]
-    input_files["field_tbl"] = [os.path.join(dir_rt_fv3,"field_table"), "cp", "field_table"]
-
-    # Configuration file 
-    input_files["nems_conf"] = [os.path.join(dir_rt_fv3,"nems.configure"), "cp", "nems.configure"]
-
-    # Initial conditions 
-    input_files["gfs_ctrl"] = [os.path.join(dir_rt_fv3,"INPUT","gfs_ctrl.nc"), "ln", os.path.join("INPUT","gfs_ctrl.nc")]
-    for tile in xrange(1,7):
-        input_files["sfc_data.tile{}".format(tile)] = [os.path.join(dir_rt_fv3,"INPUT","sfc_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","sfc_data.tile{}.nc".format(tile))]
-        input_files["gfs_data.tile{}".format(tile)] = [os.path.join(dir_rt_fv3,"INPUT","gfs_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","gfs_data.tile{}.nc".format(tile))]
-
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
@@ -212,7 +198,6 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
-        srcroot = case.get_value("SRCROOT")
         srcdir = os.path.join(srcroot,"src","model")
         safe_copy(os.path.join(srcdir,"parm","postxconfig-NT.txt"), os.path.join(rundir,"postxconfig-NT.txt"))
         safe_copy(os.path.join(srcdir,"parm","params_grib2_tbl_new"), os.path.join(rundir,"params_grib2_tbl_new")) 
@@ -251,12 +236,6 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
             else:
                 safe_copy(src_file, tgt_file) 
 
-        # Remove IC files from the list
-        input_files.pop("gfs_ctrl")
-        for tile in xrange(1,7):
-            input_files.pop("sfc_data.tile{}".format(tile))
-            input_files.pop("gfs_data.tile{}".format(tile))
-
     # Copy/Link files
     for k,v in input_files.items():
         if not os.path.isfile(os.path.join(rundir,v[2])):
@@ -264,6 +243,25 @@ def prep_input(case, datestamp, nmlgen_input, nmlgen_model):
                 symlink_force(v[0], os.path.join(rundir,v[2]))
             elif "cp" in v[1]:
                 safe_copy(v[0], os.path.join(rundir,v[2]))
+
+    # Copy *_table files
+    fv3cimeroot = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")    
+    for f in ["data_table", "diag_table", "field_table"]:
+        if not os.path.isfile(os.path.join(rundir,f)):
+            print os.path.join(fv3cimeroot,"tables",f), os.path.join(rundir,f)
+            safe_copy(os.path.join(fv3cimeroot,"tables",f),os.path.join(rundir,f))
+
+    # Create NEMS configure 
+    if not os.path.exists(os.path.join(rundir, "nems.configure")):
+        with open(os.path.join(rundir,"nems.configure"), 'w') as nems_configure:
+            # Content
+            line = "EARTH_component_list: ATM\n"
+            line = line + "ATM_model:            fv3\n"
+            line = line + "runSeq::\n"
+            line = line + "  ATM\n"
+            line = line + "::"
+            # Write
+            nems_configure.writelines(line) 
 
     # Do replacements in diag_table
     run_sd = case.get_value('RUN_STARTDATE').split('-')
