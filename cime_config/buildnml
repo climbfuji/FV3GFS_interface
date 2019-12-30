@@ -685,7 +685,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen):
+def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_model_configure):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -707,11 +707,18 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen):
     #----------------------------------------------------
     groups=['nampgb']
 
+    # Make input format for post-processing consistent with model output
+    output_file = nmlgen_model_configure.get_value('output_file')
+    if 'netcdf' in output_file:
+        nmlgen.set_value('ioform', 'netcdf')
+    elif 'nemsio' in output_file:
+        nmlgen.set_value('ioform', 'binarynemsiompiio')
+
+    # Query start date and time
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
     yy = int(run_start_date[0])
     mm = int(run_start_date[1])
     dd = int(run_start_date[2])
-
     run_start_tod = case.get_value('START_TOD')
 
     cycle_lst = [12, 24, 36]
@@ -871,12 +878,12 @@ def buildnml(case, caseroot, compname):
         nmlgen_ncep_post = NamelistGenerator(case, definition_file)
 
         # remove old configuration files
-        for f in os.listdir(confdir):
-            if "itaga" in f:
-                os.remove(os.path.join(confdir,f))
+        for f in os.listdir(rundir):
+            if "itag" in f:
+                os.remove(os.path.join(rundir,f))
 
         # create namelist model_configure
-        _create_namelist_ncep_post(case, confdir, config, namelist_infile, nmlgen_ncep_post)
+        _create_namelist_ncep_post(case, confdir, config, namelist_infile, nmlgen_ncep_post, nmlgen_model_configure)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
