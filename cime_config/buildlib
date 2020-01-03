@@ -17,6 +17,7 @@ from CIME.buildlib import parse_input
 from CIME.case import Case
 from CIME.utils import run_cmd, expect, new_lid, stringify_bool, safe_copy
 from CIME.build import get_standard_makefile_args
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -194,8 +195,13 @@ def buildlib(caseroot, libroot, bldroot):
                 from distutils.spawn import find_executable
                 netcdf = find_executable("ncdump")
                 if netcdf:
-                    netcdf = os.path.dirname(netcdf).parent
+                    if six.PY3:
+                        netcdf = os.path.dirname(netcdf).parent
+                    else:
+                        netcdf = os.path.dirname(netcdf)+"/../"
                     cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
+        cmake_flags += " -DCMAKE_Fortran_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
+        cmake_flags += " -DCMAKE_C_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
 #        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
         os.environ["CMAKE_C_COMPILER"]="mpicc"
         os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
