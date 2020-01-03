@@ -4,23 +4,16 @@
     <rest_file_extension>r</rest_file_extension>
     <rest_file_extension>rh\d*</rest_file_extension>
     <rest_file_extension>rs</rest_file_extension>
-
-    <hist_file_regex>^dynf\d\d\d.tile[1-6].nc$</hist_file_regex>
-    <hist_file_regex>^phyf\d\d\d.tile[1-6].nc$</hist_file_regex>
-    <hist_file_regex>^atmf\d\d\d.tile[1-6].nc$</hist_file_regex>
-    <hist_file_regex>^sfcf\d\d\d.tile[1-6].nc$</hist_file_regex>
-
-    <hist_file_regex>^dynf\d\d:\d\d:\d\d.nc$</hist_file_regex>
-    <hist_file_regex>^phyf\d\d:\d\d:\d\d.nc$</hist_file_regex>
-    <hist_file_regex>^atmf\d\d:\d\d:\d\d.nc$</hist_file_regex>
-    <hist_file_regex>^sfcf\d\d:\d\d:\d\d.nc$</hist_file_regex>
+    <hist_file_extension>atmf\d+.nc$</hist_file_extension>
+    <hist_file_extension>sfcf\d+.nc$</hist_file_extension>
 
     <rest_history_varname>nhfil</rest_history_varname>
     <test_file_names>
-      <tfile disposition="move">dynf024.tile2.nc</tfile>
-      <tfile disposition="move">phyf000.tile1.nc</tfile>
-      <tfile disposition="move">atmf999.tile3.nc</tfile>
-      <tfile disposition="move">sfcf024.tile4.nc</tfile>
+      <tfile disposition="move">casename.fv3.atmf024.nc</tfile>
+      <tfile disposition="move">casename.fv3.sfcf000.nc</tfile>
+      <tfile disposition="move">casename.fv3.atmf999.nc</tfile>
+      <tfile disposition="ignore">othercase.fv3.sfcf024.nc</tfile>
+      <tfile disposition="ignore">casename.fv3.sfcf024.nc.base</tfile>
     </test_file_names>
   </comp_archive_spec>
 </components>
