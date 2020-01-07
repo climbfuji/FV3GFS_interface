@@ -1,6 +1,6 @@
 <components version="2.0">
 
-  <comp_archive_spec compname="fv3gfs" compclass="atm">
+  <comp_archive_spec compname="ufsatm" compclass="atm">
     <rest_file_extension>r</rest_file_extension>
     <rest_file_extension>rh\d*</rest_file_extension>
     <rest_file_extension>rs</rest_file_extension>
