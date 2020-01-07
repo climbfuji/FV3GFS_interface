@@ -3,7 +3,7 @@
 <config_pes>
   <grid name="a%C96.+oi%tx0.66v1">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS.+CICE.+MOM">
+      <pes pesize="any" compset="ufsatm.+CICE.+MOM">
 	<comment>none</comment>
 	<ntasks>
 	  <ntasks_atm>150</ntasks_atm>
@@ -41,7 +41,7 @@
 
   <grid name="a%C96.+oi%tx0.25v1">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS.+CICE.+MOM">
+      <pes pesize="any" compset="ufsatm.+CICE.+MOM">
 	<comment>none</comment>
 	<ntasks>
 	  <ntasks_atm>150</ntasks_atm>
@@ -79,7 +79,7 @@
 
   <grid name="a%C384.+oi%tx0.25v1">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS.+CICE.+MOM">
+      <pes pesize="any" compset="ufsatm.+CICE.+MOM">
 	<comment>none</comment>
 	<ntasks>
 	  <ntasks_atm>336</ntasks_atm>
@@ -117,7 +117,7 @@
 
   <grid name="a%C96">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS">
+      <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>150</ntasks_atm>
@@ -155,7 +155,7 @@
 
   <grid name="a%C192">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS">
+      <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>300</ntasks_atm>
@@ -193,7 +193,7 @@
 
   <grid name="a%C384">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS">
+      <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>450</ntasks_atm>
@@ -231,7 +231,7 @@
 
   <grid name="a%C768">
     <mach name="any">
-      <pes pesize="any" compset="FV3GFS">
+      <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>1728</ntasks_atm>

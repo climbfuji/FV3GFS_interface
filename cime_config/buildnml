@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""FV3GFS namelist creator
+"""ufsatm namelist creator
 """
 
 # Typically ignore this.
@@ -400,7 +400,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
                 logger.info("\tThe resolution (" + atm_grid[1:] + ") need to be divided evenly with layouts.")
                 logger.info("\tTo fix the issue:")
                 logger.info("\t   (1) the total number of PEsk_atmassigned to ATM component")
-                logger.info("\t   (2) write_tasks_per_group (in user_nl_fv3gfs)")
+                logger.info("\t   (2) write_tasks_per_group (in user_nl_ufsatm)")
                 logger.info("\tcan be modified.")
 
             # find indices of smallest diff
@@ -496,7 +496,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # remove duplicates
     groups = list(set(groups))
 
-    # keep only fv3gfs related ones
+    # keep only ufsatm related ones
     groups.remove('config') # chgres
     groups.remove('_no_group_var') # model_configure
     groups.remove('freeform') # ncep_post
@@ -745,13 +745,13 @@ def buildnml(case, caseroot, compname):
     datestamp="20191213"
 
     # Build the component namelist
-    if compname != "fv3gfs":
+    if compname != "ufsatm":
         raise AttributeError
     srcroot = case.get_value("SRCROOT")
     rundir  = case.get_value("RUNDIR")
 
     # determine the confdir directory
-    confdir = os.path.join(caseroot,"Buildconf","fv3gfsconf")
+    confdir = os.path.join(caseroot,"Buildconf","ufsatmconf")
     if not os.path.isdir(confdir):
         os.makedirs(confdir)
 
@@ -776,7 +776,7 @@ def buildnml(case, caseroot, compname):
     definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
 
     # create namelist_infile using user_nl_file as input
-    user_nl_file = os.path.join(caseroot, "user_nl_fv3gfs")
+    user_nl_file = os.path.join(caseroot, "user_nl_ufsatm")
     expect(os.path.isfile(user_nl_file),
            "Missing required user_nl_file %s " %(user_nl_file))
     infile = os.path.join(confdir, "namelist_infile")
@@ -819,7 +819,7 @@ def buildnml(case, caseroot, compname):
     if os.path.isdir(rundir):
         file1 = os.path.join(confdir, "model_configure")
         file2 = os.path.join(rundir, "model_configure")
-        logger.debug("FV3GFS configuration copy: file1 %s file2 %s " %(file1, file2))
+        logger.debug("ufsatm configuration copy: file1 %s file2 %s " %(file1, file2))
         safe_copy(file1, file2)
 
     #----------------------------------------------------
@@ -844,7 +844,7 @@ def buildnml(case, caseroot, compname):
 
 
     # link file
-    logger.info("\tLinking input namelist for FV3GFS")
+    logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
     symlink_force(file2, os.path.join(rundir, "input.nml"))
@@ -915,7 +915,7 @@ def _main_func():
 
     caseroot = parse_input(sys.argv)
     with Case(caseroot) as case:
-        buildnml(case, caseroot, "fv3gfs")
+        buildnml(case, caseroot, "ufsatm")
 
 if __name__ == "__main__":
     _main_func()

@@ -1,3 +1,3 @@
 module atm_comp_nuopc
-  use fv3gfs_cap_mod, only : SetServices
+  use ufsatm_cap_mod, only : SetServices
 end module atm_comp_nuopc

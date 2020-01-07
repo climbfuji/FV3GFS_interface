@@ -5,16 +5,18 @@
 <entry_id version="3.0">
 
   <description>
-    <desc atm="FV3GFS">FV3GFS Atmosphere</desc>
+    <desc atm="ufsatm[%GFSv15p2][%GFSv16beta]">UFSATM Atmosphere with:</desc>
+    <desc option="v15p2">CCPP physics version 15p2</desc>
+    <desc option="v16beta">CCPP physics version 16beta</desc>
   </description>
 
   <entry id="COMP_ATM">
     <type>char</type>
-    <valid_values>fv3gfs</valid_values>
-    <default_value>fv3gfs</default_value>
+    <valid_values>ufsatm</valid_values>
+    <default_value>ufsatm</default_value>
     <group>case_comp</group>
     <file>env_case.xml</file>
-    <desc>FV3GFS Atmosphere component</desc>
+    <desc>ufsatm Atmosphere component</desc>
   </entry>
 
   <entry id="BUILD_CCPP">
@@ -22,16 +24,16 @@
     <default_value>TRUE</default_value>
     <group>case_comp</group>
     <file>env_build.xml</file>
-    <desc>Option for FV3GFS CCPP feature</desc>
+    <desc>Option for ufsatm CCPP feature</desc>
   </entry>
 
   <entry id="CCPP_SUITES">
     <type>char</type>
-    <valid_values></valid_values>
-    <default_value>FV3_GFS_v15p2</default_value>
+    <valid_values>v15p2,v16beta</valid_values>
+    <default_value>v15p2</default_value>
     <values match="first">
-      <value>FV3_GFS_v15p2</value>
-      <value>FV3_GFS_v16beta</value>
+      <value compset="v15p2">v15p2</value>
+      <value compset="v16beta">v16beta</value>
     </values>
     <group>case_comp</group>
     <file>env_build.xml</file>
