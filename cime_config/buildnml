@@ -137,6 +137,7 @@ def prep_input(case, datestamp, nmlgen_input):
     new_o3forc = True
 
     # Define base directories
+    dir_ic = os.path.join(din_loc_root,"prod")
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
     dir_fix_fv3 = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
 
@@ -186,6 +187,16 @@ def prep_input(case, datestamp, nmlgen_input):
         if 'character' in var_type and var_str and 'igbp' not in var_str[0:4]:
             input_files[var] = [var_str, "none", ""]
 
+    # Initial condition (raw data, need to be processed with chgres)
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
+    run_start_tod = case.get_value('START_TOD')
+    hh = int(run_start_tod//3600)
+    input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
+    input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
+
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
@@ -211,6 +222,7 @@ def prep_input(case, datestamp, nmlgen_input):
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
         os.makedirs(rundir)
+
     # Create INPUT and RESTART directories
     logger.info("\tCreating INPUT and RESTART directory")
     for _dir in ("INPUT","RESTART"):
@@ -558,6 +570,9 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
     elif 'nsteps' in stop_option:
         expect(False, "Need to implement support for 'nsteps'")
 
+    # Change restart interval
+    #rest_n = int(case.get_value('REST_N'))
+
     # Change number of used PEs if there is a mismatch
     ntask_atm = int(case.get_value('NTASKS_ATM'))
     pe_member = int(nmlgen.get_value('PE_MEMBER01'))
@@ -628,7 +643,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('fix_dir_target_grid', os.path.join("INPUT"))
 
     # Set input data directory
-    icdir = os.environ.get('IC_DIR')
+    icdir = os.path.join(case.get_value("DIN_LOC_ROOT"),"prod")
     nmlgen.set_value('data_dir_input_grid', icdir)
 
     # Set cycle
@@ -647,14 +662,14 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     atm_file_lst = nmlgen.get_value('atm_files_input_grid')
     for f in atm_file_lst:
         atm_file = os.path.join(icdir, f)
-        if not os.path.isfile(atm_file):
-            expect(False, "Couldn't find '"+atm_file+"'!")
+        #if not os.path.isfile(atm_file):
+        #    expect(False, "Couldn't find '"+atm_file+"'!")
 
     sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
     for f in sfc_file_lst:
         sfc_file = os.path.join(icdir, f)
-        if not os.path.isfile(sfc_file):
-            expect(False, "Couldn't find '"+sfc_file+"'!")
+        #if not os.path.isfile(sfc_file):
+        #    expect(False, "Couldn't find '"+sfc_file+"'!")
 
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
@@ -777,45 +792,23 @@ def buildnml(case, caseroot, compname):
     namelist_user = parse(infile)
 
     #----------------------------------------------------
-    # Check IC directory and create date list
-    #----------------------------------------------------
-    icdir = os.environ.get('IC_DIR')
-
-    if not os.path.exists(icdir):
-        expect(False, "Couldn't find initial condition direcory to process " + icdir)
-    else:
-        icdirs = icdir.split('/')
-        ndirs = len(icdirs)
-
-        # Query initial condition date from folder names
-        yyyymmdd = icdirs[ndirs-2].split('.')[1]
-        yy = int(yyyymmdd)/10000
-        mm = (int(yyyymmdd)-(yy*10000))/100
-        dd = int(yyyymmdd)-(yy*10000+mm*100)
-        hh = int(icdirs[ndirs-1])
-
-    #----------------------------------------------------
     # Set case start date
     #----------------------------------------------------
     is_restart =  case.get_value("CONTINUE_RUN")
 
-    if not is_restart: # Cold start
-        # Set date
-        case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(yy, mm, dd))
-        case.set_value('START_TOD', hh*3600)
-    else: # Warm start
-        rst_file = os.path.join(rundir, "RESTART", "coupler.res")
-        if not os.path.isfile(rst_file):
-            expect(False, "Couldn't find '"+rst_file+"'!")
-        else:
-            # Parse coupler.res
-            with open(rst_file, 'r') as f:
-                lines = f.readlines()
-                date_lst = [int(i) for i in lines[2].split()[0:6]]
+    #if is_restart: # Warm start
+    #    rst_file = os.path.join(rundir, "RESTART", "coupler.res")
+    #    if not os.path.isfile(rst_file):
+    #        expect(False, "Couldn't find '"+rst_file+"'!")
+    #    else:
+    #        # Parse coupler.res
+    #        with open(rst_file, 'r') as f:
+    #            lines = f.readlines()
+    #            date_lst = [int(i) for i in lines[2].split()[0:6]]
 
-            # Set date
-            case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(date_lst[0], date_lst[1], date_lst[2]))
-            case.set_value('START_TOD', date_lst[3]*3600+date_lst[4]*60+date_lst[5])
+    #        # Set date
+    #        case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(date_lst[0], date_lst[1], date_lst[2]))
+    #        case.set_value('START_TOD', date_lst[3]*3600+date_lst[4]*60+date_lst[5])
 
     #----------------------------------------------------
     # Namelist generator for fv3 (model_configure)
