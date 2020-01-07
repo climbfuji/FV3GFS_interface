@@ -648,7 +648,6 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Set cycle
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    #yyyy = int(run_start_date[0])
     mm = int(run_start_date[1])
     dd = int(run_start_date[2])
     run_start_tod = case.get_value('START_TOD')
@@ -662,14 +661,10 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     atm_file_lst = nmlgen.get_value('atm_files_input_grid')
     for f in atm_file_lst:
         atm_file = os.path.join(icdir, f)
-        #if not os.path.isfile(atm_file):
-        #    expect(False, "Couldn't find '"+atm_file+"'!")
 
     sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
     for f in sfc_file_lst:
         sfc_file = os.path.join(icdir, f)
-        #if not os.path.isfile(sfc_file):
-        #    expect(False, "Couldn't find '"+sfc_file+"'!")
 
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
