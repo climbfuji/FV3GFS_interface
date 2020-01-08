@@ -5,7 +5,7 @@
 <entry_id version="3.0">
 
   <description>
-    <desc atm="ufsatm[%GFSv15p2][%GFSv16beta]">UFSATM Atmosphere with:</desc>
+    <desc atm="ufsatm[%v15p2][%v16beta]">UFSATM Atmosphere with:</desc>
     <desc option="v15p2">CCPP physics version 15p2</desc>
     <desc option="v16beta">CCPP physics version 16beta</desc>
   </description>

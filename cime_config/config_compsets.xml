@@ -40,11 +40,11 @@
 
   <compset>
     <alias>GFSv15p2</alias>
-    <lname>FCST_UFSATM%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
+    <lname>FCST_ufsatm%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
   <compset>
     <alias>GFSv16beta</alias>
-    <lname>FCST_UFSATM%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
+    <lname>FCST_ufsatm%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
 
   <entries>
