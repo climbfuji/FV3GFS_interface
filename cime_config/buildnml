@@ -111,7 +111,7 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input):
+def prep_input(case, datestamp, nmlgen_input, prefix):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -187,16 +187,6 @@ def prep_input(case, datestamp, nmlgen_input):
         if 'character' in var_type and var_str and 'igbp' not in var_str[0:4]:
             input_files[var] = [var_str, "none", ""]
 
-    # Initial condition (raw data, need to be processed with chgres)
-    run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    yyyy = run_start_date[0]
-    mm = run_start_date[1]
-    dd = run_start_date[2]
-    run_start_tod = case.get_value('START_TOD')
-    hh = int(run_start_tod//3600)
-    input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
-    input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
-
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
@@ -214,11 +204,6 @@ def prep_input(case, datestamp, nmlgen_input):
         safe_copy(os.path.join(srcdir,"parm","postxconfig-NT.txt"), os.path.join(rundir,"postxconfig-NT.txt"))
         safe_copy(os.path.join(srcdir,"parm","params_grib2_tbl_new"), os.path.join(rundir,"params_grib2_tbl_new"))
 
-    # Write input file list
-    with open(os.path.join(Buildconf,"fv3.input_data_list"), 'w') as input_data_list:
-        for k,v in input_files.items():
-            input_data_list.write(k+" = "+v[0]+"\n")
-
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
         os.makedirs(rundir)
@@ -230,25 +215,54 @@ def prep_input(case, datestamp, nmlgen_input):
         if not os.path.exists(fulldir):
             os.makedirs(fulldir)
 
-    if is_restart:
+    # Initial conditions
+    if is_restart: # Warm start
+        # Clean input data belongs to cold start
+        for root, dirs, files in os.walk(os.path.join(rundir,"INPUT")):
+            for filename in files:
+                if "gfs_ctrl" in filename or "gfs_data.tile" in filename or "sfc_data.tile" in filename:
+                    f = os.path.join(rundir,"INPUT",filename)
+                    if os.path.isfile(f):
+                        os.remove(f)
+
         # Tiled files
-        for f in ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]:
+        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
+        lst = [prefix + f for f in lst]
+        for f in lst:
             for tile in xrange(1,7):
                 src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
-                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
                 if not os.path.isfile(src_file):
                     expect(False, "{} is missing.".format(src_file))
                 else:
                     safe_copy(src_file, tgt_file)
 
         # Others
-        for f in ["fv_core.res.nc", "coupler.res"]:
+        lst = ["fv_core.res.nc", "coupler.res"]
+        lst = [prefix + f for f in lst]
+        for f in lst:
             src_file = os.path.join(rundir,"RESTART",f)
-            tgt_file = os.path.join(rundir,"INPUT",f)
+            tgt_file = os.path.join(rundir,"INPUT",f.replace(prefix,""))
             if not os.path.isfile(src_file):
                 expect(False, "{} is missing.".format(src_file))
             else:
                 safe_copy(src_file, tgt_file)
+    else: # Cold start
+        run_start_date = case.get_value('RUN_STARTDATE').split('-')
+        yyyy = run_start_date[0]
+        mm = run_start_date[1]
+        dd = run_start_date[2]
+
+        run_start_tod = case.get_value('START_TOD')
+        hh = int(run_start_tod//3600)
+
+        input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
+        input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
+
+    # Write input file list
+    with open(os.path.join(Buildconf,"fv3.input_data_list"), 'w') as input_data_list:
+        for k,v in input_files.items():
+            input_data_list.write(k+" = "+v[0]+"\n")
 
     # Copy/Link files
     for k,v in input_files.items():
@@ -571,7 +585,9 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
         expect(False, "Need to implement support for 'nsteps'")
 
     # Change restart interval
-    #rest_n = int(case.get_value('REST_N'))
+    rest_n = int(case.get_value('REST_N'))
+    if rest_n != stop_n:
+        nmlgen.set_value('restart_interval', rest_n)
 
     # Change number of used PEs if there is a mismatch
     ntask_atm = int(case.get_value('NTASKS_ATM'))
@@ -591,6 +607,16 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
     # TODO: need to modify following?
     #atmos_nthreads
     #ncores_per_node
+
+    print    case.thread_count
+    print    case.total_tasks
+    print    case.tasks_per_node
+    print    case.num_nodes
+    print    case.spare_nodes
+    print    case.tasks_per_numa
+    print    case.cores_per_task
+    print    case.srun_binding
+
 
     #----------------------------------------------------
     # Write out model.configure namelist
@@ -642,10 +668,6 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # Set location of fixed surface files
     nmlgen.set_value('fix_dir_target_grid', os.path.join("INPUT"))
 
-    # Set input data directory
-    icdir = os.path.join(case.get_value("DIN_LOC_ROOT"),"prod")
-    nmlgen.set_value('data_dir_input_grid', icdir)
-
     # Set cycle
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
     mm = int(run_start_date[1])
@@ -656,6 +678,10 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_mon', mm)
     nmlgen.set_value('cycle_day', dd)
     nmlgen.set_value('cycle_hour', hh)
+
+    # Set input data directory
+    icdir = os.path.join(case.get_value("DIN_LOC_ROOT"),"prod","gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
+    nmlgen.set_value('data_dir_input_grid', icdir)
 
     # Check input files exist or not?
     atm_file_lst = nmlgen.get_value('atm_files_input_grid')
@@ -731,7 +757,8 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
             f.write(nmlgen.get_value('filename')+"\n")
             f.write(nmlgen.get_value('ioform')+"\n")
             f.write(nmlgen.get_value('outform')+"\n")
-            f.write(date_cycle.strftime("%Y-%m-%d_%H:%M:%S")+"\n")
+            if yy > 1900:
+                f.write(date_cycle.strftime("%Y-%m-%d_%H:%M:%S")+"\n")
             f.write(nmlgen.get_value('modelname')+"\n")
             f.write(nmlgen.get_value('filenameflux')+"\n")
             f.write(content)
@@ -791,19 +818,36 @@ def buildnml(case, caseroot, compname):
     #----------------------------------------------------
     is_restart =  case.get_value("CONTINUE_RUN")
 
-    #if is_restart: # Warm start
-    #    rst_file = os.path.join(rundir, "RESTART", "coupler.res")
-    #    if not os.path.isfile(rst_file):
-    #        expect(False, "Couldn't find '"+rst_file+"'!")
-    #    else:
-    #        # Parse coupler.res
-    #        with open(rst_file, 'r') as f:
-    #            lines = f.readlines()
-    #            date_lst = [int(i) for i in lines[2].split()[0:6]]
+    if is_restart: # Warm start
+        # List coupler.res files
+        res_files = []
+        for root, dirs, files in os.walk(os.path.join(rundir,"RESTART")):
+            for filename in files:
+                if "coupler.res" in filename:
+                    res_files.append(filename)
+        res_files.sort()
 
-    #        # Set date
-    #        case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(date_lst[0], date_lst[1], date_lst[2]))
-    #        case.set_value('START_TOD', date_lst[3]*3600+date_lst[4]*60+date_lst[5])
+        # If we have multiple, get time stamp
+        nres = len(res_files)
+        if nres > 1:
+            prefix = res_files[nres-2].replace("coupler.res", "")
+        else:
+            prefix = ""
+            if nres == 0: # There is no restart file
+                expect(False, "{} is missing. It is required to restart the model!".format(os.path.join(rundir,"RESTART","coupler.res")))
+
+        rst_file = os.path.join(rundir, "RESTART", "{}coupler.res".format(prefix))
+        if not os.path.isfile(rst_file):
+            expect(False, "Couldn't find '"+rst_file+"'!")
+        else:
+            # Parse coupler.res
+            with open(rst_file, 'r') as f:
+                lines = f.readlines()
+                date_lst = [int(i) for i in lines[2].split()[0:6]]
+
+            # Set date
+            case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(date_lst[0], date_lst[1], date_lst[2]))
+            case.set_value('START_TOD', date_lst[3]*3600+date_lst[4]*60+date_lst[5])
 
     #----------------------------------------------------
     # Namelist generator for fv3 (model_configure)
@@ -853,7 +897,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input)
+    prep_input(case, datestamp, nmlgen_input, prefix)
 
     #----------------------------------------------------
     # Query jobs
