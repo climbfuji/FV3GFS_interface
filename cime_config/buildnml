@@ -9,7 +9,7 @@
 # Disable these because this is our standard setup
 # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
 
-import os, sys, copy
+import os, sys, copy, time
 from datetime import datetime, timedelta
 
 CIMEROOT = os.environ.get("CIMEROOT")
@@ -168,8 +168,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
 
     if int(ico2) > 0:
         # TODO: make it automatic
-        #yy = int(time.strftime("%Y,%m,%d,%H,%M,%S").split(',')[0])
-        yy = 2019
+        yy = int(time.strftime("%Y,%m,%d,%H,%M,%S").split(',')[0])
         for year in xrange(2009,yy+1):
             input_files["co2his_{}".format(year)] = [os.path.join(dir_fix_am,"fix_co2_proj","global_co2historicaldata_{}.txt".format(year)), "ln", "co2historicaldata_{}.txt".format(year)]
 
@@ -528,7 +527,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
+def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, prefix):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -551,38 +550,42 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
     # Modify namelist defaults
     #----------------------------------------------------
 
-    # Change start date
-    run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    yyyy = int(run_start_date[0])
-    mm = int(run_start_date[1])
-    dd = int(run_start_date[2])
-    nmlgen.set_value('start_year', value=yyyy)
-    nmlgen.set_value('start_month', value=mm)
-    nmlgen.set_value('start_day', value=dd)
+    # Query previous run lenght, if it is warm start
+    is_restart = case.get_value("CONTINUE_RUN")
 
-    run_start_tod = case.get_value('START_TOD')
-    hh = int(run_start_tod//3600)
-    mi = int((run_start_tod-hh*3600)//60)
-    ss = int(run_start_tod-hh*3600-mi*60)
-    nmlgen.set_value('start_hour', value=hh)
-    nmlgen.set_value('start_minute', value=mi)
-    nmlgen.set_value('start_second', value=ss)
+    if is_restart:
+        rundir = case.get_value("RUNDIR") 
+        rst_file = os.path.join(rundir, "RESTART", "{}coupler.res".format(prefix))
+        if not os.path.isfile(rst_file):
+            expect(False, "Couldn't find '"+rst_file+"'!")
+        else:
+            # TODO: it supports only gregorian and need to support others (no_calendar=0, thirty_day_months=1, julian=2, gregorian=3, noleap=4)
+            # Parse coupler.res
+            with open(rst_file, 'r') as f:
+                lines = f.readlines()
+                calendar = lines[0].split()[0] 
+                date1 = datetime(*[int(i) for i in lines[1].split()[0:6]])
+                date2 = datetime(*[int(i) for i in lines[2].split()[0:6]])
+                nhours_fcst_pre = (date2-date1).total_seconds()//3600.0
+    else:
+        nhours_fcst_pre = 0
 
     # Change forecast lenght
     stop_option = case.get_value('STOP_OPTION')
     stop_n = int(case.get_value('STOP_N'))
+
     if 'nyears' in stop_option:
-        expect(False, "Need to implement support for 'nyears'")
+        expect(False, "Option >nyears< is not supported!")
     elif 'nmonths' in stop_option:
-        expect(False, "Need to implement support for 'nmonths'")
+        expect(False, "Option >nmonths< is not supported!")
     elif 'ndays' in stop_option:
-        nmlgen.set_value('nhours_fcst', stop_n*24)
+        nmlgen.set_value('nhours_fcst', stop_n*24 + nhours_fcst_pre)
     elif 'nhours' in stop_option:
-        nmlgen.set_value('nhours_fcst', stop_n)
+        nmlgen.set_value('nhours_fcst', stop_n + nhours_fcst_pre)
     elif 'nseconds' in stop_option:
-        nmlgen.set_value('nhours_fcst', stop_n/60)
+        nmlgen.set_value('nhours_fcst', stop_n/60 + nhours_fcst_pre)
     elif 'nsteps' in stop_option:
-        expect(False, "Need to implement support for 'nsteps'")
+        expect(False, "Option >nsteps< is not supported!")
 
     # Change restart interval
     rest_n = int(case.get_value('REST_N'))
@@ -604,19 +607,9 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen):
         # Change file prefixes
         nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.fv3.atm', case.get_value('CASE')+'.fv3.sfc'))
 
-    # TODO: need to modify following?
-    #atmos_nthreads
-    #ncores_per_node
-
-    print    case.thread_count
-    print    case.total_tasks
-    print    case.tasks_per_node
-    print    case.num_nodes
-    print    case.spare_nodes
-    print    case.tasks_per_numa
-    print    case.cores_per_task
-    print    case.srun_binding
-
+    # Modify machine specific namelist options
+    nmlgen.set_value('atmos_nthreads', case.thread_count)
+    nmlgen.set_value('ncores_per_node', case.tasks_per_node)
 
     #----------------------------------------------------
     # Write out model.configure namelist
@@ -670,14 +663,15 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Set cycle
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    mm = int(run_start_date[1])
-    dd = int(run_start_date[2])
+    yyyy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
     run_start_tod = case.get_value('START_TOD')
     hh = int(run_start_tod//3600)
 
-    nmlgen.set_value('cycle_mon', mm)
-    nmlgen.set_value('cycle_day', dd)
-    nmlgen.set_value('cycle_hour', hh)
+    nmlgen.set_value('cycle_mon', int(mm))
+    nmlgen.set_value('cycle_day', int(dd))
+    nmlgen.set_value('cycle_hour', int(hh))
 
     # Set input data directory
     icdir = os.path.join(case.get_value("DIN_LOC_ROOT"),"prod","gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
@@ -835,19 +829,8 @@ def buildnml(case, caseroot, compname):
             prefix = ""
             if nres == 0: # There is no restart file
                 expect(False, "{} is missing. It is required to restart the model!".format(os.path.join(rundir,"RESTART","coupler.res")))
-
-        rst_file = os.path.join(rundir, "RESTART", "{}coupler.res".format(prefix))
-        if not os.path.isfile(rst_file):
-            expect(False, "Couldn't find '"+rst_file+"'!")
-        else:
-            # Parse coupler.res
-            with open(rst_file, 'r') as f:
-                lines = f.readlines()
-                date_lst = [int(i) for i in lines[2].split()[0:6]]
-
-            # Set date
-            case.set_value('RUN_STARTDATE',"%d-%02d-%02d"%(date_lst[0], date_lst[1], date_lst[2]))
-            case.set_value('START_TOD', date_lst[3]*3600+date_lst[4]*60+date_lst[5])
+    else:
+        prefix = ""
 
     #----------------------------------------------------
     # Namelist generator for fv3 (model_configure)
@@ -857,7 +840,7 @@ def buildnml(case, caseroot, compname):
     nmlgen_model_configure = NamelistGenerator(case, definition_file)
 
     # create namelist model_configure
-    _create_namelist_model_configure(case, confdir, config, namelist_infile, nmlgen_model_configure)
+    _create_namelist_model_configure(case, confdir, config, namelist_infile, nmlgen_model_configure, prefix)
 
     # copy namelist files to rundir
     if os.path.isdir(rundir):
