@@ -4428,7 +4428,6 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -4438,7 +4437,6 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
@@ -4448,7 +4446,6 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <value app="mrweather">.true.</value>
   </values>
 </entry>
 
