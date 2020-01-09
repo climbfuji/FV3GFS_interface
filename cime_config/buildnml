@@ -139,17 +139,17 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     # Define base directories
     dir_ic = os.path.join(din_loc_root,"prod")
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
-    dir_fix_fv3 = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
+    dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
 
     # Grid and orography data
     for tile in xrange(1,7):
-        input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_fv3,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
-        input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_fv3,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
-    input_files["grid_spec"] = [os.path.join(dir_fix_fv3,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT","grid_spec.nc")]
-    input_files["grid_mosaic"] = [os.path.join(dir_fix_fv3,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT",atm_grid+"_mosaic.nc")]
+        input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
+        input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
+    input_files["grid_spec"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT","grid_spec.nc")]
+    input_files["grid_mosaic"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT",atm_grid+"_mosaic.nc")]
 
     # GFS standard input files
     iaer = nmlgen_input.get_value('iaer')
@@ -191,7 +191,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Fixed files for chgres
         for tile in xrange(1,7):
             for f in ["facsf", "maximum_snow_albedo", "slope_type", "snowfree_albedo", "soil_type", "substrate_temperature", "vegetation_greenness", "vegetation_type"]:
-                input_files["{}{}".format(f,tile)] = [os.path.join(dir_fix_fv3,"fix_sfc",atm_grid+".{}.tile{}.nc".format(f,tile)), "ln", os.path.join("INPUT",atm_grid+".{}.tile{}.nc".format(f,tile))]
+                input_files["{}{}".format(f,tile)] = [os.path.join(dir_fix_ufsatm,"fix_sfc",atm_grid+".{}.tile{}.nc".format(f,tile)), "ln", os.path.join("INPUT",atm_grid+".{}.tile{}.nc".format(f,tile))]
 
         # Vertical layer file for chgres
         levp = nmlgen_input.get_value("levp")
@@ -259,7 +259,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
 
     # Write input file list
-    with open(os.path.join(Buildconf,"fv3.input_data_list"), 'w') as input_data_list:
+    with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
         for k,v in input_files.items():
             input_data_list.write(k+" = "+v[0]+"\n")
 
@@ -272,10 +272,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
                 safe_copy(v[0], os.path.join(rundir,v[2]))
 
     # Copy *_table files
-    fv3cimeroot = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
+    cimeroot_ufsatm = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
     for f in ["data_table", "diag_table", "field_table"]:
         if not os.path.isfile(os.path.join(rundir,f)):
-            safe_copy(os.path.join(fv3cimeroot,"tables",f),os.path.join(rundir,f))
+            safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,f))
 
     # Create NEMS configure
     if not os.path.exists(os.path.join(rundir, "nems.configure")):
@@ -355,7 +355,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     #----------------------------------------------------
     # Clear out old data.
     #----------------------------------------------------
-    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3.input_data_list")
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ufsatm.input_data_list")
 
     #----------------------------------------------------
     # Initialize namelist defaults
@@ -501,7 +501,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # create list of groups by querying xml file
     groups = []
-    with open(os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml"), 'r') as fin:
+    with open(os.path.join(namelist_xml_dir, "namelist_definition_ufsatm.xml"), 'r') as fin:
         for s in fin.xreadlines():
             if "<group>" in s:
                 groups.append(s.replace('<group>', '').replace('</group>', '').strip())
@@ -537,7 +537,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
     #----------------------------------------------------
     # Clear out old data.
     #----------------------------------------------------
-    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3.input_data_list")
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ufsatm.input_data_list")
     if os.path.exists(data_list_path):
         os.remove(data_list_path)
 
@@ -566,7 +566,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
                 calendar = lines[0].split()[0] 
                 date1 = datetime(*[int(i) for i in lines[1].split()[0:6]])
                 date2 = datetime(*[int(i) for i in lines[2].split()[0:6]])
-                nhours_fcst_pre = (date2-date1).total_seconds()//3600.0
+                nhours_fcst_pre = int((date2-date1).total_seconds()//3600)
     else:
         nhours_fcst_pre = 0
 
@@ -605,7 +605,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
         nmlgen.set_value('output_file', 'netcdf')
 
         # Change file prefixes
-        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.fv3.atm', case.get_value('CASE')+'.fv3.sfc'))
+        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.ufsatm', case.get_value('CASE')+'.ufs.sfc'))
 
     # Modify machine specific namelist options
     nmlgen.set_value('atmos_nthreads', case.thread_count)
@@ -629,7 +629,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     #----------------------------------------------------
     # Clear out old data.
     #----------------------------------------------------
-    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3.input_data_list")
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ufsatm.input_data_list")
 
     #----------------------------------------------------
     # Initialize namelist defaults
@@ -709,7 +709,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
     #----------------------------------------------------
     # Clear out old data.
     #----------------------------------------------------
-    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "fv3.input_data_list")
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ufsatm.input_data_list")
 
     #----------------------------------------------------
     # Initialize namelist defaults
@@ -783,7 +783,7 @@ def buildnml(case, caseroot, compname):
     else:
         app = "s2s"
 
-    ccpp_suite = case.get_value("CCPP_SUITES").replace("FV3_GFS_", "")
+    ccpp_suite = case.get_value("CCPP_SUITES")
 
     config = {}
     config['app'] = app
@@ -794,7 +794,7 @@ def buildnml(case, caseroot, compname):
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
     # set namelist definition file
-    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_fv3.xml")]
+    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_ufsatm.xml")]
 
     # create namelist_infile using user_nl_file as input
     user_nl_file = os.path.join(caseroot, "user_nl_ufsatm")
@@ -833,7 +833,7 @@ def buildnml(case, caseroot, compname):
         prefix = ""
 
     #----------------------------------------------------
-    # Namelist generator for fv3 (model_configure)
+    # Namelist generator for atmosphere model (model_configure)
     #----------------------------------------------------
 
     # create the namelist generator object
@@ -850,7 +850,7 @@ def buildnml(case, caseroot, compname):
         safe_copy(file1, file2)
 
     #----------------------------------------------------
-    # Namelist generator for fv3 (input.nml)
+    # Namelist generator for atmosphere model (input.nml)
     #----------------------------------------------------
 
     # create the namelist generator object
@@ -866,7 +866,7 @@ def buildnml(case, caseroot, compname):
     if os.path.isdir(rundir):
         file1 = os.path.join(confdir, "atm_in")
         file2 = os.path.join(rundir, "atm_in")
-        logger.debug("FV3 namelist copy: file1 %s file2 %s " %(file1, file2))
+        logger.debug("ufsatm namelist copy: file1 %s file2 %s " %(file1, file2))
         safe_copy(file1, file2)
 
 
