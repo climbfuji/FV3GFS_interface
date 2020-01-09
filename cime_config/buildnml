@@ -624,7 +624,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
         nmlgen.set_value('output_file', 'netcdf')
 
         # Change file prefixes
-        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.ufsatm.atm', case.get_value('CASE')+'.ufsatm.sfc'))
+        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.ufsatm.atm.', case.get_value('CASE')+'.ufsatm.sfc.'))
 
     # Modify machine specific namelist options
     nmlgen.set_value('atmos_nthreads', case.thread_count)
