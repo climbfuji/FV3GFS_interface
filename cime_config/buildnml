@@ -630,6 +630,11 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
     nmlgen.set_value('atmos_nthreads', case.thread_count)
     nmlgen.set_value('ncores_per_node', case.tasks_per_node)
 
+    # Activate ESMF logs if it is a debug run
+    debug = case.get_value("DEBUG")
+    if debug:
+        nmlgen.set_value('print_esmf', True)
+
     #----------------------------------------------------
     # Write out model.configure namelist
     #----------------------------------------------------
