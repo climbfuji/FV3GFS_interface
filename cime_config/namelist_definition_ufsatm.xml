@@ -8491,7 +8491,6 @@
   <desc>random seeds (if 0 use system clock)</desc>
   <values>
     <value>0</value>
-    <value app="mrweather">2019102712452</value>
   </values>
 </entry>
 
@@ -8501,7 +8500,6 @@
   <desc>seeds for setting the random number sequence (ignored if stochini is true)</desc>
   <values>
     <value>0</value>
-    <value app="mrweather">2019102712451</value>
   </values>
 </entry>
 
@@ -8511,7 +8509,6 @@
   <desc>seeds for setting the random number sequence (ignored if stochini is true)</desc>
   <values>
     <value>0</value>
-    <value app="mrweather">2019102712453</value>
   </values>
 </entry>
 
