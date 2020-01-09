@@ -1871,8 +1871,10 @@
   <desc></desc>
   <values>
     <value>1,1</value>
-    <value hgrid="C96">3,8</value>
-    <value hgrid="C768">16,16</value>
+    <value app="mrweather" hgrid="C96" >4,4</value>
+    <value app="mrweather" hgrid="C192">4,6</value>
+    <value app="mrweather" hgrid="C384">6,6</value>
+    <value app="mrweather" hgrid="C768">12,8</value>
   </values>
 </entry>
 
@@ -2078,7 +2080,9 @@
   <desc></desc>
   <values>
     <value>1</value>
-    <value app="mrweather" hgrid="C96">97</value>
+    <value app="mrweather" hgrid="C96" >97</value>
+    <value app="mrweather" hgrid="C192">193</value>
+    <value app="mrweather" hgrid="C384">385</value>
     <value app="mrweather" hgrid="C768">769</value>
   </values>
 </entry>
@@ -2089,7 +2093,9 @@
   <desc></desc>
   <values>
     <value>1</value>
-    <value app="mrweather" hgrid="C96">97</value>
+    <value app="mrweather" hgrid="C96" >97</value>
+    <value app="mrweather" hgrid="C192">193</value>
+    <value app="mrweather" hgrid="C384">385</value>
     <value app="mrweather" hgrid="C768">769</value>
   </values>
 </entry>
@@ -4169,8 +4175,14 @@
   <desc></desc>
   <values>
     <value>2.0,0.25,1.0,1.0</value>
-    <value app="mrweather">3.5,0.25</value>
-    <value app="mrweather" ccpp="v16beta">4.0,0.15,1.0,1.0</value>
+    <value app="mrweather" ccpp="v15p2"   hgrid="C96" >0.125,3.0</value>
+    <value app="mrweather" ccpp="v16beta" hgrid="C96" >0.14,1.8,1.0,1.0</value>
+    <value app="mrweather" ccpp="v15p2"   hgrid="C192">0.2,2.5</value>
+    <value app="mrweather" ccpp="v16beta" hgrid="C192">0.23,1.5,1.0,1.0</value>
+    <value app="mrweather" ccpp="v15p2"   hgrid="C384">1.0,1.2</value>
+    <value app="mrweather" ccpp="v16beta" hgrid="C384">1.1,0.72,1.0,1.0</value>
+    <value app="mrweather" ccpp="v15p2"   hgrid="C768">3.5,0.25</value>
+    <value app="mrweather" ccpp="v16beta" hgrid="C768">4.0,0.15,1.0,1.0</value>
   </values>
 </entry>
 
@@ -8016,7 +8028,10 @@
   </desc>
   <values>
     <value>450</value>
-    <value app="mrweather" hgrid="C96">1200</value>
+    <value app="mrweather" hgrid="C96" >450</value>
+    <value app="mrweather" hgrid="C192">450</value>
+    <value app="mrweather" ccpp="v15p2" hgrid="C384">300</value>
+    <value app="mrweather" ccpp="v16beta" hgrid="C384">240</value>
     <value app="mrweather" hgrid="C768">225</value>
   </values>
 </entry>
@@ -8130,6 +8145,9 @@
   </desc>
   <values>
     <value>1</value>
+    <value app="mrweather" hgrid="C96" >1</value>
+    <value app="mrweather" hgrid="C192">1</value>
+    <value app="mrweather" hgrid="C384">1</value>
     <value app="mrweather" hgrid="C768">3</value>
   </values>
 </entry>
@@ -8142,8 +8160,10 @@
   </desc>
   <values>
     <value>48</value>
-    <value app="mrweather" hgrid="C96">6</value>
-    <value app="mrweather" hgrid="C768">64</value>
+    <value app="mrweather" hgrid="C96" >12</value>
+    <value app="mrweather" hgrid="C192">36</value>
+    <value app="mrweather" hgrid="C384">36</value>
+    <value app="mrweather" hgrid="C768">36</value>
   </values>
 </entry>
 
@@ -8270,7 +8290,9 @@
   </desc>
   <values>
     <value>1536</value>
-    <value hgrid="C96">384</value>
+    <value hgrid="C96" >384</value>
+    <value hgrid="C192">768</value>
+    <value hgrid="C384">1536</value>
     <value hgrid="C768">3072</value>
   </values>
 </entry>
@@ -8283,7 +8305,9 @@
   </desc>
   <values>
     <value>768</value>
-    <value hgrid="C96">190</value>
+    <value hgrid="C96" >192</value>
+    <value hgrid="C192">384</value>
+    <value hgrid="C384">768</value>
     <value hgrid="C768">1536</value>
   </values>
 </entry>
