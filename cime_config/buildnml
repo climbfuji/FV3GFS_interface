@@ -555,7 +555,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
 
     if is_restart: # Warm start
         # Set previous forecast lenght based on restart file
-        rundir = case.get_value("RUNDIR") 
+        rundir = case.get_value("RUNDIR")
         rst_file = os.path.join(rundir, "RESTART", "{}coupler.res".format(prefix))
         if not os.path.isfile(rst_file):
             expect(False, "Couldn't find '"+rst_file+"'!")
@@ -564,7 +564,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
             # Parse coupler.res
             with open(rst_file, 'r') as f:
                 lines = f.readlines()
-                calendar = lines[0].split()[0] 
+                calendar = lines[0].split()[0]
                 date1 = datetime(*[int(i) for i in lines[1].split()[0:6]])
                 date2 = datetime(*[int(i) for i in lines[2].split()[0:6]])
                 nhours_fcst_pre = int((date2-date1).total_seconds()//3600)
@@ -572,24 +572,24 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
         # Set previous forecast lenght as zero
         nhours_fcst_pre = 0
 
-        # Change start date
-        run_start_date = case.get_value('RUN_STARTDATE').split('-')
-        yyyy = int(run_start_date[0])
-        mm = int(run_start_date[1])
-        dd = int(run_start_date[2])
-        nmlgen.set_value('start_year', value=yyyy)
-        nmlgen.set_value('start_month', value=mm)
-        nmlgen.set_value('start_day', value=dd)
+    # Change start date
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = int(run_start_date[0])
+    mm = int(run_start_date[1])
+    dd = int(run_start_date[2])
+    nmlgen.set_value('start_year', value=yyyy)
+    nmlgen.set_value('start_month', value=mm)
+    nmlgen.set_value('start_day', value=dd)
 
-        run_start_tod = case.get_value('START_TOD')
-        hh = int(run_start_tod//3600)
-        mi = int((run_start_tod-hh*3600)//60)
-        ss = int(run_start_tod-hh*3600-mi*60)
-        nmlgen.set_value('start_hour', value=hh)
-        nmlgen.set_value('start_minute', value=mi)
-        nmlgen.set_value('start_second', value=ss)
+    run_start_tod = case.get_value('START_TOD')
+    hh = int(run_start_tod//3600)
+    mi = int((run_start_tod-hh*3600)//60)
+    ss = int(run_start_tod-hh*3600-mi*60)
+    nmlgen.set_value('start_hour', value=hh)
+    nmlgen.set_value('start_minute', value=mi)
+    nmlgen.set_value('start_second', value=ss)
 
-    # Change forecast lenght
+    # Change forecast length
     stop_option = case.get_value('STOP_OPTION')
     stop_n = int(case.get_value('STOP_N'))
 
@@ -624,7 +624,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, pref
         nmlgen.set_value('output_file', 'netcdf')
 
         # Change file prefixes
-        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.ufsatm', case.get_value('CASE')+'.ufs.sfc'))
+        nmlgen.set_value('filename_base', "{} {}".format(case.get_value('CASE')+'.ufsatm.atm', case.get_value('CASE')+'.ufsatm.sfc'))
 
     # Modify machine specific namelist options
     nmlgen.set_value('atmos_nthreads', case.thread_count)
