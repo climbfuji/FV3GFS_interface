@@ -200,17 +200,18 @@ def buildlib(caseroot, libroot, bldroot):
                     else:
                         netcdf = os.path.dirname(netcdf)+"/../"
                     cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
-        cmake_flags += " -DCMAKE_Fortran_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
-        cmake_flags += " -DCMAKE_C_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
-#        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
-        os.environ["CMAKE_C_COMPILER"]="mpicc"
-        os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
-        os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
-        os.environ["CMAKE_Platform"]="cime"
-        safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
-                  os.path.join(bldroot,"cmake"))
-        stat, out, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
-        expect(stat==0,"CMAKE error from fv3 {}".format(err))
+        if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
+            cmake_flags += " -DCMAKE_Fortran_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
+            cmake_flags += " -DCMAKE_C_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
+            #        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
+            os.environ["CMAKE_C_COMPILER"]="mpicc"
+            os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
+            os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
+            os.environ["CMAKE_Platform"]="cime"
+            safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
+                      os.path.join(bldroot,"cmake"))
+            stat, out, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
+            expect(stat==0,"CMAKE error from fv3 {}".format(err))
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
         gmake_args += " VERBOSE=1 "
         stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
