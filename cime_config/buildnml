@@ -64,7 +64,7 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                 var_act = [None]*var_size
                 var_def = [None]*var_size
 
-                # force to have same lenght
+                # force to have same length
                 var_act_len = len(nmlgen_cur.get_value(var))
                 var_act[0:var_act_len] = [x for x in nmlgen_cur.get_value(var)]
                 var_def_len = len(nmlgen_ini.get_value(var))
@@ -564,11 +564,11 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # Modify namelist defaults
     #----------------------------------------------------
 
-    # Query previous run lenght, if it is warm start
+    # Query previous run length, if it is warm start
     is_restart = case.get_value("CONTINUE_RUN")
 
     if is_restart: # Warm start
-        # Set previous forecast lenght based on restart file
+        # Set previous forecast length based on restart file
         rundir = case.get_value("RUNDIR")
         rst_file = os.path.join(rundir, "RESTART", "{}coupler.res".format(prefix))
         if not os.path.isfile(rst_file):
@@ -576,6 +576,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
         else:
             # TODO: it supports only gregorian and need to support others (no_calendar=0, thirty_day_months=1, julian=2, gregorian=3, noleap=4)
             # Parse coupler.res
+            logger.debug("Using {} to determine previous forecast length ...".format(rst_file))
             with open(rst_file, 'r') as f:
                 lines = f.readlines()
                 calendar = lines[0].split()[0]
@@ -583,7 +584,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
                 date2 = datetime(*[int(i) for i in lines[2].split()[0:6]])
                 nhours_fcst_pre = int((date2-date1).total_seconds()//3600)
     else: # Cold start
-        # Set previous forecast lenght as zero
+        # Set previous forecast length as zero
         nhours_fcst_pre = 0
 
     # Change start date
