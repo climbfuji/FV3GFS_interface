@@ -1,19 +1,16 @@
 <components version="2.0">
 
   <comp_archive_spec compname="ufsatm" compclass="atm">
-    <rest_file_extension>r</rest_file_extension>
-    <rest_file_extension>rh\d*</rest_file_extension>
-    <rest_file_extension>rs</rest_file_extension>
-    <hist_file_extension>atmf\d+.nc$</hist_file_extension>
-    <hist_file_extension>sfcf\d+.nc$</hist_file_extension>
+    <hist_file_extension>atm.f\d+.nc$</hist_file_extension>
+    <hist_file_extension>sfc.f\d+.nc$</hist_file_extension>
 
     <rest_history_varname>nhfil</rest_history_varname>
     <test_file_names>
-      <tfile disposition="move">casename.fv3.atmf024.nc</tfile>
-      <tfile disposition="move">casename.fv3.sfcf000.nc</tfile>
-      <tfile disposition="move">casename.fv3.atmf999.nc</tfile>
-      <tfile disposition="ignore">othercase.fv3.sfcf024.nc</tfile>
-      <tfile disposition="ignore">casename.fv3.sfcf024.nc.base</tfile>
+      <tfile disposition="move">casename.ufsatm.atm.f024.nc</tfile>
+      <tfile disposition="move">casename.ufsatm.sfc.f000.nc</tfile>
+      <tfile disposition="move">casename.ufsatm.atm.f999.nc</tfile>
+      <tfile disposition="ignore">othercase.ufsatm.sfc.f024.nc</tfile>
+      <tfile disposition="ignore">casename.ufsatm.sfc.f024.nc.base</tfile>
     </test_file_names>
   </comp_archive_spec>
 </components>
