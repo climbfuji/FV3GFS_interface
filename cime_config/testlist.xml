@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<testlist version="2.0">
+<!-- C96 -->
+
+  <test compset="GFSv15p2" grid="C96" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C96" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv15p2" grid="C96" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C96" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+
+
+<!-- C192 -->
+  <test compset="GFSv15p2" grid="C192" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C192" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv15p2" grid="C192" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C192" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+
+<!-- C384 -->
+  <test compset="GFSv15p2" grid="C384" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C384" name="SMS">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv15p2" grid="C384" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C384" name="SMS_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+</testlist>
