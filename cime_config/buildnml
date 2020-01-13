@@ -775,35 +775,32 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
 
     # Query start date and time
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    yy = int(run_start_date[0])
-    mm = int(run_start_date[1])
-    dd = int(run_start_date[2])
-    run_start_tod = case.get_value('START_TOD')
+    yy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
+    run_start_tod = int(case.get_value('START_TOD'))
+    hh = run_start_tod//3600
+    mi = (run_start_tod-hh*3600)//60
+    ss = run_start_tod-hh*3600-mi*60
 
-    cycle_lst = [12, 24, 36]
-    for i in cycle_lst:
-        # overwrite user_nl_ufsatm changes
-        nmlgen = nmlOverwrite(namelist_user, nmlgen)
+    # Overwrite user_nl_ufsatm changes
+    nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
-        # create namelist file
-        namelist_file = os.path.join(confdir, "itaga.%03d" % (i))
-        nmlgen.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
+    # Create namelist file for first time step / template script will update it for specific date
+    namelist_file = os.path.join(confdir, "itag.tmp")
+    nmlgen.write_output_file(namelist_file, data_list_path, groups=groups, sorted_groups=False)
 
-        # set cycle date
-        date_cycle = datetime(yy, mm, dd, run_start_tod/3600, 0, 0)+timedelta(hours=i)
-
-        # add header section to namelist
-        with open(namelist_file, 'r+') as f:
-            content = f.read()
-            f.seek(0,0)
-            f.write(nmlgen.get_value('filename')+"\n")
-            f.write(nmlgen.get_value('ioform')+"\n")
-            f.write(nmlgen.get_value('outform')+"\n")
-            if yy > 1900:
-                f.write(date_cycle.strftime("%Y-%m-%d_%H:%M:%S")+"\n")
-            f.write(nmlgen.get_value('modelname')+"\n")
-            f.write(nmlgen.get_value('filenameflux')+"\n")
-            f.write(content)
+    # Add header section to namelist
+    with open(namelist_file, 'r+') as f:
+        content = f.read()
+        f.seek(0,0)
+        f.write(nmlgen.get_value('filename')+"\n")
+        f.write(nmlgen.get_value('ioform')+"\n")
+        f.write(nmlgen.get_value('outform')+"\n")
+        f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{0:02d}:{0:02d}:{0:02d}".format(hh,mi,ss)+"\n")
+        f.write(nmlgen.get_value('modelname')+"\n")
+        f.write(nmlgen.get_value('filenameflux')+"\n")
+        f.write(content)
 
 ###############################################################################
 def buildnml(case, caseroot, compname):
@@ -976,12 +973,10 @@ def buildnml(case, caseroot, compname):
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
-            for f in os.listdir(confdir):
-                if "itaga" in f:
-                    file1 = os.path.join(confdir, f)
-                    file2 = os.path.join(rundir, f)
-                    logger.debug("NCEP_POST configuration copy: file1 %s file2 %s " %(file1, file2))
-                    safe_copy(file1, file2)
+            file1 = os.path.join(confdir, "itag.tmp")
+            file2 = os.path.join(rundir, "itag.tmp")
+            logger.debug("NCEP_POST configuration copy: file1 %s file2 %s " %(file1, file2))
+            safe_copy(file1, file2)
 
     return
 
