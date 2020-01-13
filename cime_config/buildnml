@@ -129,6 +129,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     atm_grid = case.get_value("ATM_GRID")
     testcase = case.get_value("TEST")
     din_loc_root = case.get_value("DIN_LOC_ROOT")
+    dir_ic = case.get_value("DIN_LOC_IC")
     testcase = case.get_value("TEST")
     is_restart =  case.get_value("CONTINUE_RUN")
     srcroot = case.get_value("SRCROOT")
@@ -148,7 +149,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     new_o3forc = True
 
     # Define base directories
-    dir_ic = os.path.join(din_loc_root,"prod")
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
     dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
 
@@ -532,7 +532,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
 
-    # overwrite user_nl_ufsatm changes 
+    # overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
     # create namelist
@@ -650,7 +650,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     if debug:
         nmlgen.set_value('print_esmf', True)
 
-    # overwrite user_nl_ufsatm changes 
+    # overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
     #----------------------------------------------------
@@ -716,7 +716,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_hour', int(hh))
 
     # Set input data directory
-    icdir = os.path.join(case.get_value("DIN_LOC_ROOT"),"prod","gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
+    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
     # Check input files exist or not?
@@ -731,7 +731,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
 
-    # overwrite user_nl_ufsatm changes 
+    # overwrite user_nl_ufsatm changes
     nmlgen_mod = nmlOverwrite(namelist_user, nmlgen_mod)
 
     #----------------------------------------------------
@@ -782,7 +782,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
 
     cycle_lst = [12, 24, 36]
     for i in cycle_lst:
-        # overwrite user_nl_ufsatm changes 
+        # overwrite user_nl_ufsatm changes
         nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
         # create namelist file
