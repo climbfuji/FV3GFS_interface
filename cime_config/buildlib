@@ -182,6 +182,9 @@ def buildlib(caseroot, libroot, bldroot):
 
         if case.get_value("BUILD_THREADED"):
             cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
+        else:
+            cmake_flags += " -DOPENMP=OFF "
+        
         mklroot = os.environ.get("MKLROOT")
         if mklroot:
             cmake_flags += " -DMKL_DIR={}".format(mklroot)
