@@ -493,6 +493,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     write_tasks_per_group = int(nmlgen_model.get_value('write_tasks_per_group'))
     write_groups = int(nmlgen_model.get_value('write_groups'))
 
+    ntask_atm = int(case.get_value('NTASKS_ATM'))
     ntask_atm_config = layout_x*layout_y*ntiles+write_tasks_per_group*write_groups
     if ntask_atm_config != ntask_atm:
         expect(False, ("Total number of PE need to be consistent with the model namelist options:\n"+
