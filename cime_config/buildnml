@@ -10,7 +10,7 @@
 # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
 
 import os, sys, copy, time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 CIMEROOT = os.environ.get("CIMEROOT")
 if CIMEROOT is None:
@@ -228,7 +228,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     # Initial conditions
     if is_restart: # Warm start
         # Clean input data belongs to cold start
-        for root, dirs, files in os.walk(os.path.join(rundir,"INPUT")):
+        for _, _, files in os.walk(os.path.join(rundir,"INPUT")):
             for filename in files:
                 if "gfs_ctrl" in filename or "gfs_data.tile" in filename or "sfc_data.tile" in filename:
                     f = os.path.join(rundir,"INPUT",filename)
@@ -548,7 +548,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
             logger.debug("Using {} to determine previous forecast length ...".format(rst_file))
             with open(rst_file, 'r') as f:
                 lines = f.readlines()
-                calendar = lines[0].split()[0]
+                #calendar = lines[0].split()[0]
                 date1 = datetime(*[int(i) for i in lines[1].split()[0:6]])
                 date2 = datetime(*[int(i) for i in lines[2].split()[0:6]])
                 nhours_fcst_pre = int((date2-date1).total_seconds()//3600)
@@ -688,15 +688,6 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
-    # Check input files exist or not?
-    atm_file_lst = nmlgen.get_value('atm_files_input_grid')
-    for f in atm_file_lst:
-        atm_file = os.path.join(icdir, f)
-
-    sfc_file_lst = nmlgen.get_value('sfc_files_input_grid')
-    for f in sfc_file_lst:
-        sfc_file = os.path.join(icdir, f)
-
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
 
@@ -766,7 +757,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write(nmlgen.get_value('filename')+"\n")
         f.write(nmlgen.get_value('ioform')+"\n")
         f.write(nmlgen.get_value('outform')+"\n")
-        f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{0:02d}:{0:02d}:{0:02d}".format(hh,mi,ss)+"\n")
+        f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{hh:02d}:{mm:02d}:{ss:02d}".format(hh=hh,mm=mi,ss=ss)+"\n")
         f.write(nmlgen.get_value('modelname')+"\n")
         f.write(nmlgen.get_value('filenameflux')+"\n")
         f.write(content)
@@ -829,7 +820,7 @@ def buildnml(case, caseroot, compname):
     if is_restart: # Warm start
         # List coupler.res files
         res_files = []
-        for root, dirs, files in os.walk(os.path.join(rundir,"RESTART")):
+        for _, _, files in os.walk(os.path.join(rundir,"RESTART")):
             for filename in files:
                 if "coupler.res" in filename:
                     res_files.append(filename)

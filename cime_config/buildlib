@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, new_lid, stringify_bool, safe_copy
+from CIME.utils import run_cmd, expect, safe_copy
 from CIME.build import get_standard_makefile_args
 import six
 
@@ -52,56 +52,6 @@ def _build_ccpp_cmake_files(ccpp_blddir, ccpp_srcmods):
 
     return needs_update
 
-def _install_configure_file(case, srcroot, bldroot, ccpp):
-    """
-    Create a file configure.fv3 used by the fv3 build system
-    """
-    machine = case.get_value("MACH")
-    compiler = case.get_value("COMPILER")
-    debug = case.get_value("DEBUG")
-    openmp = case.get_value("BUILD_THREADED")
-    mpilib = case.get_value("MPILIB")
-    caseroot = case.get_value("CASEROOT")
-
-    conf_template_dir = os.path.join(srcroot,"src","model","conf")
-    expect(os.path.isdir(conf_template_dir),"ERROR: conf dir {} not found".format(conf_template_dir))
-    conf_file = "configure.fv3.{}.{}".format(machine,compiler)
-    if not os.path.isfile(os.path.join(conf_template_dir,conf_file)):
-        # try generic
-        conf_file = "configure.fv3.linux.{}".format(compiler)
-
-    expect(os.path.isfile(os.path.join(conf_template_dir,conf_file)),"ERROR no configuration file found for {} {} {}".format(machine,compiler,mpilib))
-    conf_file = os.path.join(conf_template_dir, conf_file)
-    conf_dir = os.path.join(bldroot,"conf")
-    if not os.path.isdir(conf_dir):
-        os.makedirs(os.path.join(bldroot,"conf"))
-    with open(conf_file) as finp, open(os.path.join(conf_dir,"configure.fv3"), 'w') as fout:
-        for s in finp.xreadlines():
-            if s.startswith("SHELL"):
-                fout.write(s)
-                fout.write("-include {}\n".format(os.path.join(caseroot,"Macros.make")))
-                fout.write("CPPDEFS += -DSTATIC\n")
-                fout.write("FPPFLAGS += -DSTATIC\n")
-                continue
-            if s.startswith("DEBUG ="):
-                fout.write("DEBUG = {}\n".format("Y" if debug else "N"))
-                continue
-            if s.startswith("OPENMP ="):
-                fout.write("OPENMP = {}\n".format("Y" if openmp else "N"))
-                continue
-            if s.startswith("CCPP ="):
-                fout.write("CCPP = {}\n".format("Y" if ccpp else "N"))
-                continue
-            if s.startswith("LDFLAGS :="):
-                fout.write(s.rstrip()+"-L$(ESMF_LIBSDIR) -lesmf -L. -lfv3cap\n")
-                continue
-            if s.startswith("INCLUDE ="):
-                if ccpp:
-                    s = s.rstrip()+" -I{} ".format(os.path.join(bldroot,"ccpp","physics"))
-                s+= "-I{}\n".format(os.path.join(bldroot,"gfsphysics"))
-            fout.write(s)
-    return conf_dir
-
 def _create_dir_structure(srcdir,targetdir, sourcemods=None):
     """
     Reproduce the directory structure of srcdir in targetdir with
@@ -137,6 +87,7 @@ def _create_dir_structure(srcdir,targetdir, sourcemods=None):
     return structure_updated
 
 ###############################################################################
+#pylint: disable=unused-argument
 def buildlib(caseroot, libroot, bldroot):
 ###############################################################################
 
@@ -153,9 +104,14 @@ def buildlib(caseroot, libroot, bldroot):
         ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
         gmake = case.get_value("GMAKE")
         gmake_j = case.get_value("GMAKE_J")
+        debug = case.get_value("DEBUG")
         cmake_flags = " -DCOMPILER={} ".format(case.get_value("COMPILER"))
         cmake_flags += " -DMPILIB={} ".format(case.get_value("MPILIB"))
-        cmake_flags += " -DDEBUG={} ".format(stringify_bool(case.get_value("DEBUG")))
+        if debug:
+            cmake_flags += " -DDEBUG=TRUE "
+            cmake_flags += " -DCMAKE_BUILD_TYPE=Debug "
+        if debug or case.get_value("TEST"):
+            cmake_flags += " -DREPRO=ON "
 
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
@@ -167,13 +123,13 @@ def buildlib(caseroot, libroot, bldroot):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
 
-                stat, out, err = run_cmd("{} --config {} --static --suites={} --builddir {}"
+                stat, _, err = run_cmd("{} --config {} --static --suites={} --builddir {}"
                         .format(ccpp_preconfig, ccpp_config, ccpp_suites,
                                 os.path.join(bldroot,"FV3"),verbose=True,
                                 from_dir=srcdir))
                 expect(stat==0,"ccpp_preconfig error from fv3 {}".format(err))
-                _build_ccpp_cmake_files(ccpp_blddir,
-                                        os.path.join(caseroot,"SourceMods","src.ufsatm"))
+                _build_ccpp_cmake_files(ccpp_blddir,ccpp_srcmods)
+
 
             cmake_flags += " -DCCPP=ON -DSUITES={} ".format(ccpp_suites)
 
@@ -184,7 +140,7 @@ def buildlib(caseroot, libroot, bldroot):
             cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
         else:
             cmake_flags += " -DOPENMP=OFF "
-        
+
         mklroot = os.environ.get("MKLROOT")
         if mklroot:
             cmake_flags += " -DMKL_DIR={}".format(mklroot)
@@ -207,17 +163,20 @@ def buildlib(caseroot, libroot, bldroot):
             cmake_flags += " -DCMAKE_Fortran_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
             cmake_flags += " -DCMAKE_C_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
             #        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
+
+            cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
             os.environ["CMAKE_C_COMPILER"]="mpicc"
             os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
             os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
-            stat, out, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot,from_dir=bldroot,verbose=True))
+            print "Calling cmake {} {}".format(cmake_flags, bldroot)
+            stat, _, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot),from_dir=bldroot,verbose=True)
             expect(stat==0,"CMAKE error from fv3 {}".format(err))
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
         gmake_args += " VERBOSE=1 "
-        stat, out, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
+        stat, _, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
         expect(stat==0,"Build error from fv3 {}".format(err))
 
 def _main_func():
