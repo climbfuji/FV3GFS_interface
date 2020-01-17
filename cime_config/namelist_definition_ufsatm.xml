@@ -9150,8 +9150,6 @@
   </values>
 </entry>
 
-<!--
-
 <entry id="kth">
   <type>integer</type>
   <category>ncep_post</category>
@@ -9250,7 +9248,6 @@
     <value>.true.</value>
   </values>
 </entry>
--->
 
 <entry id="filename">
   <type>char</type>
@@ -9315,4 +9312,15 @@
   </values>
 </entry>
 
+<entry id="filenameflat">
+  <type>char</type>
+  <category>ncep_post</category>
+  <group>freeform</group>
+  <desc>
+  Name of flat file 
+  </desc>
+  <values>
+    <value>postxconfig-NT.txt</value>
+  </values>
+</entry>
 </entry_id>
