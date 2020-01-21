@@ -937,7 +937,7 @@ def buildnml(case, caseroot, compname):
     logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
-    #symlink_force(file2, os.path.join(rundir, "input.nml"))
+    symlink_force(file2, os.path.join(rundir, "input.nml"))
 
     #----------------------------------------------------
     # Copy/link input files
