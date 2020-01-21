@@ -604,9 +604,21 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
         expect(False, "Option >nsteps< is not supported!")
 
     # Change restart interval
+    rest_option = case.get_value('REST_OPTION')
     rest_n = int(case.get_value('REST_N'))
-    if rest_n != stop_n:
+
+    if 'nyears' in rest_option:
+        expect(False, "Option >nyears< is not supported!")
+    elif 'nmonths' in rest_option:
+        expect(False, "Option >nmonths< is not supported!")
+    elif 'ndays' in rest_option:
+        nmlgen.set_value('restart_interval', rest_n*24)
+    elif 'nhours' in rest_option:
         nmlgen.set_value('restart_interval', rest_n)
+    elif 'nseconds' in rest_option:
+        nmlgen.set_value('restart_interval', rest_n/60)
+    elif 'nsteps' in rest_option:
+        expect(False, "Option >nsteps< is not supported!")
 
     # Change number of used PEs if there is a mismatch
     ntask_atm = int(case.get_value('NTASKS_ATM'))
@@ -921,12 +933,11 @@ def buildnml(case, caseroot, compname):
         logger.debug("ufsatm namelist copy: file1 %s file2 %s " %(file1, file2))
         safe_copy(file1, file2)
 
-
     # link file
     logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
-    symlink_force(file2, os.path.join(rundir, "input.nml"))
+    #symlink_force(file2, os.path.join(rundir, "input.nml"))
 
     #----------------------------------------------------
     # Copy/link input files

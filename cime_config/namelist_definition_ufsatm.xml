@@ -8114,7 +8114,7 @@
   </values>
 </entry>
 
-<entry id="restart_interval">
+<entry id="restart_interval" modify_dy_xml="REST_N">
   <type>integer</type>
   <category>esmf_config</category>
   <group>_no_group_var</group>
