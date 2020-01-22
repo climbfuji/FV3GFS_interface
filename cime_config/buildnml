@@ -252,6 +252,23 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             else:
                 safe_copy(src_file, tgt_file)
     else: # Cold start
+        # Remove restart files form INPUT/ directory, if there are
+        # Tiled files
+        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
+        for f in lst:
+            for tile in xrange(1,7):
+                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                if os.path.isfile(src_file):
+                    os.remove(src_file)
+
+        # Others
+        lst = ["fv_core.res.nc", "coupler.res"]
+        for f in lst:
+            src_file = os.path.join(rundir,"INPUT",f)
+            if os.path.isfile(src_file):
+                os.remove(src_file)
+
+        # Query date and time
         run_start_date = case.get_value('RUN_STARTDATE').split('-')
         yyyy = run_start_date[0]
         mm = run_start_date[1]
@@ -260,32 +277,22 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         run_start_tod = case.get_value('START_TOD')
         hh = int(run_start_tod//3600)
 
-        # Check initial condition
+        # Check already processes initial condition exists or not?
         f = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
             # TODO: Currently we are just supporting initial conditions from analysis, might need to extend it for forecast
             input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
             input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
+        else:
+            # Link existing initial condition
+            symlink_force(f, os.path.join(rundir,"INPUT","gfs_ctrl.nc"))
 
-        # Remove restart files form INPUT/ directory, if there is
-        # Tiled files
-        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
-        for f in lst:
-            for tile in xrange(1,7):
-                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
-                print("checking REMOVING {}".format(src_file))
-                if os.path.isfile(src_file):
-                    print("REMOVING {}".format(src_file))
-                    os.remove(src_file)
-
-        # Others
-        lst = ["fv_core.res.nc", "coupler.res"]
-        for f in lst:
-            src_file = os.path.join(rundir,"INPUT",f)
-            print("checking REMOVING {}".format(src_file))
-            if os.path.isfile(src_file):
-                print("REMOVING {}".format(src_file))
-                os.remove(src_file)
+            lst = ["gfs_data", "sfc_data"]
+            for f in lst:
+                for tile in xrange(1,7):
+                    src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".nc")
+                    tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                    symlink_force(src_file, tgt_file)
 
     # Write input file list
     with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
@@ -807,7 +814,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{hh:02d}:{mm:02d}:{ss:02d}".format(hh=hh,mm=mi,ss=ss)+"\n")
         f.write(nmlgen.get_value('modelname')+"\n")
         f.write(nmlgen.get_value('filenameflux')+"\n")
-        f.write(nmlgen.get_value('filenameflat')+"\n")
+        #f.write(nmlgen.get_value('filenameflat')+"\n")
         f.write(content)
 
 ###############################################################################
