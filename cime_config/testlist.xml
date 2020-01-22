@@ -2,7 +2,7 @@
 <testlist version="2.0">
 <!-- C96 -->
 
-  <test compset="GFSv15p2" grid="C96" name="SMS_Lh5">
+  <test compset="GFSv15p2" grid="C96" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -11,7 +11,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C96" name="SMS_Lh5">
+  <test compset="GFSv16beta" grid="C96" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -20,7 +20,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv15p2" grid="C96" name="SMS_Lh5_D">
+  <test compset="GFSv15p2" grid="C96" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -29,7 +29,26 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C96" name="SMS_Lh5_D">
+  <test compset="GFSv16beta" grid="C96" name="SMS_Lh3_D">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+      <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+
+  <test compset="GFSv15p2" grid="C96" name="ERS_Lh11">
+    <machines>
+      <machine name="cheyenne" compiler="intel" category="prealpha"/>
+      <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
+    </machines>
+    <options>
+      <option name="workflow">ufs-mrweather_wo_post</option>
+    </options>
+  </test>
+  <test compset="GFSv16beta" grid="C96" name="ERS_Lh11">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -41,7 +60,7 @@
 
 
 <!-- C192 -->
-  <test compset="GFSv15p2" grid="C192" name="SMS_Lh5">
+  <test compset="GFSv15p2" grid="C192" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -50,7 +69,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C192" name="SMS_Lh5">
+  <test compset="GFSv16beta" grid="C192" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -59,7 +78,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv15p2" grid="C192" name="SMS_Lh5_D">
+  <test compset="GFSv15p2" grid="C192" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -68,7 +87,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C192" name="SMS_Lh5_D">
+  <test compset="GFSv16beta" grid="C192" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -79,7 +98,7 @@
   </test>
 
 <!-- C384 -->
-  <test compset="GFSv15p2" grid="C384" name="SMS_Lh5">
+  <test compset="GFSv15p2" grid="C384" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -88,7 +107,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C384" name="SMS_Lh5">
+  <test compset="GFSv16beta" grid="C384" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -97,7 +116,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv15p2" grid="C384" name="SMS_Lh5_D">
+  <test compset="GFSv15p2" grid="C384" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -106,7 +125,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C384" name="SMS_Lh5_D">
+  <test compset="GFSv16beta" grid="C384" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -116,7 +135,7 @@
     </options>
   </test>
   <!-- C768 -->
-  <test compset="GFSv15p2" grid="C768" name="SMS_Lh5">
+  <test compset="GFSv15p2" grid="C768" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -125,7 +144,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C768" name="SMS_Lh5">
+  <test compset="GFSv16beta" grid="C768" name="SMS_Lh3">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -134,7 +153,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv15p2" grid="C768" name="SMS_Lh5_D">
+  <test compset="GFSv15p2" grid="C768" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
@@ -143,7 +162,7 @@
       <option name="workflow">ufs-mrweather_wo_post</option>
     </options>
   </test>
-  <test compset="GFSv16beta" grid="C768" name="SMS_Lh5_D">
+  <test compset="GFSv16beta" grid="C768" name="SMS_Lh3_D">
     <machines>
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha"/>
