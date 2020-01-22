@@ -110,8 +110,12 @@ def buildlib(caseroot, libroot, bldroot):
         if debug:
             cmake_flags += " -DDEBUG=TRUE "
             cmake_flags += " -DCMAKE_BUILD_TYPE=Debug "
+        else:
+            cmake_flags += " -DDEBUG=FALSE "
+
         if debug or case.get_value("TEST"):
             cmake_flags += " -DREPRO=ON "
+            cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
 
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
@@ -160,10 +164,6 @@ def buildlib(caseroot, libroot, bldroot):
                         netcdf = os.path.dirname(netcdf)+"/../"
                     cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
-            cmake_flags += " -DCMAKE_Fortran_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
-            cmake_flags += " -DCMAKE_C_FLAGS=-I{}".format(os.path.join(netcdf,"include"))
-            #        cmake_flags += " -DCMAKE_INSTALL_PREFIX={} ".format(libroot)
-
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
             os.environ["CMAKE_C_COMPILER"]="mpicc"
             os.environ["CMAKE_CXX_COMPILER"]="mpicxx"

@@ -273,14 +273,18 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         for f in lst:
             for tile in xrange(1,7):
                 src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                print("checking REMOVING {}".format(src_file))
                 if os.path.isfile(src_file):
+                    print("REMOVING {}".format(src_file))
                     os.remove(src_file)
 
         # Others
         lst = ["fv_core.res.nc", "coupler.res"]
         for f in lst:
-            tgt_file = os.path.join(rundir,"INPUT",f))
-            if not os.path.isfile(src_file):
+            src_file = os.path.join(rundir,"INPUT",f)
+            print("checking REMOVING {}".format(src_file))
+            if os.path.isfile(src_file):
+                print("REMOVING {}".format(src_file))
                 os.remove(src_file)
 
     # Write input file list
@@ -471,15 +475,15 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
             nmlgen_input.set_value('res_latlon_dynamics', "INPUT/fv_rst.res.nc")
     else: # Cold start
         # Set back to their defaults
-        nmlgen_input.set_value('warm_start', nmlgen_input_sav.get_value('warm_start')) 
+        nmlgen_input.set_value('warm_start', nmlgen_input_sav.get_value('warm_start'))
         nmlgen_input.set_value('nggps_ic', nmlgen_input_sav.get_value('nggps_ic'))
         nmlgen_input.set_value('external_ic', nmlgen_input_sav.get_value('external_ic'))
         nmlgen_input.set_value('mountain', nmlgen_input_sav.get_value('mountain'))
         nmlgen_input.set_value('make_nh', nmlgen_input_sav.get_value('make_nh'))
-        nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))        
+        nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))
         nmlgen_input.set_value('nstf_name', nmlgen_input_sav.get_value('nstf_name'))
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
-        nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics')) 
+        nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))
 
     #----------------------------------------------------
     # Write out namelist groups
@@ -908,7 +912,7 @@ def buildnml(case, caseroot, compname):
                 if not os.path.isfile(src_file):
                     expect(False, "{} is missing.".format(src_file))
                 else:
-                    safe_copy(src_file, tgt_file)            
+                    safe_copy(src_file, tgt_file)
     else:
         prefix = ""
 
