@@ -267,6 +267,22 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
             input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
 
+        # Remove restart files form INPUT/ directory, if there is
+        # Tiled files
+        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
+        for f in lst:
+            for tile in xrange(1,7):
+                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                if os.path.isfile(src_file):
+                    os.remove(src_file)
+
+        # Others
+        lst = ["fv_core.res.nc", "coupler.res"]
+        for f in lst:
+            tgt_file = os.path.join(rundir,"INPUT",f))
+            if not os.path.isfile(src_file):
+                os.remove(src_file)
+
     # Write input file list
     with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
         for k,v in input_files.items():
