@@ -734,7 +734,7 @@
   </values>
 </entry>
 
-<entry id="ccpp_suite">
+<entry id="ccpp_suite" modify_via_xml="CCPP_SUITES">
   <type>char</type>
   <group>atmos_model_nml</group>
   <desc></desc>
