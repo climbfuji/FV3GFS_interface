@@ -290,7 +290,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             lst = ["gfs_data", "sfc_data"]
             for f in lst:
                 for tile in xrange(1,7):
-                    src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".nc")
+                    src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
                     tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
                     symlink_force(src_file, tgt_file)
 
