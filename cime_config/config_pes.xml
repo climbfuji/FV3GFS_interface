@@ -120,61 +120,17 @@
       <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
-          <ntasks_atm>150</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-	</nthrds>
-      </pes>
-    </mach>
-    <mach name="cheyenne">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
           <ntasks_atm>108</ntasks_atm>
         </ntasks>
         <nthrds>
           <nthrds_atm>1</nthrds_atm>
 	</nthrds>
-      </pes>
-    </mach>
-    <mach name="stampede2-skx">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>108</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
       </pes>
     </mach>
   </grid>
 
   <grid name="a%C192">
     <mach name="any">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>300</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="cheyenne">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>180</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="stampede2-skx">
       <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
@@ -192,28 +148,6 @@
       <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
-          <ntasks_atm>450</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="cheyenne">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>252</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="stampede2-skx">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
           <ntasks_atm>252</ntasks_atm>
         </ntasks>
         <nthrds>
@@ -228,32 +162,10 @@
       <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
-          <ntasks_atm>1728</ntasks_atm>
+          <ntasks_atm>684</ntasks_atm>
         </ntasks>
         <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="cheyenne">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>684</ntasks_atm>
-         </ntasks>
-        <nthrds>
           <nthrds_atm>2</nthrds_atm>
-        </nthrds>
-      </pes>
-    </mach>
-    <mach name="stampede-skx">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>684</ntasks_atm>
-         </ntasks>
-        <nthrds>
-          <nthrds_atm>4</nthrds_atm>
         </nthrds>
       </pes>
     </mach>
