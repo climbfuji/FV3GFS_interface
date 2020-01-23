@@ -287,12 +287,15 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             # Link existing initial condition
             symlink_force(f, os.path.join(rundir,"INPUT","gfs_ctrl.nc"))
 
-            lst = ["gfs_data", "sfc_data"]
-            for f in lst:
-                for tile in xrange(1,7):
-                    src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
-                    tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+        lst = ["gfs_data", "sfc_data"]
+        for f in lst:
+            for tile in xrange(1,7):
+                src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
+                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                if os.path.isfile(tgt_file):
                     symlink_force(src_file, tgt_file)
+                else:
+                    logger.warning("Target file {} not found".format(tgt_file))
 
     # Write input file list
     with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
