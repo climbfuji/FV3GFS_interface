@@ -140,7 +140,7 @@ def buildlib(caseroot, libroot, bldroot):
         cmake_flags += " -DMPI=ON "
         cmake_flags += " -DSTATIC=ON "
 
-        if case.get_value("BUILD_THREADED"):
+        if case.get_value("BUILD_THREADED") or case.get_value("FORCE_BUILD_SMP"):
             cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
         else:
             cmake_flags += " -DOPENMP=OFF "

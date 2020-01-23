@@ -278,22 +278,29 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
 
         run_start_tod = case.get_value('START_TOD')
         hh = int(run_start_tod//3600)
+        # For cime tests that use two test directories
+        rundirdst = rundir
+        if rundir.endswith("case2run"):
+            rundirsrc = os.path.abspath(os.path.join(rundir, os.pardir))
+        else:
+            rundirsrc = rundir
 
         # Check already processes initial condition exists or not?
-        f = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
+        f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
             # TODO: Currently we are just supporting initial conditions from analysis, might need to extend it for forecast
             input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
             input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
         else:
             # Link existing initial condition
-            symlink_force(f, os.path.join(rundir,"INPUT","gfs_ctrl.nc"))
+            symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
 
         lst = ["gfs_data", "sfc_data"]
+
         for f in lst:
             for tile in xrange(1,7):
-                src_file = os.path.join(rundir,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
-                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
+                tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
                 if os.path.isfile(src_file):
                     symlink_force(src_file, tgt_file)
                     logger.info("chgres source file {} linked to {}".format(src_file, tgt_file))
