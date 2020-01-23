@@ -259,6 +259,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             for tile in xrange(1,7):
                 src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
                 if os.path.isfile(src_file):
+                    logger.warning("removing file {}".format(src_file))
                     os.remove(src_file)
 
         # Others
@@ -266,6 +267,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         for f in lst:
             src_file = os.path.join(rundir,"INPUT",f)
             if os.path.isfile(src_file):
+                logger.warning("removing file {}".format(src_file))
                 os.remove(src_file)
 
         # Query date and time
@@ -294,6 +296,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
                 tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
                 if os.path.isfile(src_file):
                     symlink_force(src_file, tgt_file)
+                    logger.info("chgres source file {} linked to {}".format(src_file, tgt_file))
                 else:
                     logger.warning("chgres source file {} not found".format(src_file))
 
@@ -565,6 +568,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     #----------------------------------------------------
     data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ufsatm.input_data_list")
     if os.path.exists(data_list_path):
+        logger.warning("removing file {}".format(data_list_path))
         os.remove(data_list_path)
 
     #----------------------------------------------------
@@ -1014,6 +1018,7 @@ def buildnml(case, caseroot, compname):
         # remove old configuration files
         for f in os.listdir(rundir):
             if "itag" in f:
+                logger.warning("removing file {}".format(f))
                 os.remove(os.path.join(rundir,f))
 
         # create namelist model_configure
