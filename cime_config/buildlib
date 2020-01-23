@@ -153,16 +153,18 @@ def buildlib(caseroot, libroot, bldroot):
             if netcdf:
                 cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
                 break
-            if not netcdf:
-                # one last try
-                from distutils.spawn import find_executable
-                netcdf = find_executable("ncdump")
-                if netcdf:
-                    if six.PY3:
-                        netcdf = os.path.dirname(netcdf).parent
-                    else:
-                        netcdf = os.path.dirname(netcdf)+"/../"
-                    cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
+        if not netcdf:
+            # one last try
+            from distutils.spawn import find_executable
+            netcdf = find_executable("ncdump")
+            if netcdf:
+                if six.PY3:
+                    netcdf = os.path.dirname(netcdf).parent
+                else:
+                    netcdf = os.path.abspath(os.path.join(netcdf, os.pardir))
+                cmake_flags += " -DNETCDF_DIR={} ".format(netcdf)
+        # This is the variable expected in configure_cime.cmake
+        os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
             os.environ["CMAKE_C_COMPILER"]="mpicc"
