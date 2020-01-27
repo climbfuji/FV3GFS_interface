@@ -165,7 +165,7 @@
           <ntasks_atm>684</ntasks_atm>
         </ntasks>
         <nthrds>
-          <nthrds_atm>2</nthrds_atm>
+          <nthrds_atm>4</nthrds_atm>
         </nthrds>
       </pes>
     </mach>
