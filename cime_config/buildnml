@@ -831,6 +831,16 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         #f.write(nmlgen.get_value('filenameflat')+"\n")
         f.write(content)
 
+    # Check/correct task count used for post-processing 
+    atm_grid = case.get_value("ATM_GRID")
+    res = int(atm_grid.replace('C',''))    
+    task_count = int(case.get_value("task_count", subgroup="case.gfs_post"))
+    tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
+
+    if task_count > res:
+        case.set_value("task_count", str(res-res%tasks_per_node), subgroup="case.gfs_post")
+        logger.info("NCEP post task count is changed from {} to {}!".format(task_count, res-res%tasks_per_node))
+
 ###############################################################################
 def buildnml(case, caseroot, compname):
 ###############################################################################
