@@ -762,6 +762,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     task_count = {"C96": tasks_per_node, "C192": tasks_per_node, "C384": tasks_per_node*2, "C768": tasks_per_node*4} 
     if atm_grid in task_count.keys(): 
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
+        case.flush()
         logger.info("CHGRES task count is changed to {}!".format(task_count[atm_grid]))
 
     # remove namelist options that has no specialization
@@ -846,6 +847,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
     if task_count > res:
         case.set_value("task_count", str(res-res%tasks_per_node), subgroup="case.gfs_post")
+        case.flush()
         logger.info("NCEP Post task count is changed to {}!".format(res-res%tasks_per_node))
 
 ###############################################################################
