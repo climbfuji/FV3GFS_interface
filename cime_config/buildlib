@@ -113,7 +113,7 @@ def buildlib(caseroot, libroot, bldroot):
         else:
             cmake_flags += " -DDEBUG=FALSE "
 
-        if debug or case.get_value("TEST"):
+        if not debug and case.get_value("TEST"):
             cmake_flags += " -DREPRO=ON "
             cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
 
