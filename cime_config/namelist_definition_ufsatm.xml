@@ -8231,7 +8231,6 @@
   <valid_values>netcdf,netcdf_esmf,nemsio</valid_values>
   <values>
     <value>netcdf</value>
-    <value app="mrweather">nemsio</value>
   </values>
 </entry>
 
