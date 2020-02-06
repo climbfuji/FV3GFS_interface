@@ -1870,6 +1870,7 @@
   <group>fv_core_nml</group>
   <desc></desc>
   <values>
+    <value>1,1</value>
     <value app="mrweather" hgrid="C96" >4,4</value>
     <value app="mrweather" hgrid="C192">4,6</value>
     <value app="mrweather" hgrid="C384">6,6</value>
@@ -7935,9 +7936,9 @@
   <group>_no_group_var</group>
   <desc>
   </desc>
-  <values>             
+  <values>
     <value>1</value>
-  </values>            
+  </values>
 </entry>
 
 <entry id="start_day" modify_via_xml="RUN_STARTDATE">
@@ -7946,9 +7947,9 @@
   <group>_no_group_var</group>
   <desc>
   </desc>
-  <values>             
+  <values>
     <value>2012</value>
-  </values>            
+  </values>
 </entry>
 
 <entry id="start_hour" modify_via_xml="START_TOD">
@@ -7957,9 +7958,9 @@
   <group>_no_group_var</group>
   <desc>
   </desc>
-  <values>             
+  <values>
     <value>0</value>
-  </values>            
+  </values>
 </entry>
 
 <entry id="start_minute" modify_via_xml="START_TOD">
@@ -8877,7 +8878,7 @@
   <category>chgres</category>
   <group>config</group>
   <desc>
-  File name of input nst data. Only used for input_type "gfs_gaussian". 
+  File name of input nst data. Only used for input_type "gfs_gaussian".
   </desc>
   <values>
     <value></value>
@@ -8902,7 +8903,7 @@
   <category>chgres</category>
   <group>config</group>
   <desc>
-  File names of input atmospheric data (for each tile)   
+  File names of input atmospheric data (for each tile)
   </desc>
   <values>
     <value></value>
@@ -9104,7 +9105,7 @@
   <category>chgres</category>
   <group>config</group>
   <desc>
-  Number of row/cols of lateral halo, where pure lateral bndy conditions are applied (regional target grids). 
+  Number of row/cols of lateral halo, where pure lateral bndy conditions are applied (regional target grids).
   </desc>
   <values>
     <value>0</value>
@@ -9316,7 +9317,7 @@
   <category>ncep_post</category>
   <group>freeform</group>
   <desc>
-  Name of flat file 
+  Name of flat file
   </desc>
   <values>
     <value>postxconfig-NT.txt</value>

@@ -533,9 +533,8 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     groups.sort()
 
     ntask_atm = int(case.get_value('NTASKS_ATM'))
-    layout = [1,1]
     if ntask_atm == 8:
-        nmlgen_input.set_value('layout',value=layout)
+        nmlgen_input.set_value('layout',value=[1,1])
 
     # Remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
@@ -763,12 +762,11 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
-    # Check/correct task count used for post-processing 
+    # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*2)//6), "C768": 6*((tasks_per_node*4)//6)} 
-    print "task_count is {}".format(task_count)
-    if atm_grid in task_count.keys(): 
+    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*2)//6), "C768": 6*((tasks_per_node*4)//6)}
+    if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
         case.flush()
         logger.info("CHGRES task count is changed to {}!".format(task_count[atm_grid]))
@@ -848,9 +846,9 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         #f.write(nmlgen.get_value('filenameflat')+"\n")
         f.write(content)
 
-    # Check/correct task count used for post-processing 
+    # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
-    res = int(atm_grid.replace('C',''))    
+    res = int(atm_grid.replace('C',''))
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
     task_count = {"C96": tasks_per_node, "C192": tasks_per_node, "C384": tasks_per_node*2, "C768": tasks_per_node*4}
     if atm_grid in task_count.keys():
@@ -890,7 +888,6 @@ def buildnml(case, caseroot, compname):
     config['app'] = app
     config['ccpp'] = ccpp_suite
     config['hgrid'] = case.get_value("ATM_GRID")
-
     # path for namelist files
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
