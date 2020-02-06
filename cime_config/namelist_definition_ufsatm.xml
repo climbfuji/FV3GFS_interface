@@ -1870,7 +1870,6 @@
   <group>fv_core_nml</group>
   <desc></desc>
   <values>
-    <value>1,1</value>
     <value app="mrweather" hgrid="C96" >4,4</value>
     <value app="mrweather" hgrid="C192">4,6</value>
     <value app="mrweather" hgrid="C384">6,6</value>

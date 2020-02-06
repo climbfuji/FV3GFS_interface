@@ -532,6 +532,11 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Sort group
     groups.sort()
 
+    ntask_atm = int(case.get_value('NTASKS_ATM'))
+    layout = [1,1]
+    if ntask_atm == 8:
+        nmlgen_input.set_value('layout',value=layout)
+
     # Remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
 
@@ -546,7 +551,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     write_tasks_per_group = int(nmlgen_model.get_value('write_tasks_per_group'))
     write_groups = int(nmlgen_model.get_value('write_groups'))
 
-    ntask_atm = int(case.get_value('NTASKS_ATM'))
+
     ntask_atm_config = layout_x*layout_y*ntiles+write_tasks_per_group*write_groups
     if ntask_atm_config != ntask_atm:
         expect(False, ("Total number of PE need to be consistent with the model namelist options:\n"+
@@ -666,6 +671,8 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     pe_member = int(nmlgen.get_value('PE_MEMBER01'))
     if pe_member != ntask_atm:
         nmlgen.set_value('PE_MEMBER01', ntask_atm)
+    if ntask_atm == 8:
+        nmlgen.set_value("write_tasks_per_group",2)
 
     # Test run specific modifications
     testcase = case.get_value("TEST")
@@ -759,7 +766,8 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # Check/correct task count used for post-processing 
     atm_grid = case.get_value("ATM_GRID")
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    task_count = {"C96": tasks_per_node, "C192": tasks_per_node, "C384": tasks_per_node*2, "C768": tasks_per_node*4} 
+    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*2)//6), "C768": 6*((tasks_per_node*4)//6)} 
+    print "task_count is {}".format(task_count)
     if atm_grid in task_count.keys(): 
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
         case.flush()
