@@ -532,12 +532,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Sort group
     groups.sort()
 
-    ntask_atm = int(case.get_value('NTASKS_ATM'))
-    if ntask_atm == 8:
-        nmlgen_input.set_value('layout',value=[1,1])
 
     # Remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
+
+    ntask_atm = int(case.get_value('NTASKS_ATM'))
+    if ntask_atm == 8:
+        nmlgen.set_value('layout',value=[1,1])
 
     # Overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
@@ -888,6 +889,8 @@ def buildnml(case, caseroot, compname):
     config['app'] = app
     config['ccpp'] = ccpp_suite
     config['hgrid'] = case.get_value("ATM_GRID")
+    config['ntasks'] = str(case.get_value("ATM_NTASKS"))
+    print "config is {}".format(config)
     # path for namelist files
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
