@@ -210,6 +210,9 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         levp = nmlgen_input.get_value("levp")
         input_files["global_hyblev"] = [os.path.join(dir_fix_am,"global_hyblev.l{}.txt".format(levp)), "ln", os.path.join("INPUT","global_hyblev.l{}.txt".format(levp))]
 
+        # Grib2 specific file
+        input_files["var_map"] = [os.path.join(dir_fix_parm,"GFSphys_var_map.txt"), "cp", "GFSphys_var_map.txt"]
+
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
         input_files["postxconfig1"] = [os.path.join(dir_fix_parm,"postxconfig-NT-GFS.txt"), "cp", "postxconfig-NT-GFS.txt"]
@@ -288,9 +291,9 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Check already processes initial condition exists or not?
         f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
-            # TODO: Currently we are just supporting initial conditions from analysis, might need to extend it for forecast
-            input_files["ic_atm"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.atmanl.nemsio".format(hh)), "none", "none"]
-            input_files["ic_sfc"] = [os.path.join(dir_ic,"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh)), "none", "none"]
+            input_files["ic_ctl"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.ctl".format(hh)), "none", "none"]
+            input_files["ic_idx"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.idx".format(hh)), "none", "none"]
+            input_files["ic_inv"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
         else:
             # Link existing initial condition
             symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -759,9 +762,42 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_day', int(dd))
     nmlgen.set_value('cycle_hour', int(hh))
 
-    # Set input data directory
+    # Input directory
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
     nmlgen.set_value('data_dir_input_grid', icdir)
+
+    # Check input directory to find input_type
+    input_type = {}
+    for f in os.listdir(icdir):
+        if f.endswith('.nemsio'):
+            input_type["nemsio"] = "gaussian"
+        elif f.endswith('.grb2'):
+            input_type["grb2"] = "grib2"
+
+    if input_type is None:
+        expect(False, "Current version of the model only supports *.nemsio and *.grb2 files as input! Exiting ...")
+    else:
+        if len(input_type) == 1:
+            key, value = next((str(k), str(v)) for k, v in input_type.items())
+            nmlgen.set_value('input_type', value)
+        else:
+            logger.info("The input directory both have *.nemsio and *.grb2 files. The CHGRES is configured to process Grib2.")
+            nmlgen.set_value('input_type', 'grib2')
+
+    # Set input_type specific options 
+    if nmlgen.get_value('input_type') == 'gaussian':
+        atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
+        nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
+        sfc_files_input_grid = ["gfs.t{0:02d}z.sfcanl.nemsio".format(hh)]
+        nmlgen.set_value('sfc_files_input_grid', sfc_files_input_grid)
+        tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
+        nmlgen.set_value('tracers', tracers)
+        tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
+        nmlgen.set_value('tracers_input', tracers_input)
+        nmlgen.set_value('convert_nst', True)
+    elif nmlgen.get_value('input_type') == 'grib2':
+        nmlgen.set_value('grib2_file_input_grid',"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
     # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
