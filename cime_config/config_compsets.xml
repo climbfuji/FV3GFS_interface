@@ -51,7 +51,13 @@
     <entry id="RUN_STARTDATE">
       <values>
 	<!-- default value for testing -->
-	<value>2019-09-09</value>
+	<value>2019-08-29</value>
+      </values>
+    </entry>
+    <entry id="START_TOD">
+      <values>
+        <!-- default value for testing -->
+        <value>0</value>
       </values>
     </entry>
     <entry id="COMP_CLASSES">

@@ -291,8 +291,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Check already processes initial condition exists or not?
         f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
-            input_files["ic_ctl"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.ctl".format(hh)), "none", "none"]
-            input_files["ic_idx"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.idx".format(hh)), "none", "none"]
             input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
             input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
         else:
@@ -764,7 +762,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_hour', int(hh))
 
     # Input directory
-    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"gfs.{}{}{}".format(yyyy,mm,dd),"{0:02d}".format(hh))
+    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
     # Check input directory to find input_type
