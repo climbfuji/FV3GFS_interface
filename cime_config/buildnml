@@ -767,11 +767,12 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Check input directory to find input_type
     input_type = {}
-    for f in os.listdir(icdir):
-        if f.endswith('.nemsio'):
-            input_type["nemsio"] = "gaussian"
-        elif f.endswith('.grb2'):
-            input_type["grb2"] = "grib2"
+    if os.path.exists(icdir):
+        for f in os.listdir(icdir):
+            if f.endswith('.nemsio'):
+                input_type["nemsio"] = "gaussian"
+            elif f.endswith('.grb2'):
+                input_type["grb2"] = "grib2"
 
     if "grb2" in input_type:
         logger.info("Found grib2 files in input")
