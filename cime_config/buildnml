@@ -291,9 +291,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Check already processes initial condition exists or not?
         f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
-            input_files["ic_ctl"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.ctl".format(hh)), "none", "none"]
-            input_files["ic_idx"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.idx".format(hh)), "none", "none"]
-            input_files["ic_inv"] = [os.path.join(dir_ic,"gfsanl","{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
+            input_files["ic_ctl"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.ctl".format(hh)), "none", "none"]
+            input_files["ic_idx"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.idx".format(hh)), "none", "none"]
+            input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
+            input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
         else:
             # Link existing initial condition
             symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -308,7 +309,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
                     symlink_force(src_file, tgt_file)
                     logger.info("chgres source file {} linked to {}".format(src_file, tgt_file))
                 else:
-                    logger.warning("chgres source file {} not found".format(src_file))
+                    logger.debug("chgres source file {} not found".format(src_file))
 
     # Write input file list
     with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
@@ -774,17 +775,17 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         elif f.endswith('.grb2'):
             input_type["grb2"] = "grib2"
 
-    if input_type is None:
-        expect(False, "Current version of the model only supports *.nemsio and *.grb2 files as input! Exiting ...")
+    if "grb2" in input_type:
+        logger.info("Found grib2 files in input")
+        nmlgen.set_value('input_type', 'grib2')
+    elif "nemsio" in input_type:
+        logger.info("Found nemsio files in input")
+        nmlgen.set_value('input_type', "gaussian")
     else:
-        if len(input_type) == 1:
-            key, value = next((str(k), str(v)) for k, v in input_type.items())
-            nmlgen.set_value('input_type', value)
-        else:
-            logger.info("The input directory both have *.nemsio and *.grb2 files. The CHGRES is configured to process Grib2.")
-            nmlgen.set_value('input_type', 'grib2')
+        logger.info("No input files found locally, will attempt to download")
 
-    # Set input_type specific options 
+
+    # Set input_type specific options
     if nmlgen.get_value('input_type') == 'gaussian':
         atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
         nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
@@ -926,7 +927,7 @@ def buildnml(case, caseroot, compname):
     config['ccpp'] = ccpp_suite
     config['hgrid'] = case.get_value("ATM_GRID")
     config['ntasks'] = str(case.get_value("ATM_NTASKS"))
-    print "config is {}".format(config)
+
     # path for namelist files
     namelist_xml_dir = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
 
