@@ -116,7 +116,7 @@
   </grid>
 
   <grid name="a%C96">
-    <mach name="homebrew">
+    <mach name="macos">
       <pes pesize="any" compset="ufsatm">
         <comment>none</comment>
         <ntasks>
