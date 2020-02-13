@@ -435,7 +435,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp):
+def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -551,7 +551,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         nmlgen_input.set_value('mountain', nmlgen_input_sav.get_value('mountain'))
         nmlgen_input.set_value('make_nh', nmlgen_input_sav.get_value('make_nh'))
         nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))
-        nmlgen_input.set_value('nstf_name', nmlgen_input_sav.get_value('nstf_name'))
+       
+        # Turn off nst
+        nstf_name = nmlgen_input_sav.get_value('nstf_name')
+        if input_type == 'grib2':
+            nstf_name[0] = 0
+           
+        nmlgen_input.set_value('nstf_name', nstf_name)
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
         nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))
 
@@ -760,7 +766,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -818,27 +824,9 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
-    # Check input directory to find input_type
-    input_type = {}
-    if os.path.exists(icdir):
-        for f in os.listdir(icdir):
-            if f.endswith('.nemsio'):
-                input_type["nemsio"] = "gaussian"
-            elif f.endswith('.grb2'):
-                input_type["grb2"] = "grib2"
-
-    if "grb2" in input_type:
-        logger.info("Found grib2 files in input")
-        nmlgen.set_value('input_type', 'grib2')
-    elif "nemsio" in input_type:
-        logger.info("Found nemsio files in input")
-        nmlgen.set_value('input_type', "gaussian")
-    else:
-        logger.info("No input files found locally, will attempt to download")
-
-
     # Set input_type specific options
-    if nmlgen.get_value('input_type') == 'gaussian':
+    nmlgen.set_value('input_type', input_type)
+    if input_type == 'gaussian':
         atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
         nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
         sfc_files_input_grid = ["gfs.t{0:02d}z.sfcanl.nemsio".format(hh)]
@@ -848,7 +836,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
-    elif nmlgen.get_value('input_type') == 'grib2':
+    elif input_type == 'grib2':
         nmlgen.set_value('grib2_file_input_grid',"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
@@ -1065,6 +1053,35 @@ def buildnml(case, caseroot, compname):
         prefix = ""
 
     #----------------------------------------------------
+    # Set input type 
+    #----------------------------------------------------
+
+    # Query input directory
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
+    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
+
+    # Check input directory to find input_type
+    input_type = {}
+    if os.path.exists(icdir):
+        for f in os.listdir(icdir):
+            if f.endswith('.nemsio'):
+                input_type["nemsio"] = "gaussian"
+            elif f.endswith('.grb2'):
+                input_type["grb2"] = "grib2"
+
+    if "grb2" in input_type:
+        logger.info("Found grib2 files in input")
+        input_type = 'grib2'
+    elif "nemsio" in input_type:
+        logger.info("Found nemsio files in input")
+        input_type = 'gaussian'
+    else:
+        logger.info("No input files found locally, will attempt to download")
+
+    #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
     #----------------------------------------------------
 
@@ -1092,7 +1109,7 @@ def buildnml(case, caseroot, compname):
     nmlgen_input_def = NamelistGenerator(case, definition_file)
 
     # create namelist input.nml
-    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp)
+    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type)
 
     # copy namelist files to rundir
     if os.path.isdir(rundir):
@@ -1132,7 +1149,7 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
