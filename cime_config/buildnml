@@ -849,7 +849,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
     elif nmlgen.get_value('input_type') == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('grib2_file_input_grid',"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
     # Check/correct task count used for post-processing
