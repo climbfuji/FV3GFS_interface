@@ -291,8 +291,8 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Check already processes initial condition exists or not?
         f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
-            input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
-            input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
+#            input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
+            input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
         else:
             # Link existing initial condition
             symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -796,7 +796,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
     elif nmlgen.get_value('input_type') == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('grib2_file_input_grid',"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
     # Check/correct task count used for post-processing
