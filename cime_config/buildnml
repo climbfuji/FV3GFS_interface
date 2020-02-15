@@ -122,7 +122,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, prefix):
+def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -291,8 +291,8 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         # Check already processes initial condition exists or not?
         f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
         if not os.path.isfile(f):
-#            input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
-            input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
+            if input_type == 'grib2': 
+                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
         else:
             # Link existing initial condition
             symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -1007,6 +1007,8 @@ def buildnml(case, caseroot, compname):
                 input_type["nemsio"] = "gaussian"
             elif f.endswith('.grb2'):
                 input_type["grb2"] = "grib2"
+        if not input_type:
+            input_type["grb2"] = "grib2"
 
     if "grb2" in input_type:
         logger.info("Found grib2 files in input")
@@ -1015,7 +1017,7 @@ def buildnml(case, caseroot, compname):
         logger.info("Found nemsio files in input")
         input_type = 'gaussian'
     else:
-        logger.info("No input files found locally, will attempt to download")
+        logger.info("No input files found locally, will attempt to download data in grib2 format")
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
@@ -1064,7 +1066,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input, prefix)
+    prep_input(case, datestamp, nmlgen_input, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
