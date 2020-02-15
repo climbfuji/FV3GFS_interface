@@ -130,7 +130,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, prefix):
+def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -1071,6 +1071,8 @@ def buildnml(case, caseroot, compname):
                 input_type["nemsio"] = "gaussian"
             elif f.endswith('.grb2'):
                 input_type["grb2"] = "grib2"
+        if not input_type:
+            input_type["grb2"] = "grib2"
 
     if "grb2" in input_type:
         logger.info("Found grib2 files in input")
@@ -1079,7 +1081,7 @@ def buildnml(case, caseroot, compname):
         logger.info("Found nemsio files in input")
         input_type = 'gaussian'
     else:
-        logger.info("No input files found locally, will attempt to download")
+        logger.info("No input files found locally, will attempt to download data in grib2 format")
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
@@ -1128,7 +1130,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input, prefix)
+    prep_input(case, datestamp, nmlgen_input, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
