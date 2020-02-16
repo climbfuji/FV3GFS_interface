@@ -526,6 +526,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Restart
     is_restart =  case.get_value("CONTINUE_RUN")
 
+
     if is_restart: # Warm start
         nmlgen_input.set_value('warm_start', True)
         nmlgen_input.set_value('nggps_ic', False)
@@ -536,8 +537,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
         # Turn off nst spin up
         nstf_name = nmlgen_input.get_value('nstf_name')
-        nstf_name[1] = 0
-        nmlgen_input.set_value('nstf_name', nstf_name)
+        nstf_name[1] = '0'
 
         # Enable adding increment on the fly to the restarts
         read_increment = nmlgen_input.get_value('read_increment')
@@ -551,16 +551,23 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         nmlgen_input.set_value('mountain', nmlgen_input_sav.get_value('mountain'))
         nmlgen_input.set_value('make_nh', nmlgen_input_sav.get_value('make_nh'))
         nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))
-       
-        # Turn off nst
+
+        # Turn on nst spinup for grib
         nstf_name = nmlgen_input_sav.get_value('nstf_name')
         if input_type == 'grib2':
-            nstf_name[0] = 0
-           
-        nmlgen_input.set_value('nstf_name', nstf_name)
+            nstf_name[1] = '1'
+        else:
+            nstf_name[1] = '0'
+
+
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
         nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))
 
+    if input_type == 'grib2':
+        # Turn off nstf for grib input
+        nstf_name[0] = '0'
+        logger.info("input_type {} nstf_name {}".format(input_type, nstf_name))
+    nmlgen_input.set_value('nstf_name', nstf_name)
     #----------------------------------------------------
     # Write out namelist groups
     #----------------------------------------------------
@@ -597,6 +604,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # Overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
+
+    nstf_name = nmlgen.get_value('nstf_name')
+    logger.info("nstf_name is {}".format(nstf_name))
+    # if nstf_name is None here then a default of 0,0,0,0,0 is assumed
+    if not nstf_name[0] or nstf_name[0] == '0':
+        ccpp = nmlgen.get_value('ccpp_suite')
+        nmlgen.set_value('ccpp_suite',ccpp+'_no_NST')
 
     # Consistency check for layout
     layout = nmlgen_input.get_value('layout')
@@ -1053,7 +1067,7 @@ def buildnml(case, caseroot, compname):
         prefix = ""
 
     #----------------------------------------------------
-    # Set input type 
+    # Set input type
     #----------------------------------------------------
 
     # Query input directory

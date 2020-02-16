@@ -5642,8 +5642,8 @@
   <group>gfs_physics_nml</group>
   <desc></desc>
   <values>
-    <value>0,0,1,0,5</value>
-    <value app="mrweather">2,1,1,0,5</value>
+    <value>0,0,0,0,0</value>
+    <value app="mrweather">2,0,0,0,0</value>
     <value app="hafs">2,0,0,0,0</value>
   </values>
 </entry>
