@@ -740,6 +740,8 @@
   <desc></desc>
   <values>
     <value>undefined</value>
+    <value app="mrweather" ccpp="v15p2_no_NST">FV3_GFS_v15p2_no_NST</value>
+    <value app="mrweather" ccpp="v16beta_no_NST">FV3_GFS_v16beta_no_NST</value>
     <value app="mrweather" ccpp="v15p2">FV3_GFS_v15p2</value>
     <value app="mrweather" ccpp="v16beta">FV3_GFS_v16beta</value>
   </values>
@@ -5494,9 +5496,8 @@
   <group>gfs_physics_nml</group>
   <desc></desc>
   <values>
-    <value>0,0,1,0,5</value>
-    <!--<value app="mrweather">2,1,0,0,0</value>-->
-    <value app="mrweather">2,1,1,0,5</value>
+    <value>0,0,0,0,0</value>
+    <value app="mrweather">2,0,0,0,0</value>
   </values>
 </entry>
 
