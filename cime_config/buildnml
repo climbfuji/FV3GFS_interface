@@ -293,6 +293,13 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         if not os.path.isfile(f):
             if input_type == 'grib2':
                 input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
+            elif input_type == 'gaussian':
+                f = os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs.t{0:02d}z.sfcanl.nemsio".format(hh))
+                if not os.path.isfile(f):
+                    logger.warning("Please download {} manually".format(f))
+                f = os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfs.t{0:02d}z.atmanl.nemsio".format(hh))
+                if not os.path.isfile(f):
+                    logger.warning("Please download {} manually".format(f))
         else:
             # Link existing initial condition
             symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -558,9 +565,8 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
-    nstf_name = nmlgen.get_value('nstf_name')
-    logger.info("nstf_name is {}".format(nstf_name))
     # if nstf_name is None here then a default of 0,0,0,0,0 is assumed
+    nstf_name = nmlgen.get_value('nstf_name')
     if not nstf_name[0] or nstf_name[0] == '0':
         ccpp = nmlgen.get_value('ccpp_suite')
         nmlgen.set_value('ccpp_suite',ccpp+'_no_NST')
@@ -1012,19 +1018,36 @@ def buildnml(case, caseroot, compname):
     dd = run_start_date[2]
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
 
-    # Check input directory to find input_type
-    input_type = None
+    # Check input directory to find input_file format (same folder could have both .nemsio and .grb2)
+    logger.info("Checking {} directory to find raw input files ...".format(icdir))
+    input_type_lst = []
     if os.path.exists(icdir):
         for f in os.listdir(icdir):
             if f.endswith('.nemsio'):
-                input_type = "gaussian"
-                logger.info("Found nemsio files in input")
+                input_type_lst.append("gaussian")
+                logger.info("Found '{}' in input directory".format(f))
             elif f.endswith('.grb2'):
-                input_type = "grib2"
-                logger.info("Found grib2 files in input")
-    if not input_type:
+                input_type_lst.append("grib2")
+                logger.info("Found '{}' in input directory".format(f))
+
+    # Remove duplicates
+    input_type_lst = list(set(input_type_lst))
+
+    # Check user_nl_ufsatm for input_type and force buildnml to use it
+    input_type_user = namelist_user.get_value('input_type')[0]
+    if input_type_user:
+        input_type_lst = list([input_type_user.strip('\"').strip('\'')])
+
+    # If input_type is empty set grib2 default
+    if not input_type_lst:
         input_type = "grib2"
         logger.info("No input files found locally, will attempt to download data in grib2 format")
+    else:
+        if len(input_type_lst) > 1:
+            input_type = "grib2"
+        else:
+            input_type = input_type_lst[0]
+    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))    
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
