@@ -1,7 +1,34 @@
 !----------------------------------------------------------------------------------
-! Users should add all user specific namelist changes below in the form of 
-!   namelist_var = new_namelist_value 
-! Note - that it does not matter what namelist group the namelist_var belongs to
+! This file can be used to change namelist options for:
+! - Chgres
+! - UFS MR-Weather Model
+! - NCEP Post
+!
+! Users should add all user-specific namelist changes below in the form of
+!  namelist_var = new_namelist_value
+!
+! To change the namelist variables that are defined as multiple times under 
+! different namelist groups
+!  namelist_var@namelist_group = new_namelist_value
+!
+! Following is the list of namelist variables that need to be accessed by
+! specifying the namelist groups:
+!
+! alpha@nam_physics_nml
+! alpha@test_case_nml
+! avg_max_length@atmos_model_nml
+! avg_max_length@gfs_physics_nml
+! debug@atmos_model_nml
+! debug@gfs_physics_nml
+! icliq_sw@gfs_physics_nml
+! icliq_sw@nam_physics_nml
+! iospec_ieee32@fms_nml
+! iospec_ieee32@fms_io_nml
+! ntiles@fv_core_nml
+! ntiles@nest_nml
+! read_all_pe@fms_io_nml
+! read_all_pe@fms_nml
+! regional@chgres
+! regional@fv_core_nml
 !----------------------------------------------------------------------------------
 
- 
