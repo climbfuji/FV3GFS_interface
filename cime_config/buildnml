@@ -965,6 +965,9 @@ def buildnml(case, caseroot, compname):
     if not os.path.isdir(confdir):
         os.makedirs(confdir)
 
+    # determine CaseDocs
+    casedocsdir = os.path.join(caseroot,"CaseDocs")
+
     # query compset
     compset = case.get_value("COMPSET")
 
@@ -1150,6 +1153,19 @@ def buildnml(case, caseroot, compname):
     symlink_force(file2, os.path.join(rundir, "input.nml"))
 
     #----------------------------------------------------
+    # Copy module_configure and input.nml to CaseDocs
+    #----------------------------------------------------
+
+    if os.path.isdir(casedocsdir):
+        file1 = os.path.join(confdir, "model_configure")
+        file2 = os.path.join(casedocsdir, "model_configure")
+        safe_copy(file1, file2)
+
+        file1 = os.path.join(confdir, "atm_in")
+        file2 = os.path.join(casedocsdir, "input.nml")
+        safe_copy(file1, file2)
+
+    #----------------------------------------------------
     # Copy/link input files
     #----------------------------------------------------
 
@@ -1183,6 +1199,12 @@ def buildnml(case, caseroot, compname):
             logger.debug("CHGRES configuration copy: file1 %s file2 %s " %(file1, file2))
             safe_copy(file1, file2)
 
+        # copy namelist to CaseDocs
+        if os.path.isdir(casedocsdir):
+            file1 = os.path.join(confdir, "config.nml")
+            file2 = os.path.join(casedocsdir, "config.nml")
+            safe_copy(file1, file2)
+
     #----------------------------------------------------
     # Namelist generator for ncep_post
     #----------------------------------------------------
@@ -1205,6 +1227,12 @@ def buildnml(case, caseroot, compname):
             file1 = os.path.join(confdir, "itag.tmp")
             file2 = os.path.join(rundir, "itag.tmp")
             logger.debug("NCEP_POST configuration copy: file1 %s file2 %s " %(file1, file2))
+            safe_copy(file1, file2)
+
+        # copy namelist to CaseDocs
+        if os.path.isdir(casedocsdir):
+            file1 = os.path.join(confdir, "itag.tmp")
+            file2 = os.path.join(casedocsdir, "itag.tmp")
             safe_copy(file1, file2)
 
     return
