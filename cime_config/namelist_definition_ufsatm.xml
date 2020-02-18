@@ -2384,7 +2384,7 @@
   </values>
 </entry>
 
-<entry id="regional">
+<entry id="regional@fv_core_nml">
   <type>logical</type>
   <group>fv_core_nml</group>
   <desc></desc>
