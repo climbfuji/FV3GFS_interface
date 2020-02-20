@@ -609,7 +609,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     nstf_name = nmlgen.get_value('nstf_name')
     if not nstf_name[0] or nstf_name[0] == '0':
         ccpp = nmlgen.get_value('ccpp_suite')
-        nmlgen.set_value('ccpp_suite',ccpp+'_no_NST')
+        nmlgen.set_value('ccpp_suite',ccpp+'_no_nsst')
 
     # Consistency check for layout
     layout = nmlgen_input.get_value('layout')
@@ -1107,7 +1107,7 @@ def buildnml(case, caseroot, compname):
             input_type = "grib2"
         else:
             input_type = input_type_lst[0]
-    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))    
+    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
