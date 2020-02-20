@@ -120,7 +120,7 @@ def buildlib(caseroot, libroot, bldroot):
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
             ccpp_suites = "FV3_GFS_"+case.get_value("CCPP_SUITES")
-            ccpp_suites += ",FV3_GFS_"+case.get_value("CCPP_SUITES")+"_no_NST"
+            ccpp_suites += ",FV3_GFS_"+case.get_value("CCPP_SUITES")+"_no_nsst"
             ccpp_srcroot = os.path.join(srcdir,"FV3","ccpp")
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):

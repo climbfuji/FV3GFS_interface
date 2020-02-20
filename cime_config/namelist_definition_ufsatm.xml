@@ -740,8 +740,8 @@
   <desc></desc>
   <values>
     <value>undefined</value>
-    <value app="mrweather" ccpp="v15p2_no_NST">FV3_GFS_v15p2_no_NST</value>
-    <value app="mrweather" ccpp="v16beta_no_NST">FV3_GFS_v16beta_no_NST</value>
+    <value app="mrweather" ccpp="v15p2_no_nsst">FV3_GFS_v15p2_no_nsst</value>
+    <value app="mrweather" ccpp="v16beta_no_nsst">FV3_GFS_v16beta_no_nsst</value>
     <value app="mrweather" ccpp="v15p2">FV3_GFS_v15p2</value>
     <value app="mrweather" ccpp="v16beta">FV3_GFS_v16beta</value>
   </values>
