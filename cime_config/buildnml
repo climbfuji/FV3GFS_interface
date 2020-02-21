@@ -768,7 +768,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     else:
         hyblev_file = os.path.join(rundir,"INPUT","global_hyblev.l{}.txt".format(levp))
         if not os.path.exists(hyblev_file):
-            expect(False, "{} does not exist!".format(hyblev_file))
+            logger.warning("WARNING: {} does not exist, will attempt to download.".format(hyblev_file))
         else:
             nmlgen.set_value('vcoord_file_target_grid', os.path.join("INPUT","global_hyblev.l{}.txt".format(levp)))
 
@@ -810,7 +810,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*2)//6), "C768": 6*((tasks_per_node*4)//6)}
+    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
         case.flush()
