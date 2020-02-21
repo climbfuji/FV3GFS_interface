@@ -324,9 +324,11 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     # Copy/Link files
     for k,v in input_files.items():
         if not os.path.isfile(os.path.join(rundir,v[2])):
-            if "ln" in v[1]:
+            if not os.path.isfile(v[0]):
+                logger.warning("WARNING: data file {} not found, will attempt to download.".format(v[0]))
+            elif "ln" in v[1]:
                 symlink_force(v[0], os.path.join(rundir,v[2]))
-            elif "cp" in v[1]:
+            elif "cp":
                 safe_copy(v[0], os.path.join(rundir,v[2]))
 
     # Copy *_table files
