@@ -188,6 +188,7 @@ def buildlib(caseroot, libroot, bldroot):
             os.environ["CMAKE_C_COMPILER"]=ccomp.strip()
             os.environ["CMAKE_CXX_COMPILER"]=cxxcomp.strip()
             os.environ["CMAKE_Fortran_COMPILER"]=fcomp.strip()            
+            print "HERE {} {} {}".format( os.environ["CMAKE_C_COMPILER"], os.environ["CMAKE_CXX_COMPILER"], os.environ["CMAKE_Fortran_COMPILER"])
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
