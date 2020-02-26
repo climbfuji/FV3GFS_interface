@@ -17,6 +17,8 @@ from CIME.buildlib import parse_input
 from CIME.case import Case
 from CIME.utils import run_cmd, expect, safe_copy
 from CIME.build import get_standard_makefile_args
+from CIME.XML.compilers import Compilers
+from CIME.XML.machines import Machines
 import six
 
 logger = logging.getLogger(__name__)
@@ -167,9 +169,13 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
-            os.environ["CMAKE_C_COMPILER"]="mpicc"
-            os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
-            os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
+
+            machobj = Machines(machine=case.get_value("MACH"))
+            compobj = Compilers(machobj, compiler=case.get_value("COMPILER"), mpilib=case.get_value("MPILIB"))
+            os.environ["CMAKE_C_COMPILER"]=compobj.get_value("MPICC")
+            os.environ["CMAKE_CXX_COMPILER"]=compobj.get_value("MPICXX")
+            os.environ["CMAKE_Fortran_COMPILER"]=compobj.get_value("MPIFC")
+            print "HERE {} {} {}".format( os.environ["CMAKE_C_COMPILER"], os.environ["CMAKE_CXX_COMPILER"], os.environ["CMAKE_Fortran_COMPILER"])
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
