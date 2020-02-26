@@ -172,10 +172,9 @@ def buildlib(caseroot, libroot, bldroot):
 
             machobj = Machines(machine=case.get_value("MACH"))
             compobj = Compilers(machobj, compiler=case.get_value("COMPILER"), mpilib=case.get_value("MPILIB"))
-            os.environ["CMAKE_C_COMPILER"]=compobj.get_value("MPICC")
-            os.environ["CMAKE_CXX_COMPILER"]=compobj.get_value("MPICXX")
-            os.environ["CMAKE_Fortran_COMPILER"]=compobj.get_value("MPIFC")
-            print "HERE {} {} {}".format( os.environ["CMAKE_C_COMPILER"], os.environ["CMAKE_CXX_COMPILER"], os.environ["CMAKE_Fortran_COMPILER"])
+            os.environ["CMAKE_C_COMPILER"]=compobj.get_value("MPICC").strip()
+            os.environ["CMAKE_CXX_COMPILER"]=compobj.get_value("MPICXX").strip()
+            os.environ["CMAKE_Fortran_COMPILER"]=compobj.get_value("MPIFC").strip()
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
