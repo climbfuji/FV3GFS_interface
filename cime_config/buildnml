@@ -17,6 +17,10 @@ if CIMEROOT is None:
     raise SystemExit("ERROR: must set CIMEROOT environment variable")
 sys.path.append(os.path.join(CIMEROOT, "scripts", "Tools"))
 
+NCEPLIBS_DIR = os.environ.get("NCEPLIBS_DIR")
+if NCEPLIBS_DIR is None:
+    raise SystemExit("ERROR: must set NCEPLIBS_DIR environment variable")
+
 from standard_script_setup import *
 from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
@@ -152,7 +156,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
     dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
     dir_fix_parm = os.path.join(din_loc_root,"parm")
-    dir_fix_lib = os.path.join(din_loc_root,"lib")
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
@@ -215,9 +218,9 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
-        input_files["postxconfig1"] = [os.path.join(dir_fix_parm,"postxconfig-NT-GFS.txt"), "cp", "postxconfig-NT-GFS.txt"]
-        input_files["postxconfig2"] = [os.path.join(dir_fix_parm,"postxconfig-NT-GFS-F00.txt"), "cp", "postxconfig-NT-GFS-F00.txt"]
-        input_files["params_grib2_tbl"] = [os.path.join(dir_fix_lib,"g2tmpl","v1.5.0","src","params_grib2_tbl_new"), "cp", "params_grib2_tbl_new"]
+        input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
+        input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+        input_files["params_grib2_tbl"] = [os.path.join(NCEPLIBS_DIR,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
