@@ -191,6 +191,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         for tile in xrange(1,7):
             input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
             input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
+
     input_files["grid_spec"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT","grid_spec.nc")]
     input_files["grid_mosaic"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT",atm_grid+"_mosaic.nc")]
 
@@ -212,13 +213,18 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     if ico2 and int(ico2) > 0:
         # TODO: make it automatic
         yy = int(time.strftime("%Y,%m,%d,%H,%M,%S").split(',')[0])
-        for year in xrange(2009,yy+1):
+        for year in range(2009,yy+1):
             input_files["co2his_{}".format(year)] = [os.path.join(dir_fix_am,"fix_co2_proj","global_co2historicaldata_{}.txt".format(year)), "ln", "co2historicaldata_{}.txt".format(year)]
 
     input_files["clmaero"] = [os.path.join(dir_fix_am,"global_climaeropac_global.txt"), "ln", "aerosol.dat"]
 
+<<<<<<< HEAD
     if iaer and int(iaer) > 0 and "hafs" not in app:
         for year in xrange(1850,2000,10):
+=======
+    if int(iaer) > 0:
+        for year in range(1850,2000,10):
+>>>>>>> fix py3 compatibility
             input_files["volaer_{}".format(year)] = [os.path.join(dir_fix_am,"global_volcanic_aerosols_{}-{}.txt".format(year,year+9)), "ln", "volcanic_aerosols_{}-{}.txt".format(year,year+9)]
 
     # Fixed files
@@ -232,7 +238,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
-        for tile in xrange(1,7):
+        for tile in range(1,7):
             for f in ["facsf", "maximum_snow_albedo", "slope_type", "snowfree_albedo", "soil_type", "substrate_temperature", "vegetation_greenness", "vegetation_type"]:
                 input_files["{}{}".format(f,tile)] = [os.path.join(dir_fix_ufsatm,"fix_sfc",atm_grid+".{}.tile{}.nc".format(f,tile)), "ln", os.path.join("INPUT",atm_grid+".{}.tile{}.nc".format(f,tile))]
 
@@ -266,7 +272,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
         lst = [prefix + f for f in lst]
         for f in lst:
-            for tile in xrange(1,7):
+            for tile in range(1,7):
                 src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
                 tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
                 if not os.path.isfile(src_file):
@@ -285,6 +291,27 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
             else:
                 safe_copy(src_file, tgt_file)
     else: # Cold start
+<<<<<<< HEAD
+=======
+        # Remove restart files form INPUT/ directory, if there are
+        # Tiled files
+        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
+        for f in lst:
+            for tile in range(1,7):
+                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                if os.path.isfile(src_file):
+                    logger.warning("removing file {}".format(src_file))
+                    os.remove(src_file)
+
+        # Others
+        lst = ["fv_core.res.nc", "coupler.res"]
+        for f in lst:
+            src_file = os.path.join(rundir,"INPUT",f)
+            if os.path.isfile(src_file):
+                logger.warning("removing file {}".format(src_file))
+                os.remove(src_file)
+
+>>>>>>> fix py3 compatibility
         # Query date and time
         run_start_date = case.get_value('RUN_STARTDATE').split('-')
         yyyy = run_start_date[0]
@@ -320,10 +347,17 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
                         logger.warning("removing file {}".format(src_file))
                         os.remove(src_file)
 
+<<<<<<< HEAD
             # Others
             lst = ["fv_core.res.nc", "coupler.res"]
             for f in lst:
                 src_file = os.path.join(rundir,"INPUT",f)
+=======
+        for f in lst:
+            for tile in range(1,7):
+                src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
+                tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
+>>>>>>> fix py3 compatibility
                 if os.path.isfile(src_file):
                     logger.warning("removing file {}".format(src_file))
                     os.remove(src_file)
@@ -585,7 +619,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Create list of groups by querying xml file
     groups = []
     with open(os.path.join(namelist_xml_dir, "namelist_definition_ufsatm.xml"), 'r') as fin:
-        for s in fin.xreadlines():
+        for s in fin:
             if "<group>" in s:
                 groups.append(s.replace('<group>', '').replace('</group>', '').strip())
 
@@ -1053,7 +1087,7 @@ def buildnml(case, caseroot, compname):
             # Tiled files
             lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
             for f in lst:
-                for tile in xrange(1,7):
+                for tile in range(1,7):
                     src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
                     tgt_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(prefix + f,tile))
                     if not os.path.isfile(src_file):

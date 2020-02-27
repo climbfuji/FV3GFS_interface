@@ -192,7 +192,7 @@ def buildlib(caseroot, libroot, bldroot):
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
-            print "Calling cmake {} {}".format(cmake_flags, bldroot)
+            logger.info("Calling cmake {} {}".format(cmake_flags, bldroot))
             stat, _, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot),from_dir=bldroot,verbose=True)
             expect(stat==0,"CMAKE error from fv3 {}".format(err))
         gmake_args = "-j {} ".format(gmake_j)+get_standard_makefile_args(case)
