@@ -419,60 +419,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
             # Write
             nems_configure.writelines(line)
 
-    # Do replacements in diag_table
-    run_sd = case.get_value('RUN_STARTDATE').split('-')
-    run_st = case.get_value('START_TOD')
-
-    # TODO: Still needs work % is not working, copy is commentted for now, look below
-    if os.path.exists(os.path.join(rundir, "diag_table")):
-        with open(os.path.join(rundir,"diag_table"), 'r') as diag_table_in:
-            with open(os.path.join(rundir,"diag_table.tmp"), 'w') as diag_table:
-                k = 0
-                for line in diag_table_in:
-                    if k == 0:
-                        # Experiment name
-                        line = casename+" Experiment\n"
-                    elif k == 1:
-                        # Date
-                        yy = int(run_sd[0])
-                        mm = int(run_sd[1])
-                        dd = int(run_sd[2])
-                        hh = int(run_st//3600)
-                        mi = int((run_st-hh*3600)//60)
-                        ss = int(run_st-hh*3600-mi*60)
-                        line = "{} {} {} {} {} {}\n".format(yy,mm,dd,hh,mi,ss)
-
-                    if "atmos_4xdaily" in line:
-                        line = line.replace("atmos_4xdaily","{}{}".format(casename,".fv3.4xday.%4yr-%2mo-%2dy-%5sc"))
-
-                    if "atmos_static" in line:
-                        line = line.replace("atmos_static","{}{}".format(casename,".fv3.static"))
-
-                    if "fv3_history" in line and not "fv3_history2d" in line:
-                        line = line.replace("fv3_history","{}{}".format(casename,".fv3.his.%4yr-%2mo-%2dy-%5sc"))
-
-                    if "fv3_history2d" in line:
-                        line = line.replace("fv3_history2d","{}{}".format(casename,".fv3.sfc.%4yr-%2mo-%2dy-%5sc"))
-
-                    if testcase:
-                        if line.endswith('2\n'):
-                            # Make double precission
-                            line = line[:-2] + "1\n"
-
-                            # This changes output frequency and number of records per file
-                            # using HIST_N and HIST_OPTION from case
-                            parts = line.split(',')
-                            if len(parts) > 7:
-                                parts[1] = "1"
-                                parts[2] = "days"
-                                parts[6] = parts[1]
-                                parts[7] = parts[2]
-                                line = ','.join(parts)+"\n"
-
-                    # Write
-                    diag_table.writelines(line)
-                    k = k+1
-
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
 def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type):
