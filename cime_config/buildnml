@@ -814,7 +814,16 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
+    mach = case.get_value("MACH") 
+
+    # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
+    if "C768" in atm_grid and "stampede2" in mach:
+        tasks_per_node = 24
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
+        case.flush()
+        logger.info("CHGRES tasks per node is changed to {}!".format(tasks_per_node))
+    
     task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
