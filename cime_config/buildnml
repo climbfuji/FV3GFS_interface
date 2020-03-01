@@ -155,7 +155,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     # Define base directories
     dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
     dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
-    dir_fix_parm = os.path.join(din_loc_root,"parm")
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
@@ -214,7 +213,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         input_files["global_hyblev"] = [os.path.join(dir_fix_am,"global_hyblev.l{}.txt".format(levp)), "ln", os.path.join("INPUT","global_hyblev.l{}.txt".format(levp))]
 
         # Grib2 specific file
-        input_files["var_map"] = [os.path.join(dir_fix_parm,"GFSphys_var_map.txt"), "cp", "GFSphys_var_map.txt"]
+        input_files["var_map"] = [os.path.join(NCEPLIBS_DIR,"share","GFSphys_var_map.txt"), "ln", "GFSphys_var_map.txt"]
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
@@ -853,7 +852,16 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
 
     # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID")
+    mach = case.get_value("MACH")
+
+    # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
+    if "C768" in atm_grid and "stampede2" in mach:
+        tasks_per_node = 24
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.gfs_post")
+        case.flush()
+        logger.info("NCEP Post tasks per node is changed to {}!".format(tasks_per_node))
+
     task_count = {"C96": tasks_per_node, "C192": tasks_per_node, "C384": tasks_per_node*2, "C768": tasks_per_node*4}
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.gfs_post")
