@@ -763,7 +763,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    if "C768" in atm_grid and "stampede2" in mach:
+    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
         tasks_per_node = 24
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
         case.flush()
@@ -856,7 +856,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
 
     # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
-    if "C768" in atm_grid and "stampede2" in mach:
+    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
         tasks_per_node = 24
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.gfs_post")
         case.flush()
