@@ -116,8 +116,9 @@ def buildlib(caseroot, libroot, bldroot):
             cmake_flags += " -DDEBUG=FALSE "
 
         if not debug and case.get_value("TEST"):
-            cmake_flags += " -DREPRO=ON "
-            cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
+            if "PFS" not in case.get_value("TESTCASE"):
+                cmake_flags += " -DREPRO=ON "
+                cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
 
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
