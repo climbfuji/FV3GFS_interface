@@ -46,6 +46,12 @@
     <alias>GFSv16beta</alias>
     <lname>FCST_ufsatm%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
+  <compset>
+    <alias>HAFS</alias>
+    <lname>FCST_ufsatm%v0gfdlmp_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
+  </compset>
+
+
 
   <entries>
     <entry id="RUN_STARTDATE">

@@ -17,6 +17,8 @@ from CIME.buildlib import parse_input
 from CIME.case import Case
 from CIME.utils import run_cmd, expect, safe_copy
 from CIME.build import get_standard_makefile_args
+from CIME.XML.compilers import Compilers
+from CIME.XML.machines import Machines
 import six
 
 logger = logging.getLogger(__name__)
@@ -86,6 +88,15 @@ def _create_dir_structure(srcdir,targetdir, sourcemods=None):
                 structure_updated = True
     return structure_updated
 
+def get_compiler_names(case):
+    machobj = Machines(machine=case.get_value("MACH"))
+    compobj = Compilers(machobj)
+    ccomp = compobj.get_value("MPICC")
+    cxxcomp = compobj.get_value("MPICXX")
+    fcomp = compobj.get_value("MPIFC")
+
+    return ccomp, cxxcomp, fcomp
+
 ###############################################################################
 #pylint: disable=unused-argument
 def buildlib(caseroot, libroot, bldroot):
@@ -94,6 +105,7 @@ def buildlib(caseroot, libroot, bldroot):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
+        
         srcdir = os.path.join(srcroot,"src","model")
         os.environ["CASEROOT"] = caseroot
 
@@ -119,18 +131,23 @@ def buildlib(caseroot, libroot, bldroot):
 
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
-            ccpp_suites = "FV3_GFS_"+case.get_value("CCPP_SUITES")
+            suites = case.get_value("CCPP_SUITES")
+            if "GFS" in suites:
+                ccpp_suites = "FV3_GFS_"+suites
+            else:
+                ccpp_suites = "HAFS_v0_gfdlmp_nocp,HAFS_v0_gfdlmp_nocpugwd,HAFS_v0_gfdlmp"
 
             ccpp_srcroot = os.path.join(srcdir,"FV3","ccpp")
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
-
-                stat, _, err = run_cmd("{} --config {} --static --suites={} --builddir {}"
-                        .format(ccpp_preconfig, ccpp_config, ccpp_suites,
-                                os.path.join(bldroot,"FV3"),verbose=True,
-                                from_dir=srcdir))
+                ccpp_options = "--config {} --suites={} --builddir {}".format(ccpp_config, ccpp_suites, os.path.join(bldroot,"FV3"))
+                if "GFS" in suites:
+                    ccpp_options += " --static"
+                stat, _, err = run_cmd("{} {}".format(ccpp_preconfig, ccpp_options),
+                                       verbose=True,
+                                       from_dir=srcdir)
                 expect(stat==0,"ccpp_preconfig error from fv3 {}".format(err))
                 _build_ccpp_cmake_files(ccpp_blddir,ccpp_srcmods)
 
@@ -167,9 +184,12 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
-            os.environ["CMAKE_C_COMPILER"]="mpicc"
-            os.environ["CMAKE_CXX_COMPILER"]="mpicxx"
-            os.environ["CMAKE_Fortran_COMPILER"]="mpif90"
+
+            ccomp, cxxcomp, fcomp = get_compiler_names(case)
+            print "CCOMP is >{}<".format(ccomp)
+            os.environ["CMAKE_C_COMPILER"]=ccomp.strip()
+            os.environ["CMAKE_CXX_COMPILER"]=cxxcomp.strip()
+            os.environ["CMAKE_Fortran_COMPILER"]=fcomp.strip()            
             os.environ["CMAKE_Platform"]="cime"
             safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))

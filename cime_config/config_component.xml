@@ -5,9 +5,10 @@
 <entry_id version="3.0">
 
   <description>
-    <desc atm="ufsatm[%v15p2][%v16beta]">UFSATM Atmosphere with:</desc>
+    <desc atm="ufsatm[%v15p2][%v16beta][%v0gfdlmp]">UFSATM Atmosphere with:</desc>
     <desc option="v15p2">CCPP physics version 15p2</desc>
     <desc option="v16beta">CCPP physics version 16beta</desc>
+    <desc option="v0gfdlmp">CCPP physics version for hafs</desc>
   </description>
 
   <entry id="COMP_ATM">
@@ -29,11 +30,12 @@
 
   <entry id="CCPP_SUITES">
     <type>char</type>
-    <valid_values>v15p2,v16beta</valid_values>
+    <valid_values>v15p2,v16beta,v0gfdlmp</valid_values>
     <default_value>v15p2</default_value>
     <values match="first">
       <value compset="v15p2">v15p2</value>
       <value compset="v16beta">v16beta</value>
+      <value compset="v0gfldmp">v0gfldmp</value>
     </values>
     <group>case_comp</group>
     <file>env_build.xml</file>
