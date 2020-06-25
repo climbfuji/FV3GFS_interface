@@ -26,6 +26,10 @@ from CIME.utils import expect, safe_copy, symlink_force
 
 logger = logging.getLogger(__name__)
 
+# define global variables
+# set default app to s2s for now
+app = "s2s"
+
 # find factors of a number
 def factors(n):
     return set(x for tup in ([i, n//i] for i in range(1, int(n**0.5)+1) if n % i == 0) for x in tup)
@@ -440,7 +444,10 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     nmlgen_input.set_value('fnaisc', value=os.path.join(dir_fix_am,"CFSR.SEAICE.1982.2012.monthly.clim.grb"))
     nmlgen_input.set_value('fntg3c', value=os.path.join(dir_fix_am,"global_tg3clim.2.6x1.5.grb"))
     nmlgen_input.set_value('fnvegc', value=os.path.join(dir_fix_am,"global_vegfrac.0.144.decpercent.grb"))
-    nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"global_slmask.t1534.3072.1536.grb"))
+    if "mrweather" in app or "s2s" in app:
+        nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"global_slmask.t1534.3072.1536.grb"))
+    else:
+        nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"seaice_newland.grb"))
     nmlgen_input.set_value('fnvmnc', value=os.path.join(dir_fix_am,"global_shdmin.0.144x0.144.grb"))
     nmlgen_input.set_value('fnvmxc', value=os.path.join(dir_fix_am,"global_shdmax.0.144x0.144.grb"))
     nmlgen_input.set_value('fnslpc', value=os.path.join(dir_fix_am,"global_slope.1x1.grb"))
@@ -450,13 +457,16 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     nmlgen_input.set_value('fnabsc', value=os.path.join(dir_fix_am,"global_mxsnoalb.uariz.t{}.{}.{}.rg.grb".format(jcap,lonb,latb)))
 
     # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
-    if res == 96 or res == 192:
-        jcap = 1534
-        lonb = 3072
-        latb = 1536
-        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
-    else:
-        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+    if "mrweather" in app or "s2s" in app:
+        if res == 96 or res == 192:
+            jcap = 1534
+            lonb = 3072
+            latb = 1536
+            nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+        else:
+            nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+    elif "hafs" in app:
+        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.t{}.{}.{}.grb".format(jcap,lonb,latb)))
 
     # Stochastic physics
     testcase = case.get_value("TEST")
@@ -912,13 +922,22 @@ def buildnml(case, caseroot, compname):
     if not os.path.isdir(confdir):
         os.makedirs(confdir)
 
-    # create config dictionary
+    # query compset
     compset = case.get_value("COMPSET")
-    if "SLND_SICE_SOCN_SROF_SGLC_SWAV_SESP" in compset:
-        app = "mrweather"
-    else:
-        app = "s2s"
 
+    # dictionary for app, compset/s pairs
+    compset_dict = {"mrweather": ["FCST_ufsatm%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV", \
+                                  "FCST_ufsatm%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV"], \
+                    "hafs"     : ["FCST_ufsatm%v0gfdlmp_SLND_SICE_SOCN_SROF_SGLC_SWAV"]
+                   }
+
+    # determine app using compset
+    for key, value in compset_dict.items():
+        for item in value: 
+            if item in compset:
+                app = key
+    
+    # query used CCPP suite
     ccpp_suite = case.get_value("CCPP_SUITES")
 
     config = {}

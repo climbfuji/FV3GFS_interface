@@ -117,7 +117,7 @@
 
   <grid name="a%C96">
     <mach name="macos">
-      <pes pesize="any" compset="ufsatm">
+      <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>8</ntasks_atm>
@@ -131,7 +131,7 @@
 
   <grid name="a%C96">
     <mach name="any">
-      <pes pesize="any" compset="ufsatm">
+      <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>108</ntasks_atm>
@@ -145,7 +145,7 @@
 
   <grid name="a%C192">
     <mach name="any">
-      <pes pesize="any" compset="ufsatm">
+      <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>180</ntasks_atm>
@@ -159,7 +159,7 @@
 
   <grid name="a%C384">
     <mach name="any">
-      <pes pesize="any" compset="ufsatm">
+      <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>252</ntasks_atm>
@@ -173,13 +173,27 @@
 
   <grid name="a%C768">
     <mach name="any">
-      <pes pesize="any" compset="ufsatm">
+      <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
         <ntasks>
           <ntasks_atm>684</ntasks_atm>
         </ntasks>
         <nthrds>
           <nthrds_atm>4</nthrds_atm>
+        </nthrds>
+      </pes>
+    </mach>
+  </grid>
+
+  <grid name="a%C768">
+    <mach name="any">
+      <pes pesize="any" compset="ufsatm%v0">
+        <comment>none</comment>
+        <ntasks>
+          <ntasks_atm>1320</ntasks_atm>
+        </ntasks>
+        <nthrds>
+          <nthrds_atm>2</nthrds_atm>
         </nthrds>
       </pes>
     </mach>
