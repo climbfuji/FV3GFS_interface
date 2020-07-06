@@ -139,7 +139,7 @@ def buildlib(caseroot, libroot, bldroot):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
                 ccpp_options = "--config {} --suites={} --builddir {}".format(ccpp_config, ccpp_suites, os.path.join(bldroot,"FV3"))
-                if "GFS" in suites:
+                if "GFS" in ccpp_suites:
                     ccpp_options += " --static"
                 stat, _, err = run_cmd("{} {}".format(ccpp_preconfig, ccpp_options),
                                        verbose=True,

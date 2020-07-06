@@ -57,7 +57,7 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
 
             # list of namelist options that will always appear in the namelist file 
             lst = ['ccpp_suite']
-            if any(len(item) > 0 for item in lst):
+            if var in lst:
                 continue
 
             # get type and size of namelist variable
@@ -962,7 +962,7 @@ def buildnml(case, caseroot, compname):
     # dictionary for app, compset/s pairs
     compset_dict = {"mrweather": ["FCST_ufsatm%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV", \
                                   "FCST_ufsatm%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV"], \
-                    "hafs"     : ["FCST_ufsatm%v0gfdlmp_SLND_SICE_SOCN_SROF_SGLC_SWAV"]
+                    "hafs"     : ["FCST_ufsatm%v0nocp_SLND_SICE_SOCN_SROF_SGLC_SWAV"]
                    }
 
     # determine app using compset, the default value is s2s

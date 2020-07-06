@@ -37,7 +37,6 @@
   </help>
 
   <!-- F compsets -->
-
   <compset>
     <alias>GFSv15p2</alias>
     <lname>FCST_ufsatm%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
@@ -48,10 +47,8 @@
   </compset>
   <compset>
     <alias>HAFS</alias>
-    <lname>FCST_ufsatm%v0gfdlmp_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
+    <lname>FCST_ufsatm%v0nocp_SLND_SICE_SOCN_SROF_SGLC_SWAV</lname>
   </compset>
-
-
 
   <entries>
     <entry id="RUN_STARTDATE">
