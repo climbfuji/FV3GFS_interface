@@ -752,10 +752,7 @@
   <group>atmos_model_nml</group>
   <desc></desc>
   <values>
-    <value>undefined</value>
-    <value app="mrweather" ccpp="v15p2">FV3_GFS_v15p2</value>
-    <value app="mrweather" ccpp="v16beta">FV3_GFS_v16beta</value>
-    <value app="hafs">HAFS_v0_gfdlmp_nogwdps</value>
+    <value>$CCPP_SUITES</value>
   </values>
 </entry>
 
