@@ -293,7 +293,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             lst = ls_sorted_by_mtime(dir_bdy)
             for f in lst:
                 # Link files 
-                symlink_force(f, os.path.join(rundirdst,"INPUT",f))
+                symlink_force(os.path.join(dir_bdy,f), os.path.join(rundirdst,"INPUT",f))
+
+            symlink_force(os.path.join(dir_bdy,"sfc_data.tile7.nc"), os.path.join(rundirdst,"INPUT","sfc_data.nc"))
+            symlink_force(os.path.join(dir_bdy,"gfs_data.tile7.nc"), os.path.join(rundirdst,"INPUT","gfs_data.nc"))
         else:
             # Remove restart files form INPUT/ directory, if there are
             # Tiled files
@@ -351,7 +354,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     cimeroot_ufsatm = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
     for f in ["data_table", "diag_table_{}".format(app), "field_table"]:
         if not os.path.isfile(os.path.join(rundir,f)):
-            safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,f))
+            if "diag_table" in f:
+                safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,"diag_table"))
+            else:
+                safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,f))
 
     # Create NEMS configure
     if not os.path.exists(os.path.join(rundir, "nems.configure")):
