@@ -55,6 +55,11 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
             if any(len(item) > 0 for item in lst):
                 continue
 
+            # list of namelist options that will always appear in the namelist file 
+            lst = ['ccpp_suite']
+            if any(len(item) > 0 for item in lst):
+                continue
+
             # get type and size of namelist variable
             var_type, _, var_size, = nmlgen_cur._definition.split_type_string(var)
 
@@ -573,7 +578,6 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # Sort group
     groups.sort()
-
 
     # Remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
