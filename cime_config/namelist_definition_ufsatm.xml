@@ -2152,7 +2152,7 @@
     <value app="mrweather" hgrid="C192">193</value>
     <value app="mrweather" hgrid="C384">385</value>
     <value app="mrweather" hgrid="C768">769</value>
-    <value app="hafs" hgrid="C768">2881</value>
+    <value app="hafs" hgrid="C768">1921</value>
   </values>
 </entry>
 
@@ -2166,7 +2166,7 @@
     <value app="mrweather" hgrid="C192">193</value>
     <value app="mrweather" hgrid="C384">385</value>
     <value app="mrweather" hgrid="C768">769</value>
-    <value app="hafs" hgrid="C768">1921</value>
+    <value app="hafs" hgrid="C768">2161</value>
   </values>
 </entry>
 
@@ -2502,7 +2502,7 @@
   <desc></desc>
   <values>
     <value>-90.0</value>
-    <value app="hafs">22.0</value>
+    <value app="hafs">25.0</value>
   </values>
 </entry>
 
@@ -2512,7 +2512,7 @@
   <desc></desc>
   <values>
     <value>0.0</value>
-    <value app="hafs">-62.0</value>
+    <value app="hafs">-78.6</value>
   </values>
 </entry>
 
@@ -4334,7 +4334,7 @@
   <values>
     <value>.false.</value>
     <value app="mrweather">.true.</value>
-    <value app="hafs">.true.</value>
+    <value app="hafs">.false.</value>
   </values>
 </entry>
 
@@ -4345,7 +4345,7 @@
   <values>
     <value>.false.</value>
     <value app="mrweather">.true.</value>
-    <value app="hafs">.true.</value>
+    <value app="hafs">.false.</value>
   </values>
 </entry>
 
@@ -4472,6 +4472,7 @@
   <desc></desc>
   <values>
     <value>.true.</value>
+    <value app="hafs">.false.</value>
   </values>
 </entry>
 
@@ -5888,7 +5889,7 @@
   <values>
     <value>.false.</value>
     <value app="mrweather">.true.</value>
-    <value app="hafs">.true.</value>
+    <value app="hafs">.false.</value>
   </values>
 </entry>
 
@@ -8418,7 +8419,7 @@
   <valid_values>cubed_sphere_grid,gaussian_grid,regional_latlon,rotated_latlon,lambert_conformal</valid_values>
   <values>
     <value>gaussian_grid</value>
-    <value app="hafs">regional_latlon</value>
+    <value app="hafs">rotated_latlon</value>
   </values>
 </entry>
 
@@ -8586,7 +8587,7 @@
   <group>_no_group_var</group>
   <desc>central longitude</desc>
   <values>
-    <value app="hafs">-62.0</value>
+    <value app="hafs">-78.6</value>
   </values>
 </entry>
 
@@ -8606,7 +8607,7 @@
   <group>_no_group_var</group>
   <desc>longitude of lower-left</desc>
   <values>
-    <value app="hafs">-114.5</value>
+    <value app="hafs">-39.0</value>
   </values>
 </entry>
 
@@ -8616,7 +8617,7 @@
   <group>_no_group_var</group>
   <desc>latitude of lower-left</desc>
   <values>
-    <value app="hafs">-5.0</value>
+    <value app="hafs">-34.5</value>
   </values>
 </entry>
 
@@ -8626,7 +8627,7 @@
   <group>_no_group_var</group>
   <desc>longitude of upper-right</desc>
   <values>
-    <value app="hafs">-9.5</value>
+    <value app="hafs">39.0</value>
   </values>
 </entry>
 
@@ -8636,7 +8637,7 @@
   <group>_no_group_var</group>
   <desc>latitude of upper-right</desc>
   <values>
-    <value app="hafs">55.0</value>
+    <value app="hafs">34.5</value>
   </values>
 </entry>
 
