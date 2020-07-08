@@ -54,15 +54,24 @@
     <entry id="RUN_STARTDATE">
       <values>
 	<!-- default value for testing -->
-	<value>2019-08-29</value>
+	<value compset="FCST_ufsatm%v1">2019-08-29</value>
+	<value compset="FCST_ufsatm%v0">2019-09-01</value>
       </values>
     </entry>
     <entry id="START_TOD">
       <values>
         <!-- default value for testing -->
-        <value>0</value>
+        <value compset="FCST_ufsatm%v1">0</value>
+        <value compset="FCST_ufsatm%v0">64800</value>
       </values>
     </entry>
+    <entry id="REST_N">
+      <values>
+        <!-- default value for testing -->
+        <value compset="FCST_ufsatm%v0">0</value>
+      </values>
+    </entry>
+
     <entry id="COMP_CLASSES">
       <values>
 	<value compset="ufsatm.*_SLND_SICE_SOCN_SROF_SGLC_SWAV">ATM</value>

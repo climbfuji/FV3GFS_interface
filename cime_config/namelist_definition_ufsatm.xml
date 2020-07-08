@@ -5528,6 +5528,7 @@
   <desc></desc>
   <values>
     <value>1.0</value>
+    <value app="hafs">-1.0</value>
   </values>
 </entry>
 
@@ -6074,6 +6075,16 @@
   <desc></desc>
   <values>
     <value>0.3</value>
+  </values>
+</entry>
+
+<entry id="hurr_pbl">
+  <type>logical</type>
+  <group>gfs_physics_nml</group>
+  <desc></desc>
+  <values>
+    <value>.false.</value>
+    <value app="hafs">.true.</value>
   </values>
 </entry>
 

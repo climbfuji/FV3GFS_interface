@@ -743,6 +743,12 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
+    # remove parameters from the namelist based on the selected app
+    if "hafs" in app:
+        remove_lst = ["imo", "jmo", "iau_offset", "ideflate", "nbits", "output_history", "write_dopost"]
+        for var in remove_lst:
+            nmlgen._namelist.delete_variable("_no_group_var", var) 
+
     #----------------------------------------------------
     # Write out model.configure namelist
     #----------------------------------------------------
