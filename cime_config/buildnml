@@ -55,14 +55,15 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
             if any(len(item) > 0 for item in lst):
                 continue
 
-            # list of namelist options that will always appear in the namelist file 
+            # list of namelist options that will always appear in the namelist file
             lst = ['ccpp_suite']
             if var in lst:
                 continue
 
             # get type and size of namelist variable
             var_type, _, var_size, = nmlgen_cur._definition.split_type_string(var)
-
+            ini = None
+            cur = None
             # if it is list and size is different from var_size
             if var_size > 1:
                 # create empty list
@@ -89,29 +90,33 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                     var_def = [-99.9 if x is None else float(eval(x.lower().replace('d','e'))) for x in var_def]
                     matched = all(x == y for x,y in zip(var_act,var_def))
             else:
+                ini = nmlgen_ini.get_value(var)
+                cur = nmlgen_cur.get_value(var)
                 if var_type == 'character' or var_type == 'logical':
-                    if not nmlgen_ini.get_value(var).strip() == "":
-                        if nmlgen_cur.get_value(var).startswith(nmlgen_ini.get_value(var)):
+                    if not ini.strip() == "":
+                        if cur.startswith(ini):
                             matched = True
                     else:
-                        if nmlgen_ini.get_value(var).strip() == "" and nmlgen_cur.get_value(var).strip() == "":
+                        if ini.strip() == "" and cur.strip() == "":
                             matched = True
                 elif var_type == 'integer':
-                    if nmlgen_ini.get_value(var) is not None:
-                        if int(nmlgen_cur.get_value(var)) == int(nmlgen_ini.get_value(var)):
+                    if ini:
+                        if int(cur) == int(ini):
                             matched = True
                     else:
-                        if nmlgen_ini.get_value(var) is None and nmlgen_cur.get_value(var) is None:
+                        if not (ini and cur):
                             matched = True
-                elif var_type == 'real':
-                    if float(eval(nmlgen_ini.get_value(var).lower().replace('d','e'))) == \
-                       float(eval(nmlgen_cur.get_value(var).lower().replace('d','e'))):
+                elif var_type == 'real' and ini and cur:
+                    if float(eval(ini.lower().replace('d','e'))) == \
+                       float(eval(cur.lower().replace('d','e'))):
                         matched = True
 
             # if there is a match, remove it from the list
-            nmlgen_ret.set_value(var, nmlgen_cur.get_value(var))
-            if matched:
-                nmlgen_ret._namelist.delete_variable(nml, var)
+            if cur:
+                logger.debug("set {} to {}".format(var,cur))
+                nmlgen_ret.set_value(var, cur)
+                if matched:
+                    nmlgen_ret._namelist.delete_variable(nml, var)
 
     return nmlgen_ret
 
@@ -202,7 +207,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     input_files["co2hist"] = [os.path.join(dir_fix_am,"global_co2historicaldata_glob.txt"), "ln", "co2historicaldata_glob.txt"]
     input_files["co2mont"] = [os.path.join(dir_fix_am,"co2monthlycyc.txt"), "ln", "co2monthlycyc.txt"]
 
-    if int(ico2) > 0:
+    if ico2 and int(ico2) > 0:
         # TODO: make it automatic
         yy = int(time.strftime("%Y,%m,%d,%H,%M,%S").split(',')[0])
         for year in xrange(2009,yy+1):
@@ -210,7 +215,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
 
     input_files["clmaero"] = [os.path.join(dir_fix_am,"global_climaeropac_global.txt"), "ln", "aerosol.dat"]
 
-    if int(iaer) > 0 and "hafs" not in app:
+    if iaer and int(iaer) > 0 and "hafs" not in app:
         for year in xrange(1850,2000,10):
             input_files["volaer_{}".format(year)] = [os.path.join(dir_fix_am,"global_volcanic_aerosols_{}-{}.txt".format(year,year+9)), "ln", "volcanic_aerosols_{}-{}.txt".format(year,year+9)]
 
@@ -294,10 +299,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             rundirsrc = rundir
 
         if "hafs" in app:
-            # Boundary conditions 
+            # Boundary conditions
             lst = ls_sorted_by_mtime(dir_bdy)
             for f in lst:
-                # Link files 
+                # Link files
                 symlink_force(os.path.join(dir_bdy,f), os.path.join(rundirdst,"INPUT",f))
 
             symlink_force(os.path.join(dir_bdy,"sfc_data.tile7.nc"), os.path.join(rundirdst,"INPUT","sfc_data.nc"))
@@ -457,7 +462,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # Define base directory
     din_loc_root = case.get_value("DIN_LOC_ROOT")
-    if "hafs" in app: 
+    if "hafs" in app:
         dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
     else:
         dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
@@ -747,7 +752,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     if "hafs" in app:
         remove_lst = ["imo", "jmo", "iau_offset", "ideflate", "nbits", "output_history", "write_dopost"]
         for var in remove_lst:
-            nmlgen._namelist.delete_variable("_no_group_var", var) 
+            nmlgen._namelist.delete_variable("_no_group_var", var)
 
     #----------------------------------------------------
     # Write out model.configure namelist
@@ -975,10 +980,10 @@ def buildnml(case, caseroot, compname):
     global app
     app = "s2s"
     for key, value in compset_dict.items():
-        for item in value: 
+        for item in value:
             if item in compset:
                 app = key
-   
+
     # query used CCPP suite
     ccpp_suite = case.get_value("CCPP_SUITES")
 
