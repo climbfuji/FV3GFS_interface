@@ -113,7 +113,8 @@ def buildlib(caseroot, libroot, bldroot):
                                sourcemods=os.path.join(caseroot,"SourceMods","src.ufsatm"))
 
         #Now build ccpp if needed
-        ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
+        ccpp = case.get_value("BUILD_CCPP")
+        mode32bit = case.get_value("BUILD_32BIT")
         gmake = case.get_value("GMAKE")
         gmake_j = case.get_value("GMAKE_J")
         debug = case.get_value("DEBUG")
@@ -152,6 +153,8 @@ def buildlib(caseroot, libroot, bldroot):
 
         cmake_flags += " -DMPI=ON "
         cmake_flags += " -DSTATIC=ON "
+        if mode32bit:
+            cmake_flags += " -D32BIT=ON "
 
         if case.get_value("BUILD_THREADED") or case.get_value("FORCE_BUILD_SMP"):
             cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
