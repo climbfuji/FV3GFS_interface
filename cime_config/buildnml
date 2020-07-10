@@ -62,8 +62,11 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
 
             # get type and size of namelist variable
             var_type, _, var_size, = nmlgen_cur._definition.split_type_string(var)
-            ini = None
-            cur = None
+
+            # retrieve the initial (default) and current values of the namelist variable
+            ini = nmlgen_ini.get_value(var)
+            cur = nmlgen_cur.get_value(var)
+
             # if it is list and size is different from var_size
             if var_size > 1:
                 # create empty list
@@ -71,10 +74,10 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                 var_def = [None]*var_size
 
                 # force to have same length
-                var_act_len = len(nmlgen_cur.get_value(var))
-                var_act[0:var_act_len] = [x for x in nmlgen_cur.get_value(var)]
-                var_def_len = len(nmlgen_ini.get_value(var))
-                var_def[0:var_def_len] = [x for x in nmlgen_ini.get_value(var)]
+                var_act_len = len(cur)
+                var_act[0:var_act_len] = [x for x in cur]
+                var_def_len = len(ini)
+                var_def[0:var_def_len] = [x for x in ini]
 
                 # compare
                 if var_type == 'character' or var_type == 'logical':
@@ -90,8 +93,6 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                     var_def = [-99.9 if x is None else float(eval(x.lower().replace('d','e'))) for x in var_def]
                     matched = all(x == y for x,y in zip(var_act,var_def))
             else:
-                ini = nmlgen_ini.get_value(var)
-                cur = nmlgen_cur.get_value(var)
                 if var_type == 'character' or var_type == 'logical':
                     if not ini.strip() == "":
                         if cur.startswith(ini):
@@ -112,11 +113,8 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                         matched = True
 
             # if there is a match, remove it from the list
-            if cur:
-                logger.debug("set {} to {}".format(var,cur))
-                nmlgen_ret.set_value(var, cur)
-                if matched:
-                    nmlgen_ret._namelist.delete_variable(nml, var)
+            if matched:
+                nmlgen_ret._namelist.delete_variable(nml, var)
 
     return nmlgen_ret
 
