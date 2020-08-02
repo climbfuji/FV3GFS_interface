@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, safe_copy
+from CIME.utils import run_cmd, expect, safe_copy, symlink_force
 from CIME.build import get_standard_makefile_args
 from CIME.XML.compilers import Compilers
 from CIME.XML.machines import Machines
@@ -105,7 +105,7 @@ def buildlib(caseroot, libroot, bldroot):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
-        
+        comp_root_dir_atm = case.get_value("COMP_ROOT_DIR_ATM")
         srcdir = os.path.join(srcroot,"src","model")
         os.environ["CASEROOT"] = caseroot
 
@@ -134,13 +134,14 @@ def buildlib(caseroot, libroot, bldroot):
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
             ccpp_suites = case.get_value("CCPP_SUITES")
-            ccpp_srcroot = os.path.join(srcdir,"FV3","ccpp")
+            ccpp_srcroot = os.path.join(comp_root_dir_atm,"ccpp")
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
                 ccpp_options = "--config {} --suites={} --builddir {}".format(ccpp_config, ccpp_suites, os.path.join(bldroot,"FV3"))
-                if "GFS" in ccpp_suites:
+                print("HERE comp_classes {}".format(comp_classes))
+                if len(comp_classes) < 3:
                     ccpp_options += " --static"
                 stat, _, err = run_cmd("{} {}".format(ccpp_preconfig, ccpp_options),
                                        verbose=True,
@@ -187,11 +188,12 @@ def buildlib(caseroot, libroot, bldroot):
             print "CCOMP is >{}<".format(ccomp)
             os.environ["CMAKE_C_COMPILER"]=ccomp.strip()
             os.environ["CMAKE_CXX_COMPILER"]=cxxcomp.strip()
-            os.environ["CMAKE_Fortran_COMPILER"]=fcomp.strip()            
+            os.environ["CMAKE_Fortran_COMPILER"]=fcomp.strip()
             print "HERE {} {} {}".format( os.environ["CMAKE_C_COMPILER"], os.environ["CMAKE_CXX_COMPILER"], os.environ["CMAKE_Fortran_COMPILER"])
             os.environ["CMAKE_Platform"]="cime"
-            safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
+            safe_copy(os.path.join(comp_root_dir_atm,"cime","cime_config","configure_cime.cmake"),
                       os.path.join(bldroot,"cmake"))
+
             logger.info("Calling cmake {} {}".format(cmake_flags, bldroot))
             stat, _, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot),from_dir=bldroot,verbose=True)
             expect(stat==0,"CMAKE error from fv3 {}".format(err))
@@ -199,6 +201,25 @@ def buildlib(caseroot, libroot, bldroot):
         gmake_args += " VERBOSE=1 "
         stat, _, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
         expect(stat==0,"Build error from fv3 {}".format(err))
+
+        # This step is needed for CIME build
+        if "CPL" in case.get_value("COMP_CLASSES"):
+            nuopc_cap_src = os.path.join(bldroot,"FV3","cime","cime_config","cpl")
+            filepath_file = os.path.join(nuopc_cap_src,"Filepath")
+
+            if not os.path.exists(filepath_file):
+                with open(filepath_file, "w") as fp:
+                    fp.write(os.path.join(caseroot,"SourceMods","src.ufsatm"))
+                    fp.write(os.path.join(nuopc_cap_src))
+            complib = os.path.join(libroot,"libatm.a")
+            makefile = os.path.join(case.get_value("CASETOOLS"),"Makefile")
+
+            cmd = "{} complib -j {} MODEL=ufsatm COMPLIB={} -f {} {} USER_INCLDIR=-I{} " \
+                .format(gmake, gmake_j, complib, makefile, get_standard_makefile_args(case), os.path.join(bldroot,"FV3","mod"))
+
+            rc, out, err = run_cmd(cmd, from_dir=nuopc_cap_src )
+            expect(rc == 0, "Command %s failed rc=%d\nout=%s\nerr=%s" % (cmd, rc, out, err))
+            safe_copy(os.path.join(nuopc_cap_src,"atm_comp_nuopc.mod"),os.path.join(libroot,"include"))
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)

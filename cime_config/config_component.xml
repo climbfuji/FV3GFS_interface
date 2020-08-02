@@ -30,9 +30,10 @@
 
   <entry id="CCPP_SUITES">
     <type>char</type>
-    <valid_values>FV3_GFS_v15p2,FV3_GFS_v16beta,HAFS_v0_gfdlmp_nocpugwd,HAFS_v0_gfdlmp_nocp,HAFS_v0_gfdlmp</valid_values>
+    <valid_values>FV3_GFS_v15p2_coupled,FV3_GFS_v15p2,FV3_GFS_v16beta,HAFS_v0_gfdlmp_nocpugwd,HAFS_v0_gfdlmp_nocp,HAFS_v0_gfdlmp</valid_values>
     <default_value>FV3_GFS_v15p2</default_value>
     <values match="first">
+      <value compset="s2s">FV3_GFS_v15p2_coupled</value>
       <value compset="v15p2">FV3_GFS_v15p2</value>
       <value compset="v16beta">FV3_GFS_v16beta</value>
       <value compset="v0nocp">HAFS_v0_gfdlmp_nocp</value>
