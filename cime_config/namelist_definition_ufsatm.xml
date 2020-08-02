@@ -1933,11 +1933,14 @@
   <desc></desc>
   <values>
     <value>1,1</value>
-    <value app="mrweather" hgrid="C96" >4,4</value>
-    <value app="s2s" hgrid="C96" >4,4</value>
+    <value app="mrweather" hgrid="C96">4,4</value>
     <value app="mrweather" hgrid="C192">4,6</value>
     <value app="mrweather" hgrid="C384">6,6</value>
     <value app="mrweather" hgrid="C768">12,8</value>
+    <value app="s2s" hgrid="C96">4,4</value>
+    <value app="s2s" hgrid="C192">4,6</value>
+    <value app="s2s" hgrid="C384">6,6</value>
+    <value app="s2s" hgrid="C768">12,8</value>
     <value app="hafs" hgrid="C768">40,30</value>
   </values>
 </entry>
