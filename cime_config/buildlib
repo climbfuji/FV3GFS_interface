@@ -183,7 +183,6 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
-
             ccomp, cxxcomp, fcomp = get_compiler_names(case)
             print "CCOMP is >{}<".format(ccomp)
             os.environ["CMAKE_C_COMPILER"]=ccomp.strip()

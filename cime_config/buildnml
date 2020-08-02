@@ -161,7 +161,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     new_o3forc = True
 
     # Define base directories
-<<<<<<< HEAD
     if "hafs" in app:
         dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
         dir_fix_ufsatm = os.path.join(din_loc_root,"regional","fix",atm_grid)
@@ -173,10 +172,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
         dir_fix_parm = os.path.join(din_loc_root,"parm")
         dir_fix_lib = os.path.join(din_loc_root,"lib")
-=======
-    dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
-    dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
->>>>>>> get GFSphys_var_map.txt from NCEPLIBS
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
@@ -291,27 +286,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
             else:
                 safe_copy(src_file, tgt_file)
     else: # Cold start
-<<<<<<< HEAD
-=======
-        # Remove restart files form INPUT/ directory, if there are
-        # Tiled files
-        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
-        for f in lst:
-            for tile in range(1,7):
-                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
-                if os.path.isfile(src_file):
-                    logger.warning("removing file {}".format(src_file))
-                    os.remove(src_file)
-
-        # Others
-        lst = ["fv_core.res.nc", "coupler.res"]
-        for f in lst:
-            src_file = os.path.join(rundir,"INPUT",f)
-            if os.path.isfile(src_file):
-                logger.warning("removing file {}".format(src_file))
-                os.remove(src_file)
-
->>>>>>> fix py3 compatibility
         # Query date and time
         run_start_date = case.get_value('RUN_STARTDATE').split('-')
         yyyy = run_start_date[0]
@@ -347,17 +321,10 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
                         logger.warning("removing file {}".format(src_file))
                         os.remove(src_file)
 
-<<<<<<< HEAD
             # Others
             lst = ["fv_core.res.nc", "coupler.res"]
             for f in lst:
                 src_file = os.path.join(rundir,"INPUT",f)
-=======
-        for f in lst:
-            for tile in range(1,7):
-                src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
-                tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
->>>>>>> fix py3 compatibility
                 if os.path.isfile(src_file):
                     logger.warning("removing file {}".format(src_file))
                     os.remove(src_file)
