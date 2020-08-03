@@ -45,7 +45,7 @@
 
   <entry id="BUILD_32BIT">
     <type>logical</type>
-    <default_value>TRUE</default_value>
+    <default_value>FALSE</default_value>
     <values match="first">
       <value compset="v15p2">FALSE</value>
       <value compset="v16beta">FALSE</value>
