@@ -130,7 +130,7 @@ def buildlib(caseroot, libroot, bldroot):
             if "PFS" not in case.get_value("TESTCASE"):
                 cmake_flags += " -DREPRO=ON "
                 cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
-        comp_classes = case.get_value("COMP_CLASSES")
+        comp_classes = case.get_values("COMP_CLASSES")
         if ccpp:
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
             ccpp_suites = case.get_value("CCPP_SUITES")
@@ -201,6 +201,9 @@ def buildlib(caseroot, libroot, bldroot):
         gmake_args += " VERBOSE=1 "
         stat, _, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
         expect(stat==0,"Build error from fv3 {}".format(err))
+
+        if os.path.exists(os.path.join(bldroot,"FMS","libfms.a")):
+            safe_copy(os.path.join(bldroot,"FMS","libfms.a"), libroot)
 
         # This step is needed for CIME build
         if "CPL" in comp_classes:
