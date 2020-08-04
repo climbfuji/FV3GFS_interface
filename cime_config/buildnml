@@ -726,7 +726,6 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
         remove_lst.extend(["cen_lat", "cen_lon", "dlat", "dlon", "lat1", "lat2", "lon1", "lon2"])
 
     for var in remove_lst:
-        print var
         nmlgen._namelist.delete_variable("_no_group_var", var)
 
     #----------------------------------------------------

@@ -9307,7 +9307,7 @@
   Cycle month
   </desc>
   <values>
-    <value></value>
+    <value>-1</value>
   </values>
 </entry>
 
@@ -9319,7 +9319,7 @@
   Cycle day
   </desc>
   <values>
-    <value></value>
+    <value>-1</value>
   </values>
 </entry>
 
@@ -9331,7 +9331,7 @@
   Cycle hour
   </desc>
   <values>
-    <value></value>
+    <value>-1</value>
   </values>
 </entry>
 
