@@ -144,7 +144,9 @@ def buildlib(caseroot, libroot, bldroot):
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
                 ccpp_options = "--config {} --suites={} --builddir {}".format(ccpp_config, ccpp_suites, os.path.join(bldroot,"FV3"))
                 print("HERE comp_classes {}".format(comp_classes))
-                if len(comp_classes) < 3:
+                # TODO: do not compile HAFS app with --static, it is not supported yet
+                # this needs to be removed once UFSATM under HAFS is updated
+                if len(comp_classes) < 3 and "HAFS" not in ccpp_suites:
                     ccpp_options += " --static"
                 stat, _, err = run_cmd("{} {}".format(ccpp_preconfig, ccpp_options),
                                        verbose=True,

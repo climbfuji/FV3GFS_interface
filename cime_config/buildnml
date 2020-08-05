@@ -138,7 +138,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     testcase = case.get_value("TEST")
     din_loc_root = case.get_value("DIN_LOC_ROOT")
     dir_ic = case.get_value("DIN_LOC_IC")
@@ -419,7 +419,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
 
     # Spectral truncation and regular grid resolution based on FV3 resolution
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     res = int(atm_grid.replace('C',''))
     jcap = 2*res-2
     lonb = 4*res
@@ -560,9 +560,10 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # if nstf_name is None here then a default of 0,0,0,0,0 is assumed
     nstf_name = nmlgen.get_value('nstf_name')
-    if not nstf_name[0] or nstf_name[0] == '0':
-        ccpp = nmlgen.get_value('ccpp_suite')
-        nmlgen.set_value('ccpp_suite',ccpp+'_no_nsst')
+    if "hafs" not in app:
+        if not nstf_name[0] or nstf_name[0] == '0':
+            ccpp = nmlgen.get_value('ccpp_suite')
+            nmlgen.set_value('ccpp_suite',ccpp+'_no_nsst')
 
     # Consistency check for layout
     layout = nmlgen_input.get_value('layout')
@@ -757,9 +758,8 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     #----------------------------------------------------
     # Modify namelist defaults
     #----------------------------------------------------
-
     rundir = case.get_value("RUNDIR")
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
 
     # Set grid
     nmlgen.set_value('mosaic_file_target_grid', os.path.join("INPUT",atm_grid+"_mosaic.nc"))
@@ -811,7 +811,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
     # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     mach = case.get_value("MACH") 
 
     # Specific fix for Stampede2
@@ -904,7 +904,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write(content)
 
     # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     mach = case.get_value("MACH")
 
     # Specific fix for Stampede2
