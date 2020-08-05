@@ -231,7 +231,7 @@
     </mach>
   </grid>
 
-  <grid name="a%C768">
+  <grid name="a%C768r">
     <mach name="any">
       <pes pesize="any" compset="ufsatm%v0">
         <comment>none</comment>
