@@ -506,21 +506,22 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))
 
         # Turn on nst spinup for grib
-        nstf_name = nmlgen_input_sav.get_value('nstf_name')
-        if input_type == 'grib2':
-            nstf_name[1] = '1'
-        else:
-            nstf_name[1] = '0'
+        if 'hafs' not in app:
+            nstf_name = nmlgen_input_sav.get_value('nstf_name')
+            if input_type == 'grib2':
+                nstf_name[1] = '1'
+            else:
+                nstf_name[1] = '0'
 
 
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
         nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))
 
-    if input_type == 'grib2':
+    if input_type == 'grib2' and 'hafs' not in app:
         # Turn off nstf for grib input
         nstf_name[0] = '0'
         logger.info("input_type {} nstf_name {}".format(input_type, nstf_name))
-    nmlgen_input.set_value('nstf_name', nstf_name)
+        nmlgen_input.set_value('nstf_name', nstf_name)
     #----------------------------------------------------
     # Write out namelist groups
     #----------------------------------------------------

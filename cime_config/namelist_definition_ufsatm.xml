@@ -4036,7 +4036,7 @@
   <values>
     <value>.false.</value>
     <value app="mrweather">.true.</value>
-    <value app="true">.true.</value>
+    <value app="hafs">.true.</value>
   </values>
 </entry>
 
@@ -7751,7 +7751,7 @@
   <desc></desc>
   <values>
     <value>.false.</value>
-    <value app="hafs">.false.</value>
+    <value app="hafs">.true.</value>
   </values>
 </entry>
 
@@ -7923,7 +7923,8 @@
   <group>surf_map_nml</group>
   <desc></desc>
   <values>
-    <value>0</value>
+    <value>-1</value>
+    <value app="hafs">0</value>
   </values>
 </entry>
 
