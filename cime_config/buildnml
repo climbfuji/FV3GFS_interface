@@ -261,15 +261,31 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         if not os.path.exists(fulldir):
             os.makedirs(fulldir)
 
+    # For cime tests that use two test directories
+    rundirdst = rundir
+    if rundir.endswith("case2run"):
+        rundirsrc = os.path.abspath(os.path.join(rundir, os.pardir))
+    else:
+        rundirsrc = rundir
+
     # Initial conditions
     if is_restart: # Warm start
         # Tiled files
+        tile_max = 7
+        if "hafs" in app:
+            # Regional case has only one tile (1)
+            tile_max = 2
+
         lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
         lst = [prefix + f for f in lst]
         for f in lst:
-            for tile in range(1,7):
-                src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
-                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
+            for tile in range(1,tile_max):
+                if "_data" in f and "hafs" in app:
+                    src_file = os.path.join(rundir,"RESTART","{}.nc".format(f))
+                    tgt_file = os.path.join(rundir,"INPUT","{}.nc".format(f.replace(prefix,"")))
+                else:
+                    src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
+                    tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
                 if not os.path.isfile(src_file):
                     expect(False, "{} is missing.".format(src_file))
                 else:
@@ -285,6 +301,31 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
                 expect(False, "{} is missing.".format(src_file))
             else:
                 safe_copy(src_file, tgt_file)
+
+        # Reorder boundary files
+        if "hafs" in app:
+            # Boundary conditions
+            lst = ls_sorted_by_mtime(dir_bdy)
+            lst.remove("gfs_ctrl.nc")
+            lst.remove("gfs_data.tile7.nc")
+            lst.remove("sfc_data.tile7.nc")
+            for f in lst:
+                # Remove old links
+                src_file = os.path.join(rundirdst,"INPUT",f)
+                if os.path.isfile(src_file):
+                    os.remove(src_file)
+
+                # Link files again
+                time_step = int(f.split(".")[2])
+                logger.warning("time_step = {}".format(time_step))
+                if time_step < nhours_fcst_pre:
+                    continue
+                else:
+                    src_file = os.path.join(dir_bdy,f)
+                    dst_file = os.path.join(rundir,"INPUT","gfs_bndy.tile7.{0:03d}.nc".format(time_step-nhours_fcst_pre))
+                    #logger.warning("{} --> {}".format(src_file, dst_file))
+                    symlink_force(src_file, dst_file)
+
     else: # Cold start
         # Query date and time
         run_start_date = case.get_value('RUN_STARTDATE').split('-')
@@ -293,13 +334,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
         dd = run_start_date[2]
         run_start_tod = case.get_value('START_TOD')
         hh = int(run_start_tod//3600)
-
-        # For cime tests that use two test directories
-        rundirdst = rundir
-        if rundir.endswith("case2run"):
-            rundirsrc = os.path.abspath(os.path.join(rundir, os.pardir))
-        else:
-            rundirsrc = rundir
 
         if "hafs" in app:
             # Boundary conditions
@@ -339,7 +373,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
                 symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
 
             lst = ["gfs_data", "sfc_data"]
-
             for f in lst:
                 for tile in xrange(1,7):
                     src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
@@ -618,6 +651,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # Query previous run length, if it is warm start
     is_restart = case.get_value("CONTINUE_RUN")
 
+    global nhours_fcst_pre
     if is_restart: # Warm start
         # Set previous forecast length based on restart file
         rundir = case.get_value("RUNDIR")
@@ -1021,11 +1055,20 @@ def buildnml(case, caseroot, compname):
 
             # Copy files by adding prefix
             # Tiled files
+            tile_max = 7
+            if "hafs" in app:
+                # Regional case has only one tile (1)
+                tile_max = 2
+
             lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
             for f in lst:
-                for tile in range(1,7):
-                    src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
-                    tgt_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(prefix + f,tile))
+                for tile in range(1,tile_max):
+                    if "_data" in f and "hafs" in app:
+                        src_file = os.path.join(rundir,"RESTART","{}.nc".format(f))
+                        tgt_file = os.path.join(rundir,"RESTART","{}.nc".format(prefix + f))
+                    else:
+                        src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
+                        tgt_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(prefix + f,tile))
                     if not os.path.isfile(src_file):
                         expect(False, "{} is missing.".format(src_file))
                     else:
