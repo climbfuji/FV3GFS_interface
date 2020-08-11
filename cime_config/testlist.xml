@@ -194,4 +194,22 @@
       <option name="wallclock">06:00:00</option>
     </options>
   </test>
+  <!-- HAFS App -->
+  <!-- C768r -->
+  <test compset="HAFS" grid="C768r" name="SMS_Lh3">
+    <machines>
+      <machine name="orion" compiler="intel" category="hafs"/>
+    </machines>
+    <options>
+      <option name="wallclock">03:00:00</option>
+    </options>
+  </test>
+  <test compset="HAFS" grid="C768r" name="ERS_Lh11">
+    <machines>
+      <machine name="orion" compiler="intel" category="hafs"/>
+    </machines>
+    <options>
+      <option name="wallclock">03:00:00</option>
+    </options>
+  </test>
 </testlist>

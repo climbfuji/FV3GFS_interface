@@ -317,7 +317,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
 
                 # Link files again
                 time_step = int(f.split(".")[2])
-                logger.warning("time_step = {}".format(time_step))
+                #logger.warning("time_step = {}".format(time_step))
                 if time_step < nhours_fcst_pre:
                     continue
                 else:
