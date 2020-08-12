@@ -142,7 +142,6 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     testcase = case.get_value("TEST")
     din_loc_root = case.get_value("DIN_LOC_ROOT")
     dir_ic = case.get_value("DIN_LOC_IC")
-    testcase = case.get_value("TEST")
     is_restart =  case.get_value("CONTINUE_RUN")
     srcroot = case.get_value("SRCROOT")
 
@@ -702,7 +701,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     elif 'nhours' in stop_option:
         nmlgen.set_value('nhours_fcst', stop_n + nhours_fcst_pre)
     elif 'nseconds' in stop_option:
-        nmlgen.set_value('nhours_fcst', stop_n/60 + nhours_fcst_pre)
+        nmlgen.set_value('nhours_fcst', stop_n/3600 + nhours_fcst_pre)
     elif 'nsteps' in stop_option:
         expect(False, "Option >nsteps< is not supported!")
 
