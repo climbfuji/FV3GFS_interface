@@ -1145,7 +1145,7 @@ def buildnml(case, caseroot, compname):
         safe_copy(file1, file2)
 
     #----------------------------------------------------
-    # Namelist generator for atmosphere model (input.nml)
+    # Namelist generator for atmosphere model (input.nml.fv3)
     #----------------------------------------------------
 
     # create the namelist generator object
@@ -1154,7 +1154,7 @@ def buildnml(case, caseroot, compname):
     # create copy of nmlgen_input to modify
     nmlgen_input_def = NamelistGenerator(case, definition_file)
 
-    # create namelist input.nml
+    # create namelist input.nml.fv3
     _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type)
 
     # copy namelist files to rundir
@@ -1168,7 +1168,7 @@ def buildnml(case, caseroot, compname):
     logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
-    symlink_force(file2, os.path.join(rundir, "input.nml"))
+    symlink_force(file2, os.path.join(rundir, "input.nml.fv3"))
 
     #----------------------------------------------------
     # Copy module_configure and input.nml to CaseDocs
@@ -1180,7 +1180,7 @@ def buildnml(case, caseroot, compname):
         safe_copy(file1, file2)
 
         file1 = os.path.join(confdir, "atm_in")
-        file2 = os.path.join(casedocsdir, "input.nml")
+        file2 = os.path.join(casedocsdir, "input.nml.fv3")
         safe_copy(file1, file2)
 
     #----------------------------------------------------
