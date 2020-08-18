@@ -1656,6 +1656,7 @@
     <value>.false.</value>
     <value app="mrweather">.true.</value>
     <value app="hafs">.true.</value>
+    <value app="s2s">.true.</value>
   </values>
 </entry>
 
@@ -2040,6 +2041,7 @@
     <value>.true.</value>
     <value app="mrweather">.false.</value>
     <value app="hafs">.false.</value>
+    <value app="s2s">.false.</value>
   </values>
 </entry>
 
@@ -2150,6 +2152,7 @@
     <value>.false.</value>
     <value app="mrweather">.true.</value>
     <value app="hafs">.true.</value>
+    <value app="s2s">.true.</value>
   </values>
 </entry>
 
@@ -2707,6 +2710,7 @@
     <value>.true.</value>
     <value app="mrweather">.false.</value>
     <value app="hafs">.false.</value>
+    <value app="s2s">.false.</value>
   </values>
 </entry>
 
