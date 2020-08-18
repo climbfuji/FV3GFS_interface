@@ -755,9 +755,12 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # remove parameters from the namelist based on the selected app
     remove_lst = [] 
     if "hafs" in app:
-        remove_lst.extend(["imo", "jmo", "iau_offset", "ideflate", "nbits", "output_history", "write_dopost"])
+        remove_lst.extend(["imo", "jmo", "iau_offset", "ideflate", "nbits", "output_history", "write_dopost", "atm_coupling_interval_sec", "fhrot"])
     else:
         remove_lst.extend(["cen_lat", "cen_lon", "dlat", "dlon", "lat1", "lat2", "lon1", "lon2"])
+        if "mrweather" in app:
+            remove_lst.append("atm_coupling_interval_sec")
+            remove_lst.append("fhrot")
 
     for var in remove_lst:
         nmlgen._namelist.delete_variable("_no_group_var", var)
