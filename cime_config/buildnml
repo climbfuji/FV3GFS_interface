@@ -134,7 +134,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
+def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -365,8 +365,7 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
             # Check already processes initial condition exists or not?
             f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
             if not os.path.isfile(f):
-                input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
-                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
+                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
             else:
                 # Link existing initial condition
                 symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
@@ -771,7 +770,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type, ic_file_prefix):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -841,7 +840,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
     elif input_type == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"gfs_4_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('grib2_file_input_grid',"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
 
     # Check/correct task count used for post-processing
@@ -1187,7 +1186,17 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input, prefix, input_type)
+    # Check input resolution
+    ic_res = nmlgen_input.get_value('resolution_for_grib2')
+    if not ic_res:
+        ic_res = nmlgen_input_def.get_value('resolution_for_grib2')
+
+    # Set file prefix
+    ic_file_prefix = "gfs_4"
+    if "1.0" in ic_res:
+        ic_file_prefix = "gfs_3"
+
+    prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
@@ -1208,7 +1217,7 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type, ic_file_prefix)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
