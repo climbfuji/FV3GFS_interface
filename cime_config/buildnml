@@ -510,7 +510,6 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Restart
     is_restart =  case.get_value("CONTINUE_RUN")
 
-
     if is_restart: # Warm start
         nmlgen_input.set_value('warm_start', True)
         nmlgen_input.set_value('nggps_ic', False)
@@ -527,6 +526,11 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         read_increment = nmlgen_input.get_value('read_increment')
         if read_increment:
             nmlgen_input.set_value('res_latlon_dynamics', "INPUT/fv_rst.res.nc")
+
+        # Set the forecast hour 'off-set'
+        #if "s2s" in app:
+        #    nmlgen_input.set_value('fhrot', 0)
+
     else: # Cold start
         # Set back to their defaults
         nmlgen_input.set_value('warm_start', nmlgen_input_sav.get_value('warm_start'))
@@ -543,7 +547,6 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
                 nstf_name[1] = '1'
             else:
                 nstf_name[1] = '0'
-
 
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
         nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))

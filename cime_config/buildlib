@@ -105,6 +105,7 @@ def buildlib(caseroot, libroot, bldroot):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
+        compset = case.get_value("COMPSET")
         comp_root_dir_atm = case.get_value("COMP_ROOT_DIR_ATM")
         srcdir = os.path.join(srcroot,"src","model")
         os.environ["CASEROOT"] = caseroot
@@ -136,7 +137,9 @@ def buildlib(caseroot, libroot, bldroot):
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
             ccpp_suites = case.get_value("CCPP_SUITES")
             # fix for UFS MR-Weather App
-            if os.path.isfile(os.path.join(ccpp_srcroot,"suites","suite_{}_no_nsst.xml".format(ccpp_suites))):
+            components = compset.split("_")[1:]
+            components = [ x for x in components if "S" not in x[0] ]
+            if os.path.isfile(os.path.join(ccpp_srcroot,"suites","suite_{}_no_nsst.xml".format(ccpp_suites))) and len(components) < 2:
                 ccpp_suites += ","+ccpp_suites+"_no_nsst"
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):
