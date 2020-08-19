@@ -5,9 +5,10 @@
 <entry_id version="3.0">
 
   <description>
-    <desc atm="ufsatm[%v15p2][%v16beta]">UFSATM Atmosphere with:</desc>
+    <desc atm="ufsatm[%v15p2][%v16beta][%v0nocp]">UFSATM Atmosphere with:</desc>
     <desc option="v15p2">CCPP physics version 15p2</desc>
     <desc option="v16beta">CCPP physics version 16beta</desc>
+    <desc option="v0nocp">CCPP physics version for hafs</desc>
   </description>
 
   <entry id="COMP_ATM">
@@ -29,15 +30,30 @@
 
   <entry id="CCPP_SUITES">
     <type>char</type>
-    <valid_values>v15p2,v16beta</valid_values>
-    <default_value>v15p2</default_value>
+    <valid_values>FV3_GFS_v15p2_coupled,FV3_GFS_v15p2,FV3_GFS_v16beta,HAFS_v0_gfdlmp_nocpugwd,HAFS_v0_gfdlmp_nocp,HAFS_v0_gfdlmp</valid_values>
+    <default_value>FV3_GFS_v15p2</default_value>
     <values match="first">
-      <value compset="v15p2">v15p2</value>
-      <value compset="v16beta">v16beta</value>
+      <value compset="s2s">FV3_GFS_v15p2_coupled</value>
+      <value compset="v15p2">FV3_GFS_v15p2</value>
+      <value compset="v16beta">FV3_GFS_v16beta</value>
+      <value compset="v0nocp">HAFS_v0_gfdlmp_nocp</value>
     </values>
     <group>case_comp</group>
     <file>env_build.xml</file>
     <desc>Suite option for CCPP physics package</desc>
+  </entry>
+
+  <entry id="BUILD_32BIT">
+    <type>logical</type>
+    <default_value>FALSE</default_value>
+    <values match="first">
+      <value compset="v15p2">FALSE</value>
+      <value compset="v16beta">FALSE</value>
+      <value compset="v0nocp">TRUE</value>
+    </values>
+    <group>case_comp</group>
+    <file>env_build.xml</file>
+    <desc>Option for building ufsatm dycore in 32 bit mode</desc>
   </entry>
 
   <help>

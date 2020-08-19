@@ -17,12 +17,16 @@ if CIMEROOT is None:
     raise SystemExit("ERROR: must set CIMEROOT environment variable")
 sys.path.append(os.path.join(CIMEROOT, "scripts", "Tools"))
 
+NCEPLIBS_DIR = os.environ.get("NCEPLIBS_DIR")
+if NCEPLIBS_DIR is None:
+    raise SystemExit("ERROR: must set NCEPLIBS_DIR environment variable")
+
 from standard_script_setup import *
 from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
 from CIME.namelist import parse
 from CIME.buildnml import create_namelist_infile, parse_input
-from CIME.utils import expect, safe_copy, symlink_force
+from CIME.utils import expect, safe_copy, symlink_force, ls_sorted_by_mtime
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +59,17 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
             if any(len(item) > 0 for item in lst):
                 continue
 
+            # list of namelist options that will always appear in the namelist file
+            lst = ['ccpp_suite']
+            if var in lst:
+                continue
+
             # get type and size of namelist variable
             var_type, _, var_size, = nmlgen_cur._definition.split_type_string(var)
+
+            # retrieve the initial (default) and current values of the namelist variable
+            ini = nmlgen_ini.get_value(var)
+            cur = nmlgen_cur.get_value(var)
 
             # if it is list and size is different from var_size
             if var_size > 1:
@@ -65,10 +78,10 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                 var_def = [None]*var_size
 
                 # force to have same length
-                var_act_len = len(nmlgen_cur.get_value(var))
-                var_act[0:var_act_len] = [x for x in nmlgen_cur.get_value(var)]
-                var_def_len = len(nmlgen_ini.get_value(var))
-                var_def[0:var_def_len] = [x for x in nmlgen_ini.get_value(var)]
+                var_act_len = len(cur)
+                var_act[0:var_act_len] = [x for x in cur]
+                var_def_len = len(ini)
+                var_def[0:var_def_len] = [x for x in ini]
 
                 # compare
                 if var_type == 'character' or var_type == 'logical':
@@ -85,26 +98,25 @@ def nmlKeepChangedOnly(nmlgen_ini, nmlgen_cur, namelist_user):
                     matched = all(x == y for x,y in zip(var_act,var_def))
             else:
                 if var_type == 'character' or var_type == 'logical':
-                    if not nmlgen_ini.get_value(var).strip() == "":
-                        if nmlgen_cur.get_value(var).startswith(nmlgen_ini.get_value(var)):
+                    if not ini.strip() == "":
+                        if cur.startswith(ini):
                             matched = True
                     else:
-                        if nmlgen_ini.get_value(var).strip() == "" and nmlgen_cur.get_value(var).strip() == "":
+                        if ini.strip() == "" and cur.strip() == "":
                             matched = True
                 elif var_type == 'integer':
-                    if nmlgen_ini.get_value(var) is not None:
-                        if int(nmlgen_cur.get_value(var)) == int(nmlgen_ini.get_value(var)):
+                    if ini:
+                        if int(cur) == int(ini):
                             matched = True
                     else:
-                        if nmlgen_ini.get_value(var) is None and nmlgen_cur.get_value(var) is None:
+                        if not (ini and cur):
                             matched = True
-                elif var_type == 'real':
-                    if float(eval(nmlgen_ini.get_value(var).lower().replace('d','e'))) == \
-                       float(eval(nmlgen_cur.get_value(var).lower().replace('d','e'))):
+                elif var_type == 'real' and ini and cur:
+                    if float(eval(ini.lower().replace('d','e'))) == \
+                       float(eval(cur.lower().replace('d','e'))):
                         matched = True
 
             # if there is a match, remove it from the list
-            nmlgen_ret.set_value(var, nmlgen_cur.get_value(var))
             if matched:
                 nmlgen_ret._namelist.delete_variable(nml, var)
 
@@ -122,15 +134,14 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, prefix):
+def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     testcase = case.get_value("TEST")
     din_loc_root = case.get_value("DIN_LOC_ROOT")
     dir_ic = case.get_value("DIN_LOC_IC")
-    testcase = case.get_value("TEST")
     is_restart =  case.get_value("CONTINUE_RUN")
     srcroot = case.get_value("SRCROOT")
 
@@ -149,18 +160,37 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     new_o3forc = True
 
     # Define base directories
-    dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
-    dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
-    dir_fix_parm = os.path.join(din_loc_root,"parm")
-    dir_fix_lib = os.path.join(din_loc_root,"lib")
+    if "hafs" in app:
+        dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
+        dir_fix_ufsatm = os.path.join(din_loc_root,"regional","fix",atm_grid)
+        dir_fix_parm = os.path.join(din_loc_root,"parm")
+        dir_fix_lib = os.path.join(din_loc_root,"lib")
+        dir_bdy = os.path.join(din_loc_root,"regional","bcond")
+    else:
+        dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
+        dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
+        dir_fix_parm = os.path.join(din_loc_root,"parm")
+        dir_fix_lib = os.path.join(din_loc_root,"lib")
 
     # Create generic dictionary to hold input files: [source_file, "ln" | "cp", target_file]
     input_files = dict()
 
     # Grid and orography data
-    for tile in xrange(1,7):
-        input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
-        input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
+    if "hafs" in app:
+        halo_lst = ["halo0", "halo3", "halo4"]
+        for halo in halo_lst:
+            input_files["grid_tile7_{}".format(halo)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.{}.nc".format(halo)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile7.{}.nc".format(halo))]
+            input_files["orog_tile7_{}".format(halo)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile7.{}.nc".format(halo)), "ln", os.path.join("INPUT",atm_grid+"_oro_data.tile7.{}.nc".format(halo))]
+        input_files["oro_data_tile7h0"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile7.halo0.nc"), "ln",  os.path.join("INPUT","oro_data.nc")]
+        input_files["oro_data_tile7h4"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile7.halo4.nc"), "ln",  os.path.join("INPUT","oro_data.tile7.halo4.nc")]
+        input_files["grid_tile7h3"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.halo3.nc"), "ln",  os.path.join("INPUT",atm_grid+"_grid.tile7.nc")]
+        input_files["grid_tile7h0"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.halo0.nc"), "ln",  os.path.join("INPUT","grid.tile7.halo0.nc")]
+        input_files["grid_tile7h4"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.halo4.nc"), "ln",  os.path.join("INPUT","grid.tile7.halo4.nc")]
+    else:
+        for tile in xrange(1,7):
+            input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
+            input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
+
     input_files["grid_spec"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT","grid_spec.nc")]
     input_files["grid_mosaic"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_mosaic.nc"), "ln", os.path.join("INPUT",atm_grid+"_mosaic.nc")]
 
@@ -179,15 +209,15 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     input_files["co2hist"] = [os.path.join(dir_fix_am,"global_co2historicaldata_glob.txt"), "ln", "co2historicaldata_glob.txt"]
     input_files["co2mont"] = [os.path.join(dir_fix_am,"co2monthlycyc.txt"), "ln", "co2monthlycyc.txt"]
 
-    if int(ico2) > 0:
+    if ico2 and int(ico2) > 0:
         # TODO: make it automatic
         yy = int(time.strftime("%Y,%m,%d,%H,%M,%S").split(',')[0])
-        for year in xrange(2009,yy+1):
+        for year in range(2009,yy+1):
             input_files["co2his_{}".format(year)] = [os.path.join(dir_fix_am,"fix_co2_proj","global_co2historicaldata_{}.txt".format(year)), "ln", "co2historicaldata_{}.txt".format(year)]
 
     input_files["clmaero"] = [os.path.join(dir_fix_am,"global_climaeropac_global.txt"), "ln", "aerosol.dat"]
 
-    if int(iaer) > 0:
+    if iaer and int(iaer) > 0 and "hafs" not in app:
         for year in xrange(1850,2000,10):
             input_files["volaer_{}".format(year)] = [os.path.join(dir_fix_am,"global_volcanic_aerosols_{}-{}.txt".format(year,year+9)), "ln", "volcanic_aerosols_{}-{}.txt".format(year,year+9)]
 
@@ -197,12 +227,12 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         var_type,_,_ = nmlgen_input._definition.split_type_string(var)
         var_str = str(nmlgen_input.get_value(var)).strip()
         if 'character' in var_type and var_str and 'igbp' not in var_str[0:4]:
-            input_files[var] = [var_str, "none", ""]
+            input_files[var] = [var_str, "ln", os.path.basename(var_str)]
 
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
-        for tile in xrange(1,7):
+        for tile in range(1,7):
             for f in ["facsf", "maximum_snow_albedo", "slope_type", "snowfree_albedo", "soil_type", "substrate_temperature", "vegetation_greenness", "vegetation_type"]:
                 input_files["{}{}".format(f,tile)] = [os.path.join(dir_fix_ufsatm,"fix_sfc",atm_grid+".{}.tile{}.nc".format(f,tile)), "ln", os.path.join("INPUT",atm_grid+".{}.tile{}.nc".format(f,tile))]
 
@@ -211,13 +241,13 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         input_files["global_hyblev"] = [os.path.join(dir_fix_am,"global_hyblev.l{}.txt".format(levp)), "ln", os.path.join("INPUT","global_hyblev.l{}.txt".format(levp))]
 
         # Grib2 specific file
-        input_files["var_map"] = [os.path.join(dir_fix_parm,"GFSphys_var_map.txt"), "cp", "GFSphys_var_map.txt"]
+        input_files["var_map"] = [os.path.join(NCEPLIBS_DIR,"share","GFSphys_var_map.txt"), "ln", "GFSphys_var_map.txt"]
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
-        input_files["postxconfig1"] = [os.path.join(dir_fix_parm,"postxconfig-NT-GFS.txt"), "cp", "postxconfig-NT-GFS.txt"]
-        input_files["postxconfig2"] = [os.path.join(dir_fix_parm,"postxconfig-NT-GFS-F00.txt"), "cp", "postxconfig-NT-GFS-F00.txt"]
-        input_files["params_grib2_tbl"] = [os.path.join(dir_fix_lib,"g2tmpl","v1.5.0","src","params_grib2_tbl_new"), "cp", "params_grib2_tbl_new"]
+        input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
+        input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+        input_files["params_grib2_tbl"] = [os.path.join(NCEPLIBS_DIR,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
@@ -230,15 +260,31 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
         if not os.path.exists(fulldir):
             os.makedirs(fulldir)
 
+    # For cime tests that use two test directories
+    rundirdst = rundir
+    if rundir.endswith("case2run"):
+        rundirsrc = os.path.abspath(os.path.join(rundir, os.pardir))
+    else:
+        rundirsrc = rundir
+
     # Initial conditions
     if is_restart: # Warm start
         # Tiled files
+        tile_max = 7
+        if "hafs" in app:
+            # Regional case has only one tile (1)
+            tile_max = 2
+
         lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
         lst = [prefix + f for f in lst]
         for f in lst:
-            for tile in xrange(1,7):
-                src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
-                tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
+            for tile in range(1,tile_max):
+                if "_data" in f and "hafs" in app:
+                    src_file = os.path.join(rundir,"RESTART","{}.nc".format(f))
+                    tgt_file = os.path.join(rundir,"INPUT","{}.nc".format(f.replace(prefix,"")))
+                else:
+                    src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
+                    tgt_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f.replace(prefix,""),tile))
                 if not os.path.isfile(src_file):
                     expect(False, "{} is missing.".format(src_file))
                 else:
@@ -254,60 +300,86 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
                 expect(False, "{} is missing.".format(src_file))
             else:
                 safe_copy(src_file, tgt_file)
-    else: # Cold start
-        # Remove restart files form INPUT/ directory, if there are
-        # Tiled files
-        lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
-        for f in lst:
-            for tile in xrange(1,7):
-                src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+
+        # Reorder boundary files
+        if "hafs" in app:
+            # Boundary conditions
+            lst = ls_sorted_by_mtime(dir_bdy)
+            lst.remove("gfs_ctrl.nc")
+            lst.remove("gfs_data.tile7.nc")
+            lst.remove("sfc_data.tile7.nc")
+            for f in lst:
+                # Remove old links
+                src_file = os.path.join(rundirdst,"INPUT",f)
                 if os.path.isfile(src_file):
-                    logger.warning("removing file {}".format(src_file))
                     os.remove(src_file)
 
-        # Others
-        lst = ["fv_core.res.nc", "coupler.res"]
-        for f in lst:
-            src_file = os.path.join(rundir,"INPUT",f)
-            if os.path.isfile(src_file):
-                logger.warning("removing file {}".format(src_file))
-                os.remove(src_file)
+                # Link files again
+                time_step = int(f.split(".")[2])
+                #logger.warning("time_step = {}".format(time_step))
+                if time_step < nhours_fcst_pre:
+                    continue
+                else:
+                    src_file = os.path.join(dir_bdy,f)
+                    dst_file = os.path.join(rundir,"INPUT","gfs_bndy.tile7.{0:03d}.nc".format(time_step-nhours_fcst_pre))
+                    #logger.warning("{} --> {}".format(src_file, dst_file))
+                    symlink_force(src_file, dst_file)
 
+    else: # Cold start
         # Query date and time
         run_start_date = case.get_value('RUN_STARTDATE').split('-')
         yyyy = run_start_date[0]
         mm = run_start_date[1]
         dd = run_start_date[2]
-
         run_start_tod = case.get_value('START_TOD')
         hh = int(run_start_tod//3600)
-        # For cime tests that use two test directories
-        rundirdst = rundir
-        if rundir.endswith("case2run"):
-            rundirsrc = os.path.abspath(os.path.join(rundir, os.pardir))
+
+        if "hafs" in app:
+            # Boundary conditions
+            lst = ls_sorted_by_mtime(dir_bdy)
+            for f in lst:
+                # Link files
+                symlink_force(os.path.join(dir_bdy,f), os.path.join(rundirdst,"INPUT",f))
+
+            symlink_force(os.path.join(dir_bdy,"sfc_data.tile7.nc"), os.path.join(rundirdst,"INPUT","sfc_data.nc"))
+            symlink_force(os.path.join(dir_bdy,"gfs_data.tile7.nc"), os.path.join(rundirdst,"INPUT","gfs_data.nc"))
         else:
-            rundirsrc = rundir
+            # Remove restart files form INPUT/ directory, if there are
+            # Tiled files
+            lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
+            for f in lst:
+                for tile in xrange(1,7):
+                    src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
+                    if os.path.isfile(src_file):
+                        logger.warning("removing file {}".format(src_file))
+                        os.remove(src_file)
 
-        # Check already processes initial condition exists or not?
-        f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
-        if not os.path.isfile(f):
-            input_files["ic_inv"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.inv".format(hh)), "none", "none"]
-            input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
-        else:
-            # Link existing initial condition
-            symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
-
-        lst = ["gfs_data", "sfc_data"]
-
-        for f in lst:
-            for tile in xrange(1,7):
-                src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
-                tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
+            # Others
+            lst = ["fv_core.res.nc", "coupler.res"]
+            for f in lst:
+                src_file = os.path.join(rundir,"INPUT",f)
                 if os.path.isfile(src_file):
-                    symlink_force(src_file, tgt_file)
-                    logger.info("chgres source file {} linked to {}".format(src_file, tgt_file))
-                else:
-                    logger.debug("chgres source file {} not found".format(src_file))
+                    logger.warning("removing file {}".format(src_file))
+                    os.remove(src_file)
+
+            # Check already processes initial condition exists or not?
+            f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
+            if not os.path.isfile(f):
+                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
+            else:
+                # Link existing initial condition
+                symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
+
+            lst = ["gfs_data", "sfc_data"]
+            for f in lst:
+                for tile in xrange(1,7):
+                    src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
+                    tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
+                    if os.path.isfile(src_file):
+                        symlink_force(src_file, tgt_file)
+                        logger.info("chgres source file {} linked to {}".format(src_file, tgt_file))
+                    else:
+                        logger.debug("chgres source file {} not found".format(src_file))
 
     # Write input file list
     with open(os.path.join(Buildconf,"ufsatm.input_data_list"), 'w') as input_data_list:
@@ -317,16 +389,21 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
     # Copy/Link files
     for k,v in input_files.items():
         if not os.path.isfile(os.path.join(rundir,v[2])):
-            if "ln" in v[1]:
+            if not os.path.isfile(v[0]):
+                logger.warning("WARNING: data file {} not found, will attempt to download.".format(v[0]))
+            elif "ln" in v[1]:
                 symlink_force(v[0], os.path.join(rundir,v[2]))
-            elif "cp" in v[1]:
+            elif "cp":
                 safe_copy(v[0], os.path.join(rundir,v[2]))
 
     # Copy *_table files
     cimeroot_ufsatm = os.path.join(srcroot, "src", "model", "FV3", "cime", "cime_config")
-    for f in ["data_table", "diag_table", "field_table"]:
+    for f in ["data_table", "diag_table_{}".format(app), "field_table"]:
         if not os.path.isfile(os.path.join(rundir,f)):
-            safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,f))
+            if "diag_table" in f:
+                safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,"diag_table"))
+            else:
+                safe_copy(os.path.join(cimeroot_ufsatm,"tables",f),os.path.join(rundir,f))
 
     # Create NEMS configure
     if not os.path.exists(os.path.join(rundir, "nems.configure")):
@@ -340,63 +417,9 @@ def prep_input(case, datestamp, nmlgen_input, prefix):
             # Write
             nems_configure.writelines(line)
 
-    # Do replacements in diag_table
-    run_sd = case.get_value('RUN_STARTDATE').split('-')
-    run_st = case.get_value('START_TOD')
-
-    # TODO: Still needs work % is not working, copy is commentted for now, look below
-    if os.path.exists(os.path.join(rundir, "diag_table")):
-        with open(os.path.join(rundir,"diag_table"), 'r') as diag_table_in:
-            with open(os.path.join(rundir,"diag_table.tmp"), 'w') as diag_table:
-                k = 0
-                for line in diag_table_in:
-                    if k == 0:
-                        # Experiment name
-                        line = casename+" Experiment\n"
-                    elif k == 1:
-                        # Date
-                        yy = int(run_sd[0])
-                        mm = int(run_sd[1])
-                        dd = int(run_sd[2])
-                        hh = int(run_st//3600)
-                        mi = int((run_st-hh*3600)//60)
-                        ss = int(run_st-hh*3600-mi*60)
-                        line = "{} {} {} {} {} {}\n".format(yy,mm,dd,hh,mi,ss)
-
-                    if "atmos_4xdaily" in line:
-                        line = line.replace("atmos_4xdaily","{}{}".format(casename,".fv3.4xday.%4yr-%2mo-%2dy-%5sc"))
-
-                    if "atmos_static" in line:
-                        line = line.replace("atmos_static","{}{}".format(casename,".fv3.static"))
-
-                    if "fv3_history" in line and not "fv3_history2d" in line:
-                        line = line.replace("fv3_history","{}{}".format(casename,".fv3.his.%4yr-%2mo-%2dy-%5sc"))
-
-                    if "fv3_history2d" in line:
-                        line = line.replace("fv3_history2d","{}{}".format(casename,".fv3.sfc.%4yr-%2mo-%2dy-%5sc"))
-
-                    if testcase:
-                        if line.endswith('2\n'):
-                            # Make double precission
-                            line = line[:-2] + "1\n"
-
-                            # This changes output frequency and number of records per file
-                            # using HIST_N and HIST_OPTION from case
-                            parts = line.split(',')
-                            if len(parts) > 7:
-                                parts[1] = "1"
-                                parts[2] = "days"
-                                parts[6] = parts[1]
-                                parts[7] = parts[2]
-                                line = ','.join(parts)+"\n"
-
-                    # Write
-                    diag_table.writelines(line)
-                    k = k+1
-
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp):
+def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -421,10 +444,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # Define base directory
     din_loc_root = case.get_value("DIN_LOC_ROOT")
-    dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
+    if "hafs" in app:
+        dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
+    else:
+        dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
 
     # Spectral truncation and regular grid resolution based on FV3 resolution
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
     res = int(atm_grid.replace('C',''))
     jcap = 2*res-2
     lonb = 4*res
@@ -440,7 +466,10 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     nmlgen_input.set_value('fnaisc', value=os.path.join(dir_fix_am,"CFSR.SEAICE.1982.2012.monthly.clim.grb"))
     nmlgen_input.set_value('fntg3c', value=os.path.join(dir_fix_am,"global_tg3clim.2.6x1.5.grb"))
     nmlgen_input.set_value('fnvegc', value=os.path.join(dir_fix_am,"global_vegfrac.0.144.decpercent.grb"))
-    nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"global_slmask.t1534.3072.1536.grb"))
+    if "mrweather" in app or "s2s" in app:
+        nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"global_slmask.t1534.3072.1536.grb"))
+    else:
+        nmlgen_input.set_value('fnmskh', value=os.path.join(dir_fix_am,"seaice_newland.grb"))
     nmlgen_input.set_value('fnvmnc', value=os.path.join(dir_fix_am,"global_shdmin.0.144x0.144.grb"))
     nmlgen_input.set_value('fnvmxc', value=os.path.join(dir_fix_am,"global_shdmax.0.144x0.144.grb"))
     nmlgen_input.set_value('fnslpc', value=os.path.join(dir_fix_am,"global_slope.1x1.grb"))
@@ -450,13 +479,16 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     nmlgen_input.set_value('fnabsc', value=os.path.join(dir_fix_am,"global_mxsnoalb.uariz.t{}.{}.{}.rg.grb".format(jcap,lonb,latb)))
 
     # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
-    if res == 96 or res == 192:
-        jcap = 1534
-        lonb = 3072
-        latb = 1536
-        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
-    else:
-        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+    if "mrweather" in app or "s2s" in app:
+        if res == 96 or res == 192:
+            jcap = 1534
+            lonb = 3072
+            latb = 1536
+            nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+        else:
+            nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.statsgo.t{}.{}.{}.grb".format(jcap,lonb,latb)))
+    elif "hafs" in app:
+        nmlgen_input.set_value('fnsmcc', value=os.path.join(dir_fix_am,"global_soilmgldas.t{}.{}.{}.grb".format(jcap,lonb,latb)))
 
     # Stochastic physics
     testcase = case.get_value("TEST")
@@ -488,13 +520,17 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
         # Turn off nst spin up
         nstf_name = nmlgen_input.get_value('nstf_name')
-        nstf_name[1] = 0
-        nmlgen_input.set_value('nstf_name', nstf_name)
+        nstf_name[1] = '0'
 
         # Enable adding increment on the fly to the restarts
         read_increment = nmlgen_input.get_value('read_increment')
         if read_increment:
             nmlgen_input.set_value('res_latlon_dynamics', "INPUT/fv_rst.res.nc")
+
+        # Set the forecast hour 'off-set'
+        #if "s2s" in app:
+        #    nmlgen_input.set_value('fhrot', 0)
+
     else: # Cold start
         # Set back to their defaults
         nmlgen_input.set_value('warm_start', nmlgen_input_sav.get_value('warm_start'))
@@ -503,10 +539,23 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
         nmlgen_input.set_value('mountain', nmlgen_input_sav.get_value('mountain'))
         nmlgen_input.set_value('make_nh', nmlgen_input_sav.get_value('make_nh'))
         nmlgen_input.set_value('na_init', nmlgen_input_sav.get_value('na_init'))
-        nmlgen_input.set_value('nstf_name', nmlgen_input_sav.get_value('nstf_name'))
+
+        # Turn on nst spinup for grib
+        if 'hafs' not in app:
+            nstf_name = nmlgen_input_sav.get_value('nstf_name')
+            if input_type == 'grib2':
+                nstf_name[1] = '1'
+            else:
+                nstf_name[1] = '0'
+
         nmlgen_input.set_value('read_increment', nmlgen_input_sav.get_value('read_increment'))
         nmlgen_input.set_value('res_latlon_dynamics', nmlgen_input_sav.get_value('res_latlon_dynamics'))
 
+    if input_type == 'grib2' and 'hafs' not in app:
+        # Turn off nstf for grib input
+        nstf_name[0] = '0'
+        logger.info("input_type {} nstf_name {}".format(input_type, nstf_name))
+        nmlgen_input.set_value('nstf_name', nstf_name)
     #----------------------------------------------------
     # Write out namelist groups
     #----------------------------------------------------
@@ -518,7 +567,7 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Create list of groups by querying xml file
     groups = []
     with open(os.path.join(namelist_xml_dir, "namelist_definition_ufsatm.xml"), 'r') as fin:
-        for s in fin.xreadlines():
+        for s in fin:
             if "<group>" in s:
                 groups.append(s.replace('<group>', '').replace('</group>', '').strip())
 
@@ -534,7 +583,6 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
     # Sort group
     groups.sort()
 
-
     # Remove duplicates
     nmlgen = nmlKeepChangedOnly(nmlgen_input_def, nmlgen_input, namelist_user)
 
@@ -544,6 +592,13 @@ def _create_namelist_input(case, confdir, config, infile, nmlgen_model, nmlgen_i
 
     # Overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
+
+    # if nstf_name is None here then a default of 0,0,0,0,0 is assumed
+    nstf_name = nmlgen.get_value('nstf_name')
+    if "hafs" not in app:
+        if not nstf_name[0] or nstf_name[0] == '0':
+            ccpp = nmlgen.get_value('ccpp_suite')
+            nmlgen.set_value('ccpp_suite',ccpp+'_no_nsst')
 
     # Consistency check for layout
     layout = nmlgen_input.get_value('layout')
@@ -597,6 +652,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # Query previous run length, if it is warm start
     is_restart = case.get_value("CONTINUE_RUN")
 
+    global nhours_fcst_pre
     if is_restart: # Warm start
         # Set previous forecast length based on restart file
         rundir = case.get_value("RUNDIR")
@@ -647,7 +703,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     elif 'nhours' in stop_option:
         nmlgen.set_value('nhours_fcst', stop_n + nhours_fcst_pre)
     elif 'nseconds' in stop_option:
-        nmlgen.set_value('nhours_fcst', stop_n/60 + nhours_fcst_pre)
+        nmlgen.set_value('nhours_fcst', stop_n/3600 + nhours_fcst_pre)
     elif 'nsteps' in stop_option:
         expect(False, "Option >nsteps< is not supported!")
 
@@ -699,6 +755,19 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
     # overwrite user_nl_ufsatm changes
     nmlgen = nmlOverwrite(namelist_user, nmlgen)
 
+    # remove parameters from the namelist based on the selected app
+    remove_lst = [] 
+    if "hafs" in app:
+        remove_lst.extend(["imo", "jmo", "iau_offset", "ideflate", "nbits", "output_history", "write_dopost", "atm_coupling_interval_sec", "fhrot"])
+    else:
+        remove_lst.extend(["cen_lat", "cen_lon", "dlat", "dlon", "lat1", "lat2", "lon1", "lon2"])
+        if "mrweather" in app:
+            remove_lst.append("atm_coupling_interval_sec")
+            remove_lst.append("fhrot")
+
+    for var in remove_lst:
+        nmlgen._namelist.delete_variable("_no_group_var", var)
+
     #----------------------------------------------------
     # Write out model.configure namelist
     #----------------------------------------------------
@@ -707,7 +776,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type, ic_file_prefix):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -728,9 +797,8 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     #----------------------------------------------------
     # Modify namelist defaults
     #----------------------------------------------------
-
     rundir = case.get_value("RUNDIR")
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
 
     # Set grid
     nmlgen.set_value('mosaic_file_target_grid', os.path.join("INPUT",atm_grid+"_mosaic.nc"))
@@ -742,7 +810,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     else:
         hyblev_file = os.path.join(rundir,"INPUT","global_hyblev.l{}.txt".format(levp))
         if not os.path.exists(hyblev_file):
-            expect(False, "{} does not exist!".format(hyblev_file))
+            logger.warning("WARNING: {} does not exist, will attempt to download.".format(hyblev_file))
         else:
             nmlgen.set_value('vcoord_file_target_grid', os.path.join("INPUT","global_hyblev.l{}.txt".format(levp)))
 
@@ -765,27 +833,9 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
-    # Check input directory to find input_type
-    input_type = {}
-    if os.path.exists(icdir):
-        for f in os.listdir(icdir):
-            if f.endswith('.nemsio'):
-                input_type["nemsio"] = "gaussian"
-            elif f.endswith('.grb2'):
-                input_type["grb2"] = "grib2"
-
-    if "grb2" in input_type:
-        logger.info("Found grib2 files in input")
-        nmlgen.set_value('input_type', 'grib2')
-    elif "nemsio" in input_type:
-        logger.info("Found nemsio files in input")
-        nmlgen.set_value('input_type', "gaussian")
-    else:
-        logger.info("No input files found locally, will attempt to download")
-
-
     # Set input_type specific options
-    if nmlgen.get_value('input_type') == 'gaussian':
+    nmlgen.set_value('input_type', input_type)
+    if input_type == 'gaussian':
         atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
         nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
         sfc_files_input_grid = ["gfs.t{0:02d}z.sfcanl.nemsio".format(hh)]
@@ -795,14 +845,43 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
-    elif nmlgen.get_value('input_type') == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"gfsanl_3_{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+    elif input_type == 'grib2':
+        nmlgen.set_value('grib2_file_input_grid',"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
+    elif input_type == 'gaussian_netcdf':
+        nmlgen.set_value('orog_dir_target_grid', os.path.join("INPUT"))
+        oro_files = []
+        for tile in range(1,7):
+            oro_files.append("oro_data.tile{}.nc".format(tile))
+        nmlgen.set_value('orog_files_target_grid', oro_files)
+        nmlgen.set_value('atm_files_input_grid', ["gfs.t{0:02d}z.atmf000.nc".format(hh)])
+        nmlgen.set_value('sfc_files_input_grid', ["gfs.t{0:02d}z.sfcf000.nc".format(hh)])
+        nmlgen.set_value('convert_atm', True)
+        nmlgen.set_value('convert_sfc', True)
+        nmlgen.set_value('convert_nst', True)
+        tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
+        nmlgen.set_value('tracers', tracers)
+        tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
+        nmlgen.set_value('tracers_input', tracers_input)
 
     # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID")
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    mach = case.get_value("MACH") 
+
+    # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*2)//6), "C768": 6*((tasks_per_node*4)//6)}
+    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
+        tasks_per_node = 24
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
+        case.flush()
+        logger.info("CHGRES tasks per node is changed to {}!".format(tasks_per_node))
+
+    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
+
+    # netCDF input requires more memory
+    if input_type == 'gaussian_netcdf':
+        task_count[atm_grid] *= 2
+
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
         case.flush()
@@ -884,9 +963,17 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write(content)
 
     # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID")
-    res = int(atm_grid.replace('C',''))
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    mach = case.get_value("MACH")
+
+    # Specific fix for Stampede2
     tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
+    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
+        tasks_per_node = 24
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.gfs_post")
+        case.flush()
+        logger.info("NCEP Post tasks per node is changed to {}!".format(tasks_per_node))
+
     task_count = {"C96": tasks_per_node, "C192": tasks_per_node, "C384": tasks_per_node*2, "C768": tasks_per_node*4}
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.gfs_post")
@@ -912,13 +999,27 @@ def buildnml(case, caseroot, compname):
     if not os.path.isdir(confdir):
         os.makedirs(confdir)
 
-    # create config dictionary
-    compset = case.get_value("COMPSET")
-    if "SLND_SICE_SOCN_SROF_SGLC_SWAV_SESP" in compset:
-        app = "mrweather"
-    else:
-        app = "s2s"
+    # determine CaseDocs
+    casedocsdir = os.path.join(caseroot,"CaseDocs")
 
+    # query compset
+    compset = case.get_value("COMPSET")
+
+    # dictionary for app, compset/s pairs
+    compset_dict = {"mrweather": ["FCST_ufsatm%v15p2_SLND_SICE_SOCN_SROF_SGLC_SWAV", \
+                                  "FCST_ufsatm%v16beta_SLND_SICE_SOCN_SROF_SGLC_SWAV"], \
+                    "hafs"     : ["FCST_ufsatm%v0nocp_SLND_SICE_SOCN_SROF_SGLC_SWAV"]
+                   }
+
+    # determine app using compset, the default value is s2s
+    global app
+    app = "s2s"
+    for key, value in compset_dict.items():
+        for item in value:
+            if item in compset:
+                app = key
+
+    # query used CCPP suite
     ccpp_suite = case.get_value("CCPP_SUITES")
 
     config = {}
@@ -978,11 +1079,20 @@ def buildnml(case, caseroot, compname):
 
             # Copy files by adding prefix
             # Tiled files
+            tile_max = 7
+            if "hafs" in app:
+                # Regional case has only one tile (1)
+                tile_max = 2
+
             lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
             for f in lst:
-                for tile in xrange(1,7):
-                    src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
-                    tgt_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(prefix + f,tile))
+                for tile in range(1,tile_max):
+                    if "_data" in f and "hafs" in app:
+                        src_file = os.path.join(rundir,"RESTART","{}.nc".format(f))
+                        tgt_file = os.path.join(rundir,"RESTART","{}.nc".format(prefix + f))
+                    else:
+                        src_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(f,tile))
+                        tgt_file = os.path.join(rundir,"RESTART","{}.tile{}.nc".format(prefix + f,tile))
                     if not os.path.isfile(src_file):
                         expect(False, "{} is missing.".format(src_file))
                     else:
@@ -999,6 +1109,51 @@ def buildnml(case, caseroot, compname):
                     safe_copy(src_file, tgt_file)
     else:
         prefix = ""
+
+    #----------------------------------------------------
+    # Set input type
+    #----------------------------------------------------
+
+    # Query input directory
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
+    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
+
+    # Check input directory to find input_file format (same folder could have both .nemsio and .grb2)
+    logger.info("Checking {} directory to find raw input files ...".format(icdir))
+    input_type_lst = []
+    if os.path.exists(icdir):
+        for f in os.listdir(icdir):
+            if f.endswith('.nemsio'):
+                input_type_lst.append("gaussian")
+                logger.info("Found '{}' in input directory".format(f))
+            elif f.endswith('.grb2'):
+                input_type_lst.append("grib2")
+                logger.info("Found '{}' in input directory".format(f))
+            elif f.endswith('.nc'):
+                input_type_lst.append("gaussian_netcdf")
+                logger.info("Found '{}' in input directory".format(f))
+
+    # Remove duplicates
+    input_type_lst = list(set(input_type_lst))
+
+    # Check user_nl_ufsatm for input_type and force buildnml to use it
+    input_type_user = namelist_user.get_value('input_type')[0]
+    if input_type_user:
+        input_type_lst = list([input_type_user.strip('\"').strip('\'')])
+
+    # If input_type is empty set grib2 default
+    if not input_type_lst:
+        input_type = "grib2"
+        logger.info("No input files found locally, will attempt to download data in grib2 format")
+    else:
+        if len(input_type_lst) > 1:
+            input_type = "grib2"
+        else:
+            input_type = input_type_lst[0]
+    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
@@ -1018,7 +1173,7 @@ def buildnml(case, caseroot, compname):
         safe_copy(file1, file2)
 
     #----------------------------------------------------
-    # Namelist generator for atmosphere model (input.nml)
+    # Namelist generator for atmosphere model (input.nml.fv3)
     #----------------------------------------------------
 
     # create the namelist generator object
@@ -1027,8 +1182,8 @@ def buildnml(case, caseroot, compname):
     # create copy of nmlgen_input to modify
     nmlgen_input_def = NamelistGenerator(case, definition_file)
 
-    # create namelist input.nml
-    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp)
+    # create namelist input.nml.fv3
+    _create_namelist_input(case, confdir, config, namelist_infile, nmlgen_model_configure, nmlgen_input, nmlgen_input_def, namelist_user, datestamp, input_type)
 
     # copy namelist files to rundir
     if os.path.isdir(rundir):
@@ -1041,13 +1196,40 @@ def buildnml(case, caseroot, compname):
     logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
-    symlink_force(file2, os.path.join(rundir, "input.nml"))
+    if "MOM6" not in compset:
+        # there is no need to merge with MOM6 namelist, just link it
+        symlink_force(file2, os.path.join(rundir, "input.nml"))
+    else:
+        symlink_force(file2, os.path.join(rundir, "input.nml.fv3"))
+
+    #----------------------------------------------------
+    # Copy module_configure and input.nml to CaseDocs
+    #----------------------------------------------------
+
+    if os.path.isdir(casedocsdir):
+        file1 = os.path.join(confdir, "model_configure")
+        file2 = os.path.join(casedocsdir, "model_configure")
+        safe_copy(file1, file2)
+
+        file1 = os.path.join(confdir, "atm_in")
+        file2 = os.path.join(casedocsdir, "input.nml.fv3")
+        safe_copy(file1, file2)
 
     #----------------------------------------------------
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input, prefix)
+    # Check input resolution
+    ic_res = nmlgen_input.get_value('resolution_for_grib2')
+    if not ic_res:
+        ic_res = nmlgen_input_def.get_value('resolution_for_grib2')
+
+    # Set file prefix
+    ic_file_prefix = "gfs_4"
+    if "1.0" in ic_res:
+        ic_file_prefix = "gfs_3"
+
+    prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
@@ -1068,13 +1250,19 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type, ic_file_prefix)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
             file1 = os.path.join(confdir, "config.nml")
             file2 = os.path.join(rundir, "config.nml")
             logger.debug("CHGRES configuration copy: file1 %s file2 %s " %(file1, file2))
+            safe_copy(file1, file2)
+
+        # copy namelist to CaseDocs
+        if os.path.isdir(casedocsdir):
+            file1 = os.path.join(confdir, "config.nml")
+            file2 = os.path.join(casedocsdir, "config.nml")
             safe_copy(file1, file2)
 
     #----------------------------------------------------
@@ -1099,6 +1287,12 @@ def buildnml(case, caseroot, compname):
             file1 = os.path.join(confdir, "itag.tmp")
             file2 = os.path.join(rundir, "itag.tmp")
             logger.debug("NCEP_POST configuration copy: file1 %s file2 %s " %(file1, file2))
+            safe_copy(file1, file2)
+
+        # copy namelist to CaseDocs
+        if os.path.isdir(casedocsdir):
+            file1 = os.path.join(confdir, "itag.tmp")
+            file2 = os.path.join(casedocsdir, "itag.tmp")
             safe_copy(file1, file2)
 
     return

@@ -161,7 +161,7 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
-      <option name="wallclock">03:00:00</option>
+      <option name="wallclock">06:00:00</option>
     </options>
   </test>
   <test compset="GFSv16beta" grid="C768" name="SMS_Lh3">
@@ -171,7 +171,7 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
-      <option name="wallclock">03:00:00</option>
+      <option name="wallclock">06:00:00</option>
     </options>
   </test>
   <test compset="GFSv15p2" grid="C768" name="SMS_Lh3_D">
@@ -181,7 +181,7 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
-      <option name="wallclock">03:00:00</option>
+      <option name="wallclock">06:00:00</option>
     </options>
   </test>
   <test compset="GFSv16beta" grid="C768" name="SMS_Lh3_D">
@@ -191,6 +191,24 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
+      <option name="wallclock">06:00:00</option>
+    </options>
+  </test>
+  <!-- HAFS App -->
+  <!-- C768r -->
+  <test compset="HAFS" grid="C768r" name="SMS_Lh3">
+    <machines>
+      <machine name="orion" compiler="intel" category="hafs"/>
+    </machines>
+    <options>
+      <option name="wallclock">03:00:00</option>
+    </options>
+  </test>
+  <test compset="HAFS" grid="C768r" name="ERS_Lh11">
+    <machines>
+      <machine name="orion" compiler="intel" category="hafs"/>
+    </machines>
+    <options>
       <option name="wallclock">03:00:00</option>
     </options>
   </test>
