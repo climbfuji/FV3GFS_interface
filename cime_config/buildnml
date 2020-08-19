@@ -848,6 +848,21 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     elif input_type == 'grib2':
         nmlgen.set_value('grib2_file_input_grid',"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
+    elif input_type == 'gaussian_netcdf':
+        nmlgen.set_value('orog_dir_target_grid', os.path.join("INPUT"))
+        oro_files = []
+        for tile in range(1,7):
+            oro_files.append("oro_data.tile{}.nc".format(tile))
+        nmlgen.set_value('orog_files_target_grid', oro_files)
+        nmlgen.set_value('atm_files_input_grid', ["gfs.t{0:02d}z.atmf000.nc".format(hh)])
+        nmlgen.set_value('sfc_files_input_grid', ["gfs.t{0:02d}z.sfcf000.nc".format(hh)])
+        nmlgen.set_value('convert_atm', True)
+        nmlgen.set_value('convert_sfc', True)
+        nmlgen.set_value('convert_nst', True)
+        tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
+        nmlgen.set_value('tracers', tracers)
+        tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
+        nmlgen.set_value('tracers_input', tracers_input)
 
     # Check/correct task count used for post-processing
     atm_grid = case.get_value("ATM_GRID").replace('r', '')
@@ -860,8 +875,13 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
         case.flush()
         logger.info("CHGRES tasks per node is changed to {}!".format(tasks_per_node))
-    
+
     task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
+
+    # netCDF input requires more memory
+    if input_type == 'gaussian_netcdf':
+        task_count[atm_grid] *= 2
+
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
         case.flush()
@@ -1112,6 +1132,9 @@ def buildnml(case, caseroot, compname):
             elif f.endswith('.grb2'):
                 input_type_lst.append("grib2")
                 logger.info("Found '{}' in input directory".format(f))
+            elif f.endswith('.nc'):
+                input_type_lst.append("gaussian_netcdf")
+                logger.info("Found '{}' in input directory".format(f))
 
     # Remove duplicates
     input_type_lst = list(set(input_type_lst))
@@ -1173,7 +1196,11 @@ def buildnml(case, caseroot, compname):
     logger.info("\tLinking input namelist for ufsatm")
     if not os.path.exists(rundir):
         expect(False, "Couldn't find run direcory " + rundir)
-    symlink_force(file2, os.path.join(rundir, "input.nml.fv3"))
+    if "MOM6" not in compset:
+        # there is no need to merge with MOM6 namelist, just link it
+        symlink_force(file2, os.path.join(rundir, "input.nml"))
+    else:
+        symlink_force(file2, os.path.join(rundir, "input.nml.fv3"))
 
     #----------------------------------------------------
     # Copy module_configure and input.nml to CaseDocs
