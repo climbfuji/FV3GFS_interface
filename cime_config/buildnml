@@ -364,7 +364,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
 
             # Check already processes initial condition exists or not?
             f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
-            if not os.path.isfile(f) and "none" not in ic_file_prefix:
+            if not os.path.isfile(f) and ic_file_prefix:
                 input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
             else:
                 # Link existing initial condition
@@ -880,7 +880,7 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # netCDF input requires more memory
     if input_type == 'gaussian_netcdf':
-        task_count[atm_grid] *= 2
+        task_count[atm_grid] *= 4
 
     if atm_grid in task_count.keys():
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
@@ -1226,7 +1226,7 @@ def buildnml(case, caseroot, compname):
 
     # Set file prefix
     if "gaussian_netcdf" in input_type:
-        ic_file_prefix = "none"
+        ic_file_prefix = None
     else:
         ic_file_prefix = "gfs_4"
         if "1.0" in ic_res:
