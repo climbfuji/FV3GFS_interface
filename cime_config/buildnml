@@ -134,7 +134,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
+def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -245,8 +245,28 @@ def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
-        input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
-        input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+        src_file = os.path.join(casedocsdir, "postxconfig-NT-GFS.txt")
+        dst_file = os.path.join(rundir, "postxconfig-NT-GFS.txt")
+        if os.path.isfile(dst_file):
+            os.remove(dst_file)
+
+        if os.path.isfile(src_file):
+            safe_copy(src_file, dst_file)
+            logger.info("Copying {} to {}".format(src_file, dst_file))
+        else:
+            input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
+
+        src_file = os.path.join(casedocsdir, "postxconfig-NT-GFS-F00.txt")
+        dst_file = os.path.join(rundir, "postxconfig-NT-GFS-F00.txt")
+        if os.path.isfile(dst_file):
+            os.remove(dst_file)
+
+        if os.path.isfile(src_file):
+            safe_copy(src_file, dst_file)
+            logger.info("Copying {} to {}".format(src_file, dst_file))
+        else:
+            input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+
         input_files["params_grib2_tbl"] = [os.path.join(NCEPLIBS_DIR,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
 
     # Make sure that rundir exists. If not, make it:
@@ -1232,7 +1252,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    prep_input(case, datestamp, nmlgen_input, prefix, input_type)
+    prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
