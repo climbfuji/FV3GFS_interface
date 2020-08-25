@@ -134,7 +134,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type):
+def prep_input(case, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -364,9 +364,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
 
             # Check already processes initial condition exists or not?
             f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
-            if not os.path.isfile(f) and ic_file_prefix:
-                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
-            else:
+            if os.path.isfile(f):
                 # Link existing initial condition
                 symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
 
@@ -776,7 +774,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type, ic_file_prefix):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -836,17 +834,15 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # Set input_type specific options
     nmlgen.set_value('input_type', input_type)
     if input_type == 'gaussian':
-        atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
-        nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
-        sfc_files_input_grid = ["gfs.t{0:02d}z.sfcanl.nemsio".format(hh)]
-        nmlgen.set_value('sfc_files_input_grid', sfc_files_input_grid)
+        nmlgen.set_value('atm_files_input_grid', 'atm.input.ic.nemsio') 
+        nmlgen.set_value('sfc_files_input_grid', 'sfc.input.ic.nemsio')
         tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
         nmlgen.set_value('tracers', tracers)
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
     elif input_type == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('grib2_file_input_grid','atm.input.ic.grb2')
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
     elif input_type == 'gaussian_netcdf':
         nmlgen.set_value('orog_dir_target_grid', os.path.join("INPUT"))
@@ -854,8 +850,8 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         for tile in range(1,7):
             oro_files.append("oro_data.tile{}.nc".format(tile))
         nmlgen.set_value('orog_files_target_grid', oro_files)
-        nmlgen.set_value('atm_files_input_grid', ["gfs.t{0:02d}z.atmf000.nc".format(hh)])
-        nmlgen.set_value('sfc_files_input_grid', ["gfs.t{0:02d}z.sfcf000.nc".format(hh)])
+        nmlgen.set_value('atm_files_input_grid', ['atm.input.ic.nc'])
+        nmlgen.set_value('sfc_files_input_grid', ['sfc.input.ic.nc'])
         nmlgen.set_value('convert_atm', True)
         nmlgen.set_value('convert_sfc', True)
         nmlgen.set_value('convert_nst', True)
@@ -1123,37 +1119,54 @@ def buildnml(case, caseroot, compname):
 
     # Check input directory to find input_file format (same folder could have both .nemsio and .grb2)
     logger.info("Checking {} directory to find raw input files ...".format(icdir))
-    input_type_lst = []
+    input_dict = {}
     if os.path.exists(icdir):
         for f in os.listdir(icdir):
             if f.endswith('.nemsio'):
-                input_type_lst.append("gaussian")
+                if 'gaussian' in input_dict.keys():
+                    input_dict['gaussian'].append(f)
+                else:
+                    input_dict.update({'gaussian':[f]})
                 logger.info("Found '{}' in input directory".format(f))
             elif f.endswith('.grb2'):
-                input_type_lst.append("grib2")
+                if 'grib2' in input_dict.keys():
+                    input_dict['grib2'].append(f)
+                else:
+                    input_dict.update({'grib2':[f]})
                 logger.info("Found '{}' in input directory".format(f))
             elif f.endswith('.nc'):
-                input_type_lst.append("gaussian_netcdf")
+                if 'gaussian_netcdf' in input_dict.keys():
+                    input_dict['gaussian_netcdf'].append(f)
+                else:
+                    input_dict.update({'gaussian_netcdf':[f]})
                 logger.info("Found '{}' in input directory".format(f))
 
     # Remove duplicates
-    input_type_lst = list(set(input_type_lst))
+    input_type_lst = list(set(input_dict.keys()))
 
     # Check user_nl_ufsatm for input_type and force buildnml to use it
     input_type_user = namelist_user.get_value('input_type')[0]
     if input_type_user:
         input_type_lst = list([input_type_user.strip('\"').strip('\'')])
 
-    # If input_type is empty set grib2 default
+    # If input_type is empty throw error
     if not input_type_lst:
-        input_type = "grib2"
-        logger.info("No input files found locally, will attempt to download data in grib2 format")
+        expect(False, "No input files found locally! Please download initial condition in one of the following formats [.grb2|.nemsio|.nc]")
     else:
+        # Set grib2 as default, if we have multiple data formats such as both .grb2 and .nc
         if len(input_type_lst) > 1:
             input_type = "grib2"
         else:
             input_type = input_type_lst[0]
-    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
+
+        logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
+
+        # Check files for grb2
+        for f in input_dict[input_type]:
+            if not os.path.exists(os.path.join(icdir,f)):
+                expect(False, "{} not found!".format(os.path.join(icdir,f)))
+            else:
+                logger.info("CHGRES will use {}".format(os.path.join(icdir,f)))
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
@@ -1219,20 +1232,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    # Check input resolution
-    ic_res = nmlgen_input.get_value('resolution_for_grib2')
-    if not ic_res:
-        ic_res = nmlgen_input_def.get_value('resolution_for_grib2')
-
-    # Set file prefix
-    if "gaussian_netcdf" in input_type:
-        ic_file_prefix = None
-    else:
-        ic_file_prefix = "gfs_4"
-        if "1.0" in ic_res:
-            ic_file_prefix = "gfs_3"
-
-    prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type)
+    prep_input(case, datestamp, nmlgen_input, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
@@ -1253,7 +1253,7 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type, ic_file_prefix)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):

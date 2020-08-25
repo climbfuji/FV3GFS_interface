@@ -9860,21 +9860,4 @@
   </values>
 </entry>
 
-<!-- =========================== -->
-<!-- CIME internal -->
-<!-- =========================== -->
-
-<entry id="resolution_for_grib2">
-  <type>char</type>
-  <category>cime</category>
-  <group>freeform</group>
-  <desc>
-  Specifies resolution for raw initial condition
-  </desc>
-  <valid_values>0.5,1.0</valid_values>
-  <values>
-    <value>0.5</value>
-  </values>
-</entry>
-
 </entry_id>
