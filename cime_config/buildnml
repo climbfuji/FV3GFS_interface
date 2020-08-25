@@ -159,13 +159,21 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
     # TODO: make it xmlchnage variable
     new_o3forc = True
 
+    # Query date and time
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = run_start_date[0]
+    mm = run_start_date[1]
+    dd = run_start_date[2]
+    run_start_tod = case.get_value('START_TOD')
+    hh = int(run_start_tod//3600)
+
     # Define base directories
     if "hafs" in app:
         dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
         dir_fix_ufsatm = os.path.join(din_loc_root,"regional","fix",atm_grid)
         dir_fix_parm = os.path.join(din_loc_root,"parm")
         dir_fix_lib = os.path.join(din_loc_root,"lib")
-        dir_bdy = os.path.join(din_loc_root,"regional","bcond")
+        dir_bdy = os.path.join(din_loc_root,"regional","bcond","{0:04d}{0:02d}{0:02d}{0:02d}".format(yyyy,mm,dd,hh))
     else:
         dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
         dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
@@ -346,14 +354,6 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
                     symlink_force(src_file, dst_file)
 
     else: # Cold start
-        # Query date and time
-        run_start_date = case.get_value('RUN_STARTDATE').split('-')
-        yyyy = run_start_date[0]
-        mm = run_start_date[1]
-        dd = run_start_date[2]
-        run_start_tod = case.get_value('START_TOD')
-        hh = int(run_start_tod//3600)
-
         if "hafs" in app:
             # Boundary conditions
             lst = ls_sorted_by_mtime(dir_bdy)
