@@ -1152,19 +1152,19 @@ def buildnml(case, caseroot, compname):
     input_dict = {}
     if os.path.exists(icdir):
         for f in os.listdir(icdir):
-            if f.endswith('.nemsio'):
+            if "atm.input.ic.nemsio" in f:
                 if 'gaussian' in input_dict.keys():
                     input_dict['gaussian'].append(f)
                 else:
                     input_dict.update({'gaussian':[f]})
                 logger.info("Found '{}' in input directory".format(f))
-            elif f.endswith('.grb2'):
+            elif "atm.input.ic.grb2" in f:
                 if 'grib2' in input_dict.keys():
                     input_dict['grib2'].append(f)
                 else:
                     input_dict.update({'grib2':[f]})
                 logger.info("Found '{}' in input directory".format(f))
-            elif f.endswith('.nc'):
+            elif "atm.input.ic.nc" in f or "src.input.ic.nc" in f:
                 if 'gaussian_netcdf' in input_dict.keys():
                     input_dict['gaussian_netcdf'].append(f)
                 else:
@@ -1181,7 +1181,12 @@ def buildnml(case, caseroot, compname):
 
     # If input_type is empty throw error
     if not input_type_lst:
-        expect(False, "No input files found locally! Please download initial condition in one of the following formats [.grb2|.nemsio|.nc]")
+        logger.info("No input file/s found locally!")
+        logger.info("Please download raw initial condition and rename the file/s using following convention:")
+        logger.info("\t NEMSIO: atm.input.ic.nemsio and sfc.input.ic.nemsio")
+        logger.info("\t GRIB2 : atm.input.ic.grb2")
+        logger.info("\t NetCDF: atm.input.ic.nc and sfc.input.ic.nc")
+        expect(False, "Exiting ...")
     else:
         # Set grib2 as default, if we have multiple data formats such as both .grb2 and .nc
         if len(input_type_lst) > 1:
