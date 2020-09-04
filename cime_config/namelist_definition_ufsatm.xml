@@ -9591,7 +9591,7 @@
   <desc>
   Input data type: "restart" for fv3 tiled restart files; "history" for fv3 tiled history files; "gaussian" for fv3 gaussian nemsio files; "gfs_gaussian" for spectral gfs gaussian nemsio files.
   </desc>
-  <valid_values>restart,history,gaussian,gaussian_netcdf,gfs_gaussian,grib2</valid_values>
+  <valid_values>restart,history,gaussian_nemsio,gfs_gaussian_nemsio,gfs_sigio,gaussian_netcdf,grib2</valid_values>
   <values>
     <value>history</value>
     <!--<value app="mrweather">grib2</value>-->
@@ -9857,23 +9857,6 @@
   </desc>
   <values>
     <value>postxconfig-NT.txt</value>
-  </values>
-</entry>
-
-<!-- =========================== -->
-<!-- CIME internal -->
-<!-- =========================== -->
-
-<entry id="resolution_for_grib2">
-  <type>char</type>
-  <category>cime</category>
-  <group>freeform</group>
-  <desc>
-  Specifies resolution for raw initial condition
-  </desc>
-  <valid_values>0.5,1.0</valid_values>
-  <values>
-    <value>0.5</value>
   </values>
 </entry>
 

@@ -30,6 +30,15 @@ from CIME.utils import expect, safe_copy, symlink_force, ls_sorted_by_mtime
 
 logger = logging.getLogger(__name__)
 
+def date_yyyymmddhh(case):
+    run_start_date = case.get_value('RUN_STARTDATE').split('-')
+    yyyy = int(run_start_date[0])
+    mm = int(run_start_date[1])
+    dd = int(run_start_date[2])
+    run_start_tod = case.get_value('START_TOD')
+    hh = int(run_start_tod)//3600
+    return yyyy, mm, dd, hh
+
 # find factors of a number
 def factors(n):
     return set(x for tup in ([i, n//i] for i in range(1, int(n**0.5)+1) if n % i == 0) for x in tup)
@@ -134,7 +143,7 @@ def nmlOverwrite(nmlgen_src, nmlgen_dst):
     return nmlgen_ret
 
 # prepares the input files of a case and places in rundir:
-def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type):
+def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
     casename = case.get_value("CASE")
     Buildconf = case.get_value("CASEBUILD")
     rundir = case.get_value("RUNDIR")
@@ -144,6 +153,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
     dir_ic = case.get_value("DIN_LOC_IC")
     is_restart =  case.get_value("CONTINUE_RUN")
     srcroot = case.get_value("SRCROOT")
+    caseroot = case.get_value("CASEROOT")
 
     #----------------------------------------------------
     # Query jobs
@@ -159,13 +169,16 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
     # TODO: make it xmlchnage variable
     new_o3forc = True
 
+    # Query date and time
+    yyyy, mm, dd, hh = date_yyyymmddhh(case)
+
     # Define base directories
     if "hafs" in app:
         dir_fix_am  = os.path.join(din_loc_root,"regional","fix_am")
         dir_fix_ufsatm = os.path.join(din_loc_root,"regional","fix",atm_grid)
         dir_fix_parm = os.path.join(din_loc_root,"parm")
         dir_fix_lib = os.path.join(din_loc_root,"lib")
-        dir_bdy = os.path.join(din_loc_root,"regional","bcond")
+        dir_bdy = os.path.join(din_loc_root,"regional","bcond","{:04d}{:02d}{:02d}{:02d}".format(int(yyyy),int(mm),int(dd),hh))
     else:
         dir_fix_am  = os.path.join(din_loc_root,"global","fix","fix_am.v{}".format(datestamp))
         dir_fix_ufsatm = os.path.join(din_loc_root,"global","fix","fix_fv3_gmted2010.v{}".format(datestamp),atm_grid)
@@ -187,7 +200,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
         input_files["grid_tile7h0"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.halo0.nc"), "ln",  os.path.join("INPUT","grid.tile7.halo0.nc")]
         input_files["grid_tile7h4"] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile7.halo4.nc"), "ln",  os.path.join("INPUT","grid.tile7.halo4.nc")]
     else:
-        for tile in xrange(1,7):
+        for tile in range(1,7):
             input_files["grid_tile{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_grid.tile{}.nc".format(tile)), "ln", os.path.join("INPUT",atm_grid+"_grid.tile{}.nc".format(tile))]
             input_files["orog_data{}".format(tile)] = [os.path.join(dir_fix_ufsatm,atm_grid+"_oro_data.tile{}.nc".format(tile)), "ln", os.path.join("INPUT","oro_data.tile{}.nc".format(tile))]
 
@@ -218,7 +231,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
     input_files["clmaero"] = [os.path.join(dir_fix_am,"global_climaeropac_global.txt"), "ln", "aerosol.dat"]
 
     if iaer and int(iaer) > 0 and "hafs" not in app:
-        for year in xrange(1850,2000,10):
+        for year in range(1850,2000,10):
             input_files["volaer_{}".format(year)] = [os.path.join(dir_fix_am,"global_volcanic_aerosols_{}-{}.txt".format(year,year+9)), "ln", "volcanic_aerosols_{}-{}.txt".format(year,year+9)]
 
     # Fixed files
@@ -245,8 +258,30 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
-        input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
-        input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+        src_file = os.path.join(caseroot,"SourceMods","src.ufsatm","postxconfig-NT-GFS.txt")
+        dst_file = os.path.join(rundir, "postxconfig-NT-GFS.txt")
+        if os.path.isfile(dst_file):
+            os.remove(dst_file)
+
+        if os.path.isfile(src_file):
+            safe_copy(src_file, dst_file)
+            logger.info("Using {} for post-processing".format(src_file))
+        else:
+            logger.info("Using {} for post-processing".format(os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt")))
+            input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
+
+        src_file = os.path.join(caseroot,"SourceMods","src.ufsatm","postxconfig-NT-GFS-F00.txt")
+        dst_file = os.path.join(rundir, "postxconfig-NT-GFS-F00.txt")
+        if os.path.isfile(dst_file):
+            os.remove(dst_file)
+
+        if os.path.isfile(src_file):
+            safe_copy(src_file, dst_file)
+            logger.info("Using {} for post-processing".format(src_file))
+        else:
+            logger.info("Using {} for post-processing".format(os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt")))
+            input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+
         input_files["params_grib2_tbl"] = [os.path.join(NCEPLIBS_DIR,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
 
     # Make sure that rundir exists. If not, make it:
@@ -321,19 +356,11 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
                     continue
                 else:
                     src_file = os.path.join(dir_bdy,f)
-                    dst_file = os.path.join(rundir,"INPUT","gfs_bndy.tile7.{0:03d}.nc".format(time_step-nhours_fcst_pre))
+                    dst_file = os.path.join(rundir,"INPUT","gfs_bndy.tile7.{:03d}.nc".format(time_step-nhours_fcst_pre))
                     #logger.warning("{} --> {}".format(src_file, dst_file))
                     symlink_force(src_file, dst_file)
 
     else: # Cold start
-        # Query date and time
-        run_start_date = case.get_value('RUN_STARTDATE').split('-')
-        yyyy = run_start_date[0]
-        mm = run_start_date[1]
-        dd = run_start_date[2]
-        run_start_tod = case.get_value('START_TOD')
-        hh = int(run_start_tod//3600)
-
         if "hafs" in app:
             # Boundary conditions
             lst = ls_sorted_by_mtime(dir_bdy)
@@ -348,7 +375,7 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
             # Tiled files
             lst = ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"]
             for f in lst:
-                for tile in xrange(1,7):
+                for tile in range(1,7):
                     src_file = os.path.join(rundir,"INPUT","{}.tile{}.nc".format(f,tile))
                     if os.path.isfile(src_file):
                         logger.warning("removing file {}".format(src_file))
@@ -363,17 +390,16 @@ def prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type
                     os.remove(src_file)
 
             # Check already processes initial condition exists or not?
-            f = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.gfs_ctrl.nc".format(hh))
-            if not os.path.isfile(f) and ic_file_prefix:
-                input_files["ic_grb2"] = [os.path.join(dir_ic,"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd),"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh)), "none", "none"]
-            else:
+            f = os.path.join(rundirsrc,"INPUT","{}.".format(atm_grid)+"{:04d}-{:02d}-{:02d}".format(yyyy,mm,dd)+"_{:02d}.gfs_ctrl.nc".format(hh))
+            print f
+            if os.path.isfile(f):
                 # Link existing initial condition
                 symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
 
             lst = ["gfs_data", "sfc_data"]
             for f in lst:
-                for tile in xrange(1,7):
-                    src_file = os.path.join(rundirsrc,"INPUT","{}.{}-{}-{}".format(atm_grid,yyyy,mm,dd)+"_{0:02d}.".format(hh)+f+".tile{}.nc".format(tile))
+                for tile in range(1,7):
+                    src_file = os.path.join(rundirsrc,"INPUT","{}.".format(atm_grid)+"{:04d}-{:02d}-{:02d}".format(yyyy,mm,dd)+"_{:02d}.".format(hh)+f+".tile{}.nc".format(tile))
                     tgt_file = os.path.join(rundirdst,"INPUT","{}.tile{}.nc".format(f,tile))
                     if os.path.isfile(src_file):
                         symlink_force(src_file, tgt_file)
@@ -776,7 +802,7 @@ def _create_namelist_model_configure(case, confdir, config, infile, nmlgen, name
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type, ic_file_prefix):
+def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, nmlgen_input, namelist_user, input_type):
 ####################################################################################
     """Write out the namelist for this component.
 
@@ -819,9 +845,9 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Set cycle
     run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    yyyy = run_start_date[0]
-    mm = run_start_date[1]
-    dd = run_start_date[2]
+    yyyy = int(run_start_date[0])
+    mm = int(run_start_date[1])
+    dd = int(run_start_date[2])
     run_start_tod = case.get_value('START_TOD')
     hh = int(run_start_tod//3600)
 
@@ -830,23 +856,21 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     nmlgen.set_value('cycle_hour', int(hh))
 
     # Input directory
-    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
+    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{:04d}{:02d}".format(yyyy,mm),"{:04d}{:02d}{:02d}".format(yyyy,mm,dd))
     nmlgen.set_value('data_dir_input_grid', icdir)
 
     # Set input_type specific options
     nmlgen.set_value('input_type', input_type)
-    if input_type == 'gaussian':
-        atm_files_input_grid = ["gfs.t{0:02d}z.atmanl.nemsio".format(hh)]
-        nmlgen.set_value('atm_files_input_grid', atm_files_input_grid)
-        sfc_files_input_grid = ["gfs.t{0:02d}z.sfcanl.nemsio".format(hh)]
-        nmlgen.set_value('sfc_files_input_grid', sfc_files_input_grid)
+    if input_type == 'gaussian_nemsio':
+        nmlgen.set_value('atm_files_input_grid', ['atm.input.ic.nemsio'])
+        nmlgen.set_value('sfc_files_input_grid', ['sfc.input.ic.nemsio'])
         tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
         nmlgen.set_value('tracers', tracers)
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
         nmlgen.set_value('convert_nst', True)
     elif input_type == 'grib2':
-        nmlgen.set_value('grib2_file_input_grid',"{}_".format(ic_file_prefix)+"{}{}{}_".format(yyyy,mm,dd)+"{0:02d}00_000.grb2".format(hh))
+        nmlgen.set_value('grib2_file_input_grid','atm.input.ic.grb2')
         nmlgen.set_value('varmap_file', 'GFSphys_var_map.txt')
     elif input_type == 'gaussian_netcdf':
         nmlgen.set_value('orog_dir_target_grid', os.path.join("INPUT"))
@@ -854,8 +878,8 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         for tile in range(1,7):
             oro_files.append("oro_data.tile{}.nc".format(tile))
         nmlgen.set_value('orog_files_target_grid', oro_files)
-        nmlgen.set_value('atm_files_input_grid', ["gfs.t{0:02d}z.atmf000.nc".format(hh)])
-        nmlgen.set_value('sfc_files_input_grid', ["gfs.t{0:02d}z.sfcf000.nc".format(hh)])
+        nmlgen.set_value('atm_files_input_grid', ['atm.input.ic.nc'])
+        nmlgen.set_value('sfc_files_input_grid', ['sfc.input.ic.nc'])
         nmlgen.set_value('convert_atm', True)
         nmlgen.set_value('convert_sfc', True)
         nmlgen.set_value('convert_nst', True)
@@ -864,28 +888,20 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
 
-    # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    # Check/correct task count used for pre-processing
     mach = case.get_value("MACH") 
-
-    # Specific fix for Stampede2
-    tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
-        tasks_per_node = 24
-        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
-        case.flush()
-        logger.info("CHGRES tasks per node is changed to {}!".format(tasks_per_node))
-
-    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
-
-    # netCDF input requires more memory
-    if input_type == 'gaussian_netcdf':
-        task_count[atm_grid] *= 4
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    tasks_per_node = 6
+    task_count = {"C96"  : 2*tasks_per_node, # 2 nodes
+                  "C192" : 2*tasks_per_node, # 2 nodes
+                  "C384" : 4*tasks_per_node, # 4 nodes
+                  "C768" : 6*tasks_per_node} # 6 nodes
 
     if atm_grid in task_count.keys():
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
+        logger.info("CHGRES task count and tasks per node are modified! task_count = {} tasks_per_node = {}".format(task_count[atm_grid], tasks_per_node))
         case.flush()
-        logger.info("CHGRES task count is changed to {}!".format(task_count[atm_grid]))
 
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
@@ -959,7 +975,6 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{hh:02d}:{mm:02d}:{ss:02d}".format(hh=hh,mm=mi,ss=ss)+"\n")
         f.write(nmlgen.get_value('modelname')+"\n")
         f.write(nmlgen.get_value('filenameflux')+"\n")
-        #f.write(nmlgen.get_value('filenameflat')+"\n")
         f.write(content)
 
     # Check/correct task count used for post-processing
@@ -967,7 +982,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
     mach = case.get_value("MACH")
 
     # Specific fix for Stampede2
-    tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
+    tasks_per_node = int(case.get_value("MAX_TASKS_PER_NODE"))
     if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
         tasks_per_node = 24
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.gfs_post")
@@ -1072,9 +1087,9 @@ def buildnml(case, caseroot, compname):
                 with open(rst_file, 'r') as f:
                     lines = f.readlines()
                     line = [int(x) for x in lines[2].split()[0:6]]
-                    prefix = "{0:04d}".format(line[0])
-                    prefix = prefix + "".join("{0:02d}".format(x) for x in line[1:3])
-                    prefix = prefix + "." + "".join("{0:02d}".format(x) for x in line[3:7])
+                    prefix = "{:04d}".format(line[0])
+                    prefix = prefix + "".join("{:02d}".format(x) for x in line[1:3])
+                    prefix = prefix + "." + "".join("{:02d}".format(x) for x in line[3:7])
                     prefix = prefix + "."
 
             # Copy files by adding prefix
@@ -1114,46 +1129,84 @@ def buildnml(case, caseroot, compname):
     # Set input type
     #----------------------------------------------------
 
+    # Query date and time 
+    yyyy, mm, dd, hh = date_yyyymmddhh(case)
+
     # Query input directory
-    run_start_date = case.get_value('RUN_STARTDATE').split('-')
-    yyyy = run_start_date[0]
-    mm = run_start_date[1]
-    dd = run_start_date[2]
-    icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{}{}".format(yyyy,mm),"{}{}{}".format(yyyy,mm,dd))
+    if "hafs" in app:
+        din_loc_root = case.get_value("DIN_LOC_ROOT")
+        icdir = os.path.join(din_loc_root,"regional","bcond","{:04d}{:02d}{:02d}{:02d}".format(yyyy,mm,dd,hh))
+    else:
+        icdir = os.path.join(case.get_value("DIN_LOC_IC"),"{:04d}{:02d}".format(yyyy,mm),"{:04d}{:02d}{:02d}".format(yyyy,mm,dd))
 
     # Check input directory to find input_file format (same folder could have both .nemsio and .grb2)
     logger.info("Checking {} directory to find raw input files ...".format(icdir))
-    input_type_lst = []
+    input_dict = {}
     if os.path.exists(icdir):
         for f in os.listdir(icdir):
-            if f.endswith('.nemsio'):
-                input_type_lst.append("gaussian")
+            if "atm.input.ic.nemsio" in f or "sfc.input.ic.nemsio" in f:
+                if 'gaussian_nemsio' in input_dict.keys():
+                    input_dict['gaussian_nemsio'].append(f)
+                else:
+                    input_dict.update({'gaussian_nemsio':[f]})
                 logger.info("Found '{}' in input directory".format(f))
-            elif f.endswith('.grb2'):
-                input_type_lst.append("grib2")
+            elif "atm.input.ic.grb2" in f:
+                if 'grib2' in input_dict.keys():
+                    input_dict['grib2'].append(f)
+                else:
+                    input_dict.update({'grib2':[f]})
                 logger.info("Found '{}' in input directory".format(f))
-            elif f.endswith('.nc'):
-                input_type_lst.append("gaussian_netcdf")
+            elif "atm.input.ic.nc" in f or "sfc.input.ic.nc" in f:
+                if 'gaussian_netcdf' in input_dict.keys():
+                    input_dict['gaussian_netcdf'].append(f)
+                else:
+                    input_dict.update({'gaussian_netcdf':[f]})
                 logger.info("Found '{}' in input directory".format(f))
 
     # Remove duplicates
-    input_type_lst = list(set(input_type_lst))
+    input_type_lst = list(set(input_dict.keys()))
 
     # Check user_nl_ufsatm for input_type and force buildnml to use it
     input_type_user = namelist_user.get_value('input_type')[0]
     if input_type_user:
         input_type_lst = list([input_type_user.strip('\"').strip('\'')])
 
-    # If input_type is empty set grib2 default
+    # If input_type is empty throw error
     if not input_type_lst:
-        input_type = "grib2"
-        logger.info("No input files found locally, will attempt to download data in grib2 format")
+        logger.info("No input file/s found locally! {}".format(icdir))
+        logger.info("Please download raw initial condition and rename the file/s using following convention:")
+        logger.info("\t NEMSIO: atm.input.ic.nemsio and sfc.input.ic.nemsio")
+        logger.info("\t GRIB2 : atm.input.ic.grb2")
+        logger.info("\t NetCDF: atm.input.ic.nc and sfc.input.ic.nc")
+        expect(False, "Exiting ...")
     else:
+        # Set grib2 as default, if we have multiple data formats such as both .grb2 and .nc
         if len(input_type_lst) > 1:
             input_type = "grib2"
         else:
             input_type = input_type_lst[0]
-    logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
+
+        logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
+
+        # Check defined input_type exists in the dictionary
+        if input_type in input_dict.keys():
+            # Check the input file matched with the input_type
+            for f in input_dict[input_type]:
+                if not os.path.exists(os.path.join(icdir,f)):
+                    expect(False, "{} not found!".format(os.path.join(icdir,f)))
+                else:
+                    logger.info("CHGRES will use {}".format(os.path.join(icdir,f)))
+        else:
+            # If there is no file with given input_type, print information and exit
+            if "gaussian_nemsio" == input_type:
+                logger.info("Please download raw initial condition in NEMSIO format rename it as atm.input.ic.nemsio and sfc.input.ic.nemsio")
+            elif "grib2" == input_type:
+                logger.info("Please download raw initial condition in GRIB2 format and rename it as atm.input.ic.grb2")
+            elif "gaussian_netcdf" == input_type:
+                logger.info("Please download raw initial condition in NETCDF format and rename it as atm.input.ic.nc and sfc.input.ic.nc")
+            else:
+                logger.info("Namelist option input_type can be 'gaussian_nemsio', 'grib2' or 'gaussian_netcdf'.")
+            expect(False, "Exiting ...")
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
@@ -1219,20 +1272,7 @@ def buildnml(case, caseroot, compname):
     # Copy/link input files
     #----------------------------------------------------
 
-    # Check input resolution
-    ic_res = nmlgen_input.get_value('resolution_for_grib2')
-    if not ic_res:
-        ic_res = nmlgen_input_def.get_value('resolution_for_grib2')
-
-    # Set file prefix
-    if "gaussian_netcdf" in input_type:
-        ic_file_prefix = None
-    else:
-        ic_file_prefix = "gfs_4"
-        if "1.0" in ic_res:
-            ic_file_prefix = "gfs_3"
-
-    prep_input(case, datestamp, nmlgen_input, ic_file_prefix, prefix, input_type)
+    prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type)
 
     #----------------------------------------------------
     # Query jobs
@@ -1253,7 +1293,7 @@ def buildnml(case, caseroot, compname):
         nmlgen_chgres_def = NamelistGenerator(case, definition_file)
 
         # create namelist config.nml
-        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type, ic_file_prefix)
+        _create_namelist_chgres(case, confdir, config, namelist_infile, nmlgen_chgres, nmlgen_chgres_def, nmlgen_input, namelist_user, input_type)
 
         # copy namelist to rundir
         if os.path.isdir(rundir):
