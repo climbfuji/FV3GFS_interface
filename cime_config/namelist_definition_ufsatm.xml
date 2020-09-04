@@ -9591,7 +9591,7 @@
   <desc>
   Input data type: "restart" for fv3 tiled restart files; "history" for fv3 tiled history files; "gaussian" for fv3 gaussian nemsio files; "gfs_gaussian" for spectral gfs gaussian nemsio files.
   </desc>
-  <valid_values>restart,history,gaussian,gaussian_netcdf,gfs_gaussian,grib2</valid_values>
+  <valid_values>restart,history,gaussian_nemsio,gfs_gaussian_nemsio,gfs_sigio,gaussian_netcdf,grib2</valid_values>
   <values>
     <value>history</value>
     <!--<value app="mrweather">grib2</value>-->

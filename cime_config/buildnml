@@ -856,9 +856,9 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
 
     # Set input_type specific options
     nmlgen.set_value('input_type', input_type)
-    if input_type == 'gaussian':
-        nmlgen.set_value('atm_files_input_grid', 'atm.input.ic.nemsio') 
-        nmlgen.set_value('sfc_files_input_grid', 'sfc.input.ic.nemsio')
+    if input_type == 'gaussian_nemsio':
+        nmlgen.set_value('atm_files_input_grid', ['atm.input.ic.nemsio'])
+        nmlgen.set_value('sfc_files_input_grid', ['sfc.input.ic.nemsio'])
         tracers = ['sphum','liq_wat','o3mr','ice_wat','rainwat','snowwat','graupel']
         nmlgen.set_value('tracers', tracers)
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
@@ -883,28 +883,20 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
         tracers_input = ['spfh','clwmr','o3mr','icmr','rwmr','snmr','grle']
         nmlgen.set_value('tracers_input', tracers_input)
 
-    # Check/correct task count used for post-processing
-    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    # Check/correct task count used for pre-processing
     mach = case.get_value("MACH") 
-
-    # Specific fix for Stampede2
-    tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.chgres"))
-    if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
-        tasks_per_node = 24
-        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
-        case.flush()
-        logger.info("CHGRES tasks per node is changed to {}!".format(tasks_per_node))
-
-    task_count = {"C96": 6*int(tasks_per_node//6), "C192": 6*(tasks_per_node//6), "C384": 6*((tasks_per_node*4)//6), "C768": 6*((tasks_per_node*6)//6)}
-
-    # netCDF input requires more memory
-    if input_type == 'gaussian_netcdf':
-        task_count[atm_grid] *= 4
+    atm_grid = case.get_value("ATM_GRID").replace('r', '')
+    tasks_per_node = 6
+    task_count = {"C96"  : 2*tasks_per_node, # 2 nodes
+                  "C192" : 2*tasks_per_node, # 2 nodes
+                  "C384" : 4*tasks_per_node, # 4 nodes
+                  "C768" : 6*tasks_per_node} # 6 nodes
 
     if atm_grid in task_count.keys():
+        case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
         case.set_value("task_count", str(task_count[atm_grid]), subgroup="case.chgres")
+        logger.info("CHGRES task count and tasks per node are modified! task_count = {} tasks_per_node = {}".format(task_count[atm_grid], tasks_per_node))
         case.flush()
-        logger.info("CHGRES task count is changed to {}!".format(task_count[atm_grid]))
 
     # remove namelist options that has no specialization
     nmlgen_mod = nmlKeepChangedOnly(nmlgen_def, nmlgen, namelist_user)
@@ -978,7 +970,6 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
         f.write("{}-{}-{}".format(yy,mm,dd)+"_"+"{hh:02d}:{mm:02d}:{ss:02d}".format(hh=hh,mm=mi,ss=ss)+"\n")
         f.write(nmlgen.get_value('modelname')+"\n")
         f.write(nmlgen.get_value('filenameflux')+"\n")
-        #f.write(nmlgen.get_value('filenameflat')+"\n")
         f.write(content)
 
     # Check/correct task count used for post-processing
@@ -986,7 +977,7 @@ def _create_namelist_ncep_post(case, confdir, config, infile, nmlgen, nmlgen_mod
     mach = case.get_value("MACH")
 
     # Specific fix for Stampede2
-    tasks_per_node = int(case.get_value("tasks_per_node", subgroup="case.gfs_post"))
+    tasks_per_node = int(case.get_value("MAX_TASKS_PER_NODE"))
     if ("C384" in atm_grid or "C768" in atm_grid) and "stampede2" in mach:
         tasks_per_node = 24
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.gfs_post")
@@ -1152,11 +1143,11 @@ def buildnml(case, caseroot, compname):
     input_dict = {}
     if os.path.exists(icdir):
         for f in os.listdir(icdir):
-            if "atm.input.ic.nemsio" in f:
-                if 'gaussian' in input_dict.keys():
-                    input_dict['gaussian'].append(f)
+            if "atm.input.ic.nemsio" in f or "sfc.input.ic.nemsio" in f:
+                if 'gaussian_nemsio' in input_dict.keys():
+                    input_dict['gaussian_nemsio'].append(f)
                 else:
-                    input_dict.update({'gaussian':[f]})
+                    input_dict.update({'gaussian_nemsio':[f]})
                 logger.info("Found '{}' in input directory".format(f))
             elif "atm.input.ic.grb2" in f:
                 if 'grib2' in input_dict.keys():
@@ -1164,7 +1155,7 @@ def buildnml(case, caseroot, compname):
                 else:
                     input_dict.update({'grib2':[f]})
                 logger.info("Found '{}' in input directory".format(f))
-            elif "atm.input.ic.nc" in f or "src.input.ic.nc" in f:
+            elif "atm.input.ic.nc" in f or "sfc.input.ic.nc" in f:
                 if 'gaussian_netcdf' in input_dict.keys():
                     input_dict['gaussian_netcdf'].append(f)
                 else:
@@ -1181,7 +1172,7 @@ def buildnml(case, caseroot, compname):
 
     # If input_type is empty throw error
     if not input_type_lst:
-        logger.info("No input file/s found locally!")
+        logger.info("No input file/s found locally! {}".format(icdir))
         logger.info("Please download raw initial condition and rename the file/s using following convention:")
         logger.info("\t NEMSIO: atm.input.ic.nemsio and sfc.input.ic.nemsio")
         logger.info("\t GRIB2 : atm.input.ic.grb2")
@@ -1196,12 +1187,25 @@ def buildnml(case, caseroot, compname):
 
         logger.info("CHGRES namelist option 'input_type' is set to {}".format(input_type))
 
-        # Check files for grb2
-        for f in input_dict[input_type]:
-            if not os.path.exists(os.path.join(icdir,f)):
-                expect(False, "{} not found!".format(os.path.join(icdir,f)))
+        # Check defined input_type exists in the dictionary
+        if input_type in input_dict.keys():
+            # Check the input file matched with the input_type
+            for f in input_dict[input_type]:
+                if not os.path.exists(os.path.join(icdir,f)):
+                    expect(False, "{} not found!".format(os.path.join(icdir,f)))
+                else:
+                    logger.info("CHGRES will use {}".format(os.path.join(icdir,f)))
+        else:
+            # If there is no file with given input_type, print information and exit
+            if "gaussian_nemsio" == input_type:
+                logger.info("Please download raw initial condition in NEMSIO format rename it as atm.input.ic.nemsio and sfc.input.ic.nemsio")
+            elif "grib2" == input_type:
+                logger.info("Please download raw initial condition in GRIB2 format and rename it as atm.input.ic.grb2")
+            elif "gaussian_netcdf" == input_type:
+                logger.info("Please download raw initial condition in NETCDF format and rename it as atm.input.ic.nc and sfc.input.ic.nc")
             else:
-                logger.info("CHGRES will use {}".format(os.path.join(icdir,f)))
+                logger.info("Namelist option input_type can be 'gaussian_nemsio', 'grib2' or 'gaussian_netcdf'.")
+            expect(False, "Exiting ...")
 
     #----------------------------------------------------
     # Namelist generator for atmosphere model (model_configure)
