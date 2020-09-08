@@ -6,6 +6,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -17,6 +18,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -28,6 +30,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -39,6 +42,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -50,6 +54,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -61,6 +66,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p1"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -72,6 +78,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -84,6 +91,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -95,6 +103,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -106,6 +115,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -117,6 +127,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -129,6 +140,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p2"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -140,6 +152,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -151,6 +164,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -162,6 +176,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -174,6 +189,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -185,6 +201,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -196,6 +213,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
@@ -207,6 +225,7 @@
       <machine name="cheyenne" compiler="intel" category="prealpha"/>
       <machine name="cheyenne" compiler="gnu" category="prealpha"/>
       <machine name="stampede2-skx" compiler="intel" category="prealpha_p3"/>
+      <machine name="orion" compiler="intel" category="prealpha"/>
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
