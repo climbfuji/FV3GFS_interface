@@ -15,7 +15,7 @@ sys.path.append(_LIBDIR)
 from standard_script_setup import *
 from CIME.buildlib import parse_input
 from CIME.case import Case
-from CIME.utils import run_cmd, expect, safe_copy, symlink_force
+from CIME.utils import run_cmd, expect, safe_copy
 from CIME.build import get_standard_makefile_args
 from CIME.XML.compilers import Compilers
 from CIME.XML.machines import Machines
@@ -88,15 +88,6 @@ def _create_dir_structure(srcdir,targetdir, sourcemods=None):
                 structure_updated = True
     return structure_updated
 
-def get_compiler_names(case):
-    machobj = Machines(machine=case.get_value("MACH"))
-    compobj = Compilers(machobj)
-    ccomp = compobj.get_value("MPICC")
-    cxxcomp = compobj.get_value("MPICXX")
-    fcomp = compobj.get_value("MPIFC")
-
-    return ccomp, cxxcomp, fcomp
-
 ###############################################################################
 #pylint: disable=unused-argument
 def buildlib(caseroot, libroot, bldroot):
@@ -105,8 +96,6 @@ def buildlib(caseroot, libroot, bldroot):
     with Case(caseroot) as case:
         # retrieve variables
         srcroot = case.get_value("SRCROOT")
-        compset = case.get_value("COMPSET")
-        comp_root_dir_atm = case.get_value("COMP_ROOT_DIR_ATM")
         srcdir = os.path.join(srcroot,"src","model")
         os.environ["CASEROOT"] = caseroot
 
@@ -114,8 +103,7 @@ def buildlib(caseroot, libroot, bldroot):
                                sourcemods=os.path.join(caseroot,"SourceMods","src.ufsatm"))
 
         #Now build ccpp if needed
-        ccpp = case.get_value("BUILD_CCPP")
-        mode32bit = case.get_value("BUILD_32BIT")
+        ccpp = case.get_value("BUILD_CCPP") #__CCPP__ Y/N
         gmake = case.get_value("GMAKE")
         gmake_j = case.get_value("GMAKE_J")
         debug = case.get_value("DEBUG")
@@ -131,29 +119,23 @@ def buildlib(caseroot, libroot, bldroot):
             if "PFS" not in case.get_value("TESTCASE"):
                 cmake_flags += " -DREPRO=ON "
                 cmake_flags += " -DCMAKE_BUILD_TYPE=Bitforbit "
-        comp_classes = case.get_values("COMP_CLASSES")
+
         if ccpp:
-            ccpp_srcroot = os.path.join(comp_root_dir_atm,"ccpp")
             ccpp_srcmods = os.path.join(caseroot,"SourceMods","src.ufsatm")
+            #ccpp_suites = "FV3_GFS_"+case.get_value("CCPP_SUITES")
+            #ccpp_suites += ",FV3_GFS_"+case.get_value("CCPP_SUITES")+"_no_nsst"
             ccpp_suites = case.get_value("CCPP_SUITES")
-            # fix for UFS MR-Weather App
-            components = compset.split("_")[1:]
-            components = [ x for x in components if "S" not in x[0] ]
-            if os.path.isfile(os.path.join(ccpp_srcroot,"suites","suite_{}_no_nsst.xml".format(ccpp_suites))) and len(components) < 2:
-                ccpp_suites += ","+ccpp_suites+"_no_nsst"
+            ccpp_suites += ","+case.get_value("CCPP_SUITES")+"_no_nsst"
+            ccpp_srcroot = os.path.join(srcdir,"FV3","ccpp")
             ccpp_blddir=os.path.join(bldroot,"FV3","ccpp")
             if not os.path.exists(os.path.join(ccpp_blddir,"cime_cmake_CAPS.txt")):
                 ccpp_preconfig = os.path.join(ccpp_srcroot,"framework","scripts","ccpp_prebuild.py")
                 ccpp_config = os.path.join(ccpp_srcroot,"config","ccpp_prebuild_config.py")
-                ccpp_options = "--config {} --suites={} --builddir {}".format(ccpp_config, ccpp_suites, os.path.join(bldroot,"FV3"))
-                print("HERE comp_classes {}".format(comp_classes))
-                # TODO: do not compile HAFS app with --static, it is not supported yet
-                # this needs to be removed once UFSATM under HAFS is updated
-                if len(comp_classes) < 3 and "HAFS" not in ccpp_suites:
-                    ccpp_options += " --static"
-                stat, _, err = run_cmd("{} {}".format(ccpp_preconfig, ccpp_options),
-                                       verbose=True,
-                                       from_dir=srcdir)
+
+                stat, _, err = run_cmd("{} --config {} --static --suites={} --builddir {}"
+                        .format(ccpp_preconfig, ccpp_config, ccpp_suites,
+                                os.path.join(bldroot,"FV3"),verbose=True,
+                                from_dir=srcdir))
                 expect(stat==0,"ccpp_preconfig error from fv3 {}".format(err))
                 _build_ccpp_cmake_files(ccpp_blddir,ccpp_srcmods)
 
@@ -162,10 +144,8 @@ def buildlib(caseroot, libroot, bldroot):
 
         cmake_flags += " -DMPI=ON "
         cmake_flags += " -DSTATIC=ON "
-        if mode32bit:
-            cmake_flags += " -D32BIT=ON "
 
-        if case.get_value("BUILD_THREADED") or case.get_value("FORCE_BUILD_SMP") or case.get_value("SMP_PRESENT"):
+        if case.get_value("BUILD_THREADED") or case.get_value("FORCE_BUILD_SMP"):
             cmake_flags += " -DOPENMP=ON -Dcompile_threaded=TRUE "
         else:
             cmake_flags += " -DOPENMP=OFF "
@@ -192,16 +172,15 @@ def buildlib(caseroot, libroot, bldroot):
         os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
             cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
-            ccomp, cxxcomp, fcomp = get_compiler_names(case)
-            print "CCOMP is >{}<".format(ccomp)
-            os.environ["CMAKE_C_COMPILER"]=ccomp.strip()
-            os.environ["CMAKE_CXX_COMPILER"]=cxxcomp.strip()
-            os.environ["CMAKE_Fortran_COMPILER"]=fcomp.strip()
-            print "HERE {} {} {}".format( os.environ["CMAKE_C_COMPILER"], os.environ["CMAKE_CXX_COMPILER"], os.environ["CMAKE_Fortran_COMPILER"])
-            os.environ["CMAKE_Platform"]="cime"
-            safe_copy(os.path.join(comp_root_dir_atm,"cime","cime_config","configure_cime.cmake"),
-                      os.path.join(bldroot,"cmake"))
 
+            machobj = Machines(machine=case.get_value("MACH"))
+            compobj = Compilers(machobj, compiler=case.get_value("COMPILER"), mpilib=case.get_value("MPILIB"))
+            os.environ["CMAKE_C_COMPILER"]=compobj.get_value("MPICC").strip()
+            os.environ["CMAKE_CXX_COMPILER"]=compobj.get_value("MPICXX").strip()
+            os.environ["CMAKE_Fortran_COMPILER"]=compobj.get_value("MPIFC").strip()
+            os.environ["CMAKE_Platform"]="cime"
+            safe_copy(os.path.join(srcroot,"src","model","FV3","cime","cime_config","configure_cime.cmake"),
+                      os.path.join(bldroot,"cmake"))
             logger.info("Calling cmake {} {}".format(cmake_flags, bldroot))
             stat, _, err = run_cmd("cmake {} {} ".format(cmake_flags,bldroot),from_dir=bldroot,verbose=True)
             expect(stat==0,"CMAKE error from fv3 {}".format(err))
@@ -209,28 +188,6 @@ def buildlib(caseroot, libroot, bldroot):
         gmake_args += " VERBOSE=1 "
         stat, _, err = run_cmd("{} {}".format(gmake,gmake_args),from_dir=bldroot,verbose=True)
         expect(stat==0,"Build error from fv3 {}".format(err))
-
-        if os.path.exists(os.path.join(bldroot,"FMS","libfms.a")):
-            safe_copy(os.path.join(bldroot,"FMS","libfms.a"), libroot)
-
-        # This step is needed for CIME build
-        if "CPL" in comp_classes:
-            nuopc_cap_src = os.path.join(bldroot,"FV3","cime","cime_config","cpl")
-            filepath_file = os.path.join(nuopc_cap_src,"Filepath")
-
-            if not os.path.exists(filepath_file):
-                with open(filepath_file, "w") as fp:
-                    fp.write(os.path.join(caseroot,"SourceMods","src.ufsatm"))
-                    fp.write(os.path.join(nuopc_cap_src))
-            complib = os.path.join(libroot,"libatm.a")
-            makefile = os.path.join(case.get_value("CASETOOLS"),"Makefile")
-
-            cmd = "{} complib -j {} MODEL=ufsatm COMPLIB={} -f {} {} USER_INCLDIR=-I{} " \
-                .format(gmake, gmake_j, complib, makefile, get_standard_makefile_args(case), os.path.join(bldroot,"FV3","mod"))
-
-            rc, out, err = run_cmd(cmd, from_dir=nuopc_cap_src )
-            expect(rc == 0, "Command %s failed rc=%d\nout=%s\nerr=%s" % (cmd, rc, out, err))
-            safe_copy(os.path.join(nuopc_cap_src,"atm_comp_nuopc.mod"),os.path.join(libroot,"include"))
 
 def _main_func():
     caseroot, libroot, bldroot = parse_input(sys.argv)
