@@ -391,7 +391,6 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
 
             # Check already processes initial condition exists or not?
             f = os.path.join(rundirsrc,"INPUT","{}.".format(atm_grid)+"{:04d}-{:02d}-{:02d}".format(yyyy,mm,dd)+"_{:02d}.gfs_ctrl.nc".format(hh))
-            print f
             if os.path.isfile(f):
                 # Link existing initial condition
                 symlink_force(f, os.path.join(rundirdst,"INPUT","gfs_ctrl.nc"))
