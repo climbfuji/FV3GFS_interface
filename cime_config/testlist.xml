@@ -217,7 +217,7 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
-      <option name="wallclock">12:00:00</option>
+      <option name="wallclock">08:00:00</option>
     </options>
   </test>
   <test compset="GFSv16beta" grid="C768" name="SMS_Lh3_D">
@@ -229,7 +229,7 @@
     </machines>
     <options>
       <option name="workflow">ufs-mrweather_wo_post</option>
-      <option name="wallclock">12:00:00</option>
+      <option name="wallclock">08:00:00</option>
     </options>
   </test>
   <!-- HAFS App -->
