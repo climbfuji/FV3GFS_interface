@@ -890,11 +890,11 @@ def _create_namelist_chgres(case, confdir, config, infile, nmlgen, nmlgen_def, n
     # Check/correct task count used for pre-processing
     mach = case.get_value("MACH") 
     atm_grid = case.get_value("ATM_GRID").replace('r', '')
-    tasks_per_node = 6
-    task_count = {"C96"  : 2*tasks_per_node, # 2 nodes
-                  "C192" : 2*tasks_per_node, # 2 nodes
-                  "C384" : 4*tasks_per_node, # 4 nodes
-                  "C768" : 6*tasks_per_node} # 6 nodes
+    tasks_per_node = 12
+    task_count = {"C96"  : 1*tasks_per_node, # 2 nodes
+                  "C192" : 1*tasks_per_node, # 2 nodes
+                  "C384" : 2*tasks_per_node, # 4 nodes
+                  "C768" : 3*tasks_per_node} # 6 nodes
 
     if atm_grid in task_count.keys():
         case.set_value("tasks_per_node", str(tasks_per_node), subgroup="case.chgres")
