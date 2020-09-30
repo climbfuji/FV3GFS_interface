@@ -162,20 +162,6 @@
   </grid>
 
   <grid name="a%C96">
-    <mach name="linux">
-      <pes pesize="any" compset="ufsatm">
-        <comment>none</comment>
-        <ntasks>
-          <ntasks_atm>8</ntasks_atm>
-        </ntasks>
-        <nthrds>
-          <nthrds_atm>1</nthrds_atm>
-	</nthrds>
-      </pes>
-    </mach>
-  </grid>
-
-  <grid name="a%C96">
     <mach name="any">
       <pes pesize="any" compset="ufsatm%v1">
         <comment>none</comment>
