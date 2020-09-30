@@ -17,10 +17,6 @@ if CIMEROOT is None:
     raise SystemExit("ERROR: must set CIMEROOT environment variable")
 sys.path.append(os.path.join(CIMEROOT, "scripts", "Tools"))
 
-NCEPLIBS_DIR = os.environ.get("NCEPLIBS_DIR")
-if NCEPLIBS_DIR is None:
-    raise SystemExit("ERROR: must set NCEPLIBS_DIR environment variable")
-
 from standard_script_setup import *
 from CIME.case import Case
 from CIME.nmlgen import NamelistGenerator
@@ -242,6 +238,12 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
         if 'character' in var_type and var_str and 'igbp' not in var_str[0:4]:
             input_files[var] = [var_str, "ln", os.path.basename(var_str)]
 
+    # Look for nceplibs_dir
+    nceplibs_dir = os.environ.get("nceplibs_dir")
+    if "case.chgres" in jobs:
+        expect(nceplibs_dir, "nceplibs_dir environment variable need to be set to process raw input data!")
+        expect(os.path.exists(nceplibs_dir),"nceplibs_dir {} not found".format(nceplibs_dir))
+
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
         # Fixed files for chgres
@@ -254,7 +256,7 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
         input_files["global_hyblev"] = [os.path.join(dir_fix_am,"global_hyblev.l{}.txt".format(levp)), "ln", os.path.join("INPUT","global_hyblev.l{}.txt".format(levp))]
 
         # Grib2 specific file
-        input_files["var_map"] = [os.path.join(NCEPLIBS_DIR,"share","GFSphys_var_map.txt"), "ln", "GFSphys_var_map.txt"]
+        input_files["var_map"] = [os.path.join(nceplibs_dir,"share","GFSphys_var_map.txt"), "ln", "GFSphys_var_map.txt"]
 
     # Post-processing specific files (gfs_post, copy from source directory)
     if "case.gfs_post" in jobs:
@@ -267,8 +269,8 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
             safe_copy(src_file, dst_file)
             logger.info("Using {} for post-processing".format(src_file))
         else:
-            logger.info("Using {} for post-processing".format(os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt")))
-            input_files["postxconfig1"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
+            logger.info("Using {} for post-processing".format(os.path.join(nceplibs_dir,"share","postxconfig-NT-GFS.txt")))
+            input_files["postxconfig1"] = [os.path.join(nceplibs_dir,"share","postxconfig-NT-GFS.txt"), "ln", "postxconfig-NT-GFS.txt"]
 
         src_file = os.path.join(caseroot,"SourceMods","src.ufsatm","postxconfig-NT-GFS-F00.txt")
         dst_file = os.path.join(rundir, "postxconfig-NT-GFS-F00.txt")
@@ -279,10 +281,10 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
             safe_copy(src_file, dst_file)
             logger.info("Using {} for post-processing".format(src_file))
         else:
-            logger.info("Using {} for post-processing".format(os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt")))
-            input_files["postxconfig2"] = [os.path.join(NCEPLIBS_DIR,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
+            logger.info("Using {} for post-processing".format(os.path.join(nceplibs_dir,"share","postxconfig-NT-GFS-F00.txt")))
+            input_files["postxconfig2"] = [os.path.join(nceplibs_dir,"share","postxconfig-NT-GFS-F00.txt"), "ln", "postxconfig-NT-GFS-F00.txt"]
 
-        input_files["params_grib2_tbl"] = [os.path.join(NCEPLIBS_DIR,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
+        input_files["params_grib2_tbl"] = [os.path.join(nceplibs_dir,"share","params_grib2_tbl_new"), "ln", "params_grib2_tbl_new"]
 
     # Make sure that rundir exists. If not, make it:
     if not os.path.exists(rundir):
