@@ -239,10 +239,10 @@ def prep_input(case, casedocsdir, datestamp, nmlgen_input, prefix, input_type):
             input_files[var] = [var_str, "ln", os.path.basename(var_str)]
 
     # Look for nceplibs_dir
-    nceplibs_dir = os.environ.get("nceplibs_dir")
+    nceplibs_dir = os.environ.get("NCEPLIBS_DIR")
     if "case.chgres" in jobs:
-        expect(nceplibs_dir, "nceplibs_dir environment variable need to be set to process raw input data!")
-        expect(os.path.exists(nceplibs_dir),"nceplibs_dir {} not found".format(nceplibs_dir))
+        expect(nceplibs_dir, "NCEPLIBS_DIR environment variable need to be set to process raw input data!")
+        expect(os.path.exists(nceplibs_dir),"NCEPLIBS_DIR {} not found".format(nceplibs_dir))
 
     # Pre-processing specific files (chgres)
     if "case.chgres" in jobs:
