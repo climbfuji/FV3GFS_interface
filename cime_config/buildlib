@@ -171,7 +171,6 @@ def buildlib(caseroot, libroot, bldroot):
         # This is the variable expected in configure_cime.cmake
         os.environ["NETCDF"] = netcdf
         if structure_updated or not os.path.exists(os.path.join(bldroot,"CMakeFiles")):
-            cmake_flags += " -C {}".format(os.path.join(bldroot,"cmake","configure_cime.cmake"))
 
             machobj = Machines(machine=case.get_value("MACH"))
             compobj = Compilers(machobj, compiler=case.get_value("COMPILER"), mpilib=case.get_value("MPILIB"))
